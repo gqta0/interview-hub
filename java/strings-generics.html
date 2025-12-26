@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>String & Generics - Java Core Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#java" class="nav-back"><i class="fas fa-arrow-left"></i> Java Core</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon java"><i class="fas fa-font"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">Java Core</span>
+            <h1>String & Generics</h1>
+            <p class="topic-desc">String Pool, Immutability, Generic types, Wildcards, Type Erasure</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#string-basics">String Basics</a></li>
+                <li><a href="#string-pool">String Pool</a></li>
+                <li><a href="#string-classes">String vs StringBuilder</a></li>
+                <li><a href="#generics-basics">Generics Basics</a></li>
+                <li><a href="#wildcards">Wildcards</a></li>
+                <li><a href="#type-erasure">Type Erasure</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <section class="content-section">
+                <h2 id="string-basics" class="section-title"><span class="section-icon">📝</span>String Basics</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>String Immutability</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <p>String trong Java là <strong>immutable</strong> - một khi được tạo, không thể thay đổi nội
+                            dung.</p>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-question-circle"></i> Tại sao String là Immutable?</h4>
+                            <ul>
+                                <li><strong>String Pool:</strong> Cho phép caching và reuse</li>
+                                <li><strong>Security:</strong> Không thể thay đổi giá trị sau khi tạo (passwords, URLs)
+                                </li>
+                                <li><strong>Thread-safe:</strong> Có thể share giữa các threads</li>
+                                <li><strong>Hashing:</strong> hashCode được cache (hiệu quả cho HashMap keys)</li>
+                            </ul>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">String
+                                    Immutability Demo</span></div>
+                            <pre><code>String s1 = "Hello";
+String s2 = s1.concat(" World");  // Creates NEW String
+
+System.out.println(s1);  // "Hello" - unchanged!
+System.out.println(s2);  // "Hello World" - new object
+
+// Every modification creates new object
+String s3 = s1.toUpperCase();   // New object
+String s4 = s1.substring(0, 2); // New object
+String s5 = s1.replace('l', 'x'); // New object
+
+// Internally, String is:
+public final class String {
+    private final char[] value;  // Java 8
+    private final byte[] value;  // Java 9+ (compact strings)
+    private int hash;  // Cached hash code
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="string-pool" class="section-title"><span class="section-icon">🏊</span>String Pool</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>String Interning</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <p>String Pool là vùng đặc biệt trong Heap lưu trữ String literals để tái sử dụng.</p>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">String
+                                    Pool Examples</span></div>
+                            <pre><code>// String literals go to pool
+String s1 = "Hello";
+String s2 = "Hello";
+System.out.println(s1 == s2);  // true - same reference from pool
+
+// new String() creates in heap, NOT pool
+String s3 = new String("Hello");
+System.out.println(s1 == s3);  // false - different objects
+System.out.println(s1.equals(s3));  // true - same content
+
+// intern() adds to pool and returns pooled reference
+String s4 = s3.intern();
+System.out.println(s1 == s4);  // true - s4 now points to pool
+
+// Concatenation at compile time
+String s5 = "Hel" + "lo";
+System.out.println(s1 == s5);  // true - optimized by compiler
+
+// Runtime concatenation creates new object
+String prefix = "Hel";
+String s6 = prefix + "lo";
+System.out.println(s1 == s6);  // false - runtime concat</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Memory</span></div>
+                            <pre><code>    HEAP MEMORY
+┌──────────────────────────────────────┐
+│   String Pool (special area)         │
+│   ┌─────────────────────────────┐   │
+│   │  "Hello"  "World"  "Java"   │   │
+│   └─────────────────────────────┘   │
+│                                      │
+│   Regular Heap Objects               │
+│   ┌─────────────────────────────┐   │
+│   │  new String("Hello")        │   │
+│   │  (separate from pool)       │   │
+│   └─────────────────────────────┘   │
+└──────────────────────────────────────┘</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="string-classes" class="section-title"><span class="section-icon">🔧</span>String vs
+                    StringBuilder vs StringBuffer</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Comparison</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>String</th>
+                                        <th>StringBuilder</th>
+                                        <th>StringBuffer</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Mutability</td>
+                                        <td>Immutable</td>
+                                        <td>Mutable</td>
+                                        <td>Mutable</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Thread-safe</td>
+                                        <td>Yes (immutable)</td>
+                                        <td>No</td>
+                                        <td>Yes (synchronized)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Performance</td>
+                                        <td>Slow for concat</td>
+                                        <td>Fast</td>
+                                        <td>Slower (sync overhead)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>When to use</td>
+                                        <td>Few modifications</td>
+                                        <td>Single thread</td>
+                                        <td>Multi-thread (rare)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Performance Comparison</span></div>
+                            <pre><code>// Bad - creates many intermediate objects
+String result = "";
+for (int i = 0; i < 10000; i++) {
+    result += i;  // Creates new String each iteration!
+}
+
+// Good - mutable, efficient
+StringBuilder sb = new StringBuilder();
+for (int i = 0; i < 10000; i++) {
+    sb.append(i);  // Modifies same buffer
+}
+String result = sb.toString();
+
+// StringBuilder common methods
+sb.append("text");
+sb.insert(0, "prefix");
+sb.delete(0, 5);
+sb.reverse();
+sb.replace(0, 3, "new");
+String str = sb.toString();
+
+// Also consider String.join() and StringJoiner
+String joined = String.join(", ", list);  // Java 8+
+StringJoiner sj = new StringJoiner(", ", "[", "]");
+sj.add("a").add("b");  // "[a, b]"</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="generics-basics" class="section-title"><span class="section-icon">🔷</span>Generics Basics</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Generic Types</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <p>Generics cho phép type-safe code bằng cách parameterize types.</p>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Generic
+                                    Class & Method</span></div>
+                            <pre><code>// Generic class
+public class Box&lt;T&gt; {
+    private T content;
+    
+    public void set(T content) { this.content = content; }
+    public T get() { return content; }
+}
+
+// Multiple type parameters
+public class Pair&lt;K, V&gt; {
+    private K key;
+    private V value;
+    
+    public Pair(K key, V value) {
+        this.key = key;
+        this.value = value;
+    }
+}
+
+// Generic method
+public class Utils {
+    public static &lt;T&gt; T getFirst(List&lt;T&gt; list) {
+        return list.isEmpty() ? null : list.get(0);
+    }
+    
+    // Multiple type parameters in method
+    public static &lt;K, V&gt; V getValue(Map&lt;K, V&gt; map, K key) {
+        return map.get(key);
+    }
+}
+
+// Usage
+Box&lt;String&gt; stringBox = new Box&lt;&gt;();
+stringBox.set("Hello");
+String s = stringBox.get();  // No cast needed
+
+Pair&lt;String, Integer&gt; pair = new Pair&lt;&gt;("age", 30);
+String first = Utils.getFirst(Arrays.asList("a", "b", "c"));</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Bounded
+                                    Type Parameters</span></div>
+                            <pre><code>// Upper bound - T must be Number or subclass
+public class NumberBox&lt;T extends Number&gt; {
+    private T value;
+    
+    public double getDoubleValue() {
+        return value.doubleValue();  // Can call Number methods
+    }
+}
+
+NumberBox&lt;Integer&gt; intBox = new NumberBox&lt;&gt;();
+NumberBox&lt;Double&gt; doubleBox = new NumberBox&lt;&gt;();
+// NumberBox&lt;String&gt; stringBox;  // Compile error!
+
+// Multiple bounds (extends class & interface)
+public class MultiBox&lt;T extends Number & Comparable&lt;T&gt;&gt; {
+    private T value;
+    
+    public int compareTo(T other) {
+        return value.compareTo(other);
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="wildcards" class="section-title"><span class="section-icon">❓</span>Wildcards & PECS</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>PECS: Producer Extends, Consumer Super</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Wildcard</th>
+                                        <th>Example</th>
+                                        <th>Purpose</th>
+                                        <th>Rule</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>?</code></td>
+                                        <td>List&lt;?&gt;</td>
+                                        <td>Unknown type</td>
+                                        <td>Read only (as Object)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>? extends T</code></td>
+                                        <td>List&lt;? extends Number&gt;</td>
+                                        <td>Upper bound</td>
+                                        <td>Read only (Producer)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>? super T</code></td>
+                                        <td>List&lt;? super Integer&gt;</td>
+                                        <td>Lower bound</td>
+                                        <td>Write only (Consumer)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">PECS
+                                    Pattern</span></div>
+                            <pre><code>// Producer Extends - READ from it
+public void printNumbers(List&lt;? extends Number&gt; list) {
+    for (Number n : list) {
+        System.out.println(n);  // Can read as Number
+    }
+    // list.add(1);  // Compile error! Can't add
+}
+
+printNumbers(Arrays.asList(1, 2, 3));      // List&lt;Integer&gt; OK
+printNumbers(Arrays.asList(1.0, 2.0));     // List&lt;Double&gt; OK
+
+// Consumer Super - WRITE to it
+public void addNumbers(List&lt;? super Integer&gt; list) {
+    list.add(1);
+    list.add(2);
+    // Integer num = list.get(0);  // Error! Returns Object
+    Object obj = list.get(0);  // OK
+}
+
+addNumbers(new ArrayList&lt;Integer&gt;());  // OK
+addNumbers(new ArrayList&lt;Number&gt;());   // OK
+addNumbers(new ArrayList&lt;Object&gt;());   // OK
+
+// Copy example using PECS
+public static &lt;T&gt; void copy(
+    List&lt;? super T&gt; dest,      // Consumer (write)
+    List&lt;? extends T&gt; src) {   // Producer (read)
+    for (T item : src) {
+        dest.add(item);
+    }
+}</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-lightbulb"></i> Remember PECS</h4>
+                            <ul>
+                                <li><strong>Get/Read:</strong> Use <code>? extends T</code> (Producer)</li>
+                                <li><strong>Put/Write:</strong> Use <code>? super T</code> (Consumer)</li>
+                                <li><strong>Both:</strong> Use exact type <code>&lt;T&gt;</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="type-erasure" class="section-title"><span class="section-icon">🔍</span>Type Erasure</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>How Generics Work at Runtime</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <p>Java generics sử dụng <strong>type erasure</strong> - thông tin generic bị xóa tại runtime.
+                        </p>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Type
+                                    Erasure Examples</span></div>
+                            <pre><code>// At compile time
+List&lt;String&gt; strings = new ArrayList&lt;&gt;();
+List&lt;Integer&gt; integers = new ArrayList&lt;&gt;();
+
+// At runtime - same class!
+System.out.println(strings.getClass() == integers.getClass()); // true
+
+// Both become: ArrayList (raw type)
+// Generic info is erased
+
+// Can't do at runtime:
+// if (obj instanceof List&lt;String&gt;) {}  // Compile error!
+// T item = new T();  // Compile error!
+// T[] array = new T[10];  // Compile error!
+
+// Workaround - pass Class token
+public &lt;T&gt; T create(Class&lt;T&gt; clazz) throws Exception {
+    return clazz.getDeclaredConstructor().newInstance();
+}
+
+String s = create(String.class);</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Before/After</span><span
+                                    class="code-title">Type Erasure</span></div>
+                            <pre><code>// Source code (with generics)
+public class Box&lt;T&gt; {
+    private T item;
+    public void set(T item) { this.item = item; }
+    public T get() { return item; }
+}
+
+// After type erasure (bytecode)
+public class Box {
+    private Object item;
+    public void set(Object item) { this.item = item; }
+    public Object get() { return item; }
+}
+
+// Bounded type
+public class Box&lt;T extends Number&gt; {
+    private T item;
+}
+
+// After erasure - bound type is kept
+public class Box {
+    private Number item;  // Erased to bound
+}</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Type Erasure Limitations</h4>
+                            <ul>
+                                <li>Can't create generic arrays: <code>new T[10]</code></li>
+                                <li>Can't use instanceof with generics</li>
+                                <li>Can't catch generic exceptions</li>
+                                <li>Can't create instance of type parameter</li>
+                                <li>Can't overload methods that differ only by generic type</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>Why is String immutable in Java?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Security:</strong> Can't modify after creation. <strong>Thread-safety:</strong>
+                                Safe to share. <strong>Caching:</strong> String pool optimization.
+                                <strong>Hashing:</strong> hashCode cached for HashMap performance.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>Difference between == and equals() for String?</p>
+                        </div>
+                        <div class="answer">
+                            <p><code>==</code> compares references (same object?). <code>equals()</code> compares
+                                content. String literals share pool references, but <code>new String()</code> creates
+                                new objects.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>What is String.intern()?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Adds String to pool and returns the pooled reference. If already in pool, returns
+                                existing reference. Useful for memory optimization with many duplicate strings.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>Explain PECS principle?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Producer Extends:</strong> Use <code>? extends T</code> when you only READ from
+                                collection. <strong>Consumer Super:</strong> Use <code>? super T</code> when you only
+                                WRITE to collection.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>What is Type Erasure?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Java removes generic type info at runtime for backward compatibility.
+                                <code>List&lt;String&gt;</code> and <code>List&lt;Integer&gt;</code> become same
+                                <code>List</code> class at runtime. Limits: can't use instanceof, can't create generic
+                                arrays.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="design-patterns.html" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>Design
+                        Patterns</span></a>
+                <a href="../index.html#java" class="nav-btn next"><span>Quay lại Java Core</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

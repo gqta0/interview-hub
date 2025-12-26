@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Boot Testing - Spring Boot Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#spring" class="nav-back"><i class="fas fa-arrow-left"></i> Spring Boot</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon spring"><i class="fas fa-vial"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">Spring Boot</span>
+            <h1>Spring Boot Testing</h1>
+            <p class="topic-desc">Unit Tests, Integration Tests, MockMvc, TestContainers</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#overview">Testing Overview</a></li>
+                <li><a href="#unit">Unit Testing</a></li>
+                <li><a href="#mockito">Mockito</a></li>
+                <li><a href="#integration">Integration Testing</a></li>
+                <li><a href="#web">Web Layer Testing</a></li>
+                <li><a href="#data">Data Layer Testing</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <section class="content-section">
+                <h2 id="overview" class="section-title"><span class="section-icon">📊</span>Testing Overview</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Test Pyramid</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Pyramid</span></div>
+                            <pre><code>              /\
+             /  \       E2E Tests (few)
+            /    \      - Full system
+           /______\
+          /        \    Integration Tests (some)
+         /          \   - Multiple components
+        /____________\  - Database, external services
+       /              \
+      /                \ Unit Tests (many)
+     /                  \ - Single class
+    /____________________\ - Fast, isolated</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>spring-boot-starter-test Includes</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Library</th>
+                                        <th>Purpose</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>JUnit 5</strong></td>
+                                        <td>Testing framework</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Mockito</strong></td>
+                                        <td>Mocking framework</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>AssertJ</strong></td>
+                                        <td>Fluent assertions</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Hamcrest</strong></td>
+                                        <td>Matcher library</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>JSONPath</strong></td>
+                                        <td>JSON assertions</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Spring Test</strong></td>
+                                        <td>Spring testing utilities</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="unit" class="section-title"><span class="section-icon">🔬</span>Unit Testing</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Testing Service Layer</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Pure
+                                    Unit Test</span></div>
+                            <pre><code>// No Spring context - fast!
+class UserServiceTest {
+    
+    private UserService userService;
+    private UserRepository userRepository;
+    
+    @BeforeEach
+    void setUp() {
+        userRepository = mock(UserRepository.class);
+        userService = new UserService(userRepository);
+    }
+    
+    @Test
+    void findById_WhenUserExists_ReturnsUser() {
+        // Given
+        User expected = new User(1L, "john@example.com", "John");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(expected));
+        
+        // When
+        User actual = userService.findById(1L);
+        
+        // Then
+        assertThat(actual).isEqualTo(expected);
+        verify(userRepository).findById(1L);
+    }
+    
+    @Test
+    void findById_WhenUserNotExists_ThrowsException() {
+        // Given
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+        
+        // When & Then
+        assertThatThrownBy(() -> userService.findById(999L))
+            .isInstanceOf(ResourceNotFoundException.class)
+            .hasMessage("User not found with id: 999");
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="mockito" class="section-title"><span class="section-icon">🎭</span>Mockito</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Mocking with Mockito</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Mockito
+                                    Patterns</span></div>
+                            <pre><code>@ExtendWith(MockitoExtension.class)
+class OrderServiceTest {
+    
+    @Mock
+    private OrderRepository orderRepository;
+    
+    @Mock
+    private PaymentService paymentService;
+    
+    @InjectMocks
+    private OrderService orderService;
+    
+    @Captor
+    private ArgumentCaptor&lt;Order&gt; orderCaptor;
+    
+    @Test
+    void testBasicMocking() {
+        // Stubbing
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        
+        // Stubbing with argument matchers
+        when(orderRepository.findByStatus(any())).thenReturn(List.of());
+        when(orderRepository.save(any(Order.class))).thenAnswer(
+            invocation -> invocation.getArgument(0));
+        
+        // Stubbing void methods
+        doNothing().when(paymentService).processPayment(any());
+        doThrow(PaymentException.class).when(paymentService).processPayment(any());
+    }
+    
+    @Test
+    void testVerification() {
+        orderService.createOrder(orderDto);
+        
+        // Verify method was called
+        verify(orderRepository).save(any(Order.class));
+        verify(orderRepository, times(1)).save(any());
+        verify(orderRepository, never()).delete(any());
+        verify(orderRepository, atLeastOnce()).findById(any());
+        
+        // Verify with argument capture
+        verify(orderRepository).save(orderCaptor.capture());
+        Order savedOrder = orderCaptor.getValue();
+        assertThat(savedOrder.getStatus()).isEqualTo(OrderStatus.PENDING);
+    }
+    
+    @Test
+    void testArgumentMatchers() {
+        when(orderRepository.findByUserIdAndStatus(
+            eq(1L), 
+            argThat(status -> status == OrderStatus.PENDING)
+        )).thenReturn(List.of());
+    }
+}</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>@Mock vs @MockBean vs @SpyBean</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Annotation</th>
+                                        <th>Context</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>@Mock</code></td>
+                                        <td>No Spring</td>
+                                        <td>Unit tests</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>@MockBean</code></td>
+                                        <td>Spring context</td>
+                                        <td>Replace bean in context</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>@SpyBean</code></td>
+                                        <td>Spring context</td>
+                                        <td>Partial mock of real bean</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="integration" class="section-title"><span class="section-icon">🔗</span>Integration Testing</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>@SpringBootTest</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Full
+                                    Integration Test</span></div>
+                            <pre><code>@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class UserIntegrationTest {
+    
+    @Autowired
+    private TestRestTemplate restTemplate;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @MockBean  // Replace real bean in context
+    private EmailService emailService;
+    
+    @BeforeEach
+    void setUp() {
+        userRepository.deleteAll();
+    }
+    
+    @Test
+    void createUser_Success() {
+        // Given
+        UserDto dto = new UserDto("john@example.com", "John");
+        
+        // When
+        ResponseEntity&lt;User&gt; response = restTemplate.postForEntity(
+            "/api/users", dto, User.class);
+        
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody().getEmail()).isEqualTo("john@example.com");
+        assertThat(userRepository.count()).isEqualTo(1);
+        
+        verify(emailService).sendWelcomeEmail(any());
+    }
+}
+
+// WebEnvironment options:
+// MOCK - MockServletContext (default)
+// RANDOM_PORT - Real server on random port
+// DEFINED_PORT - Real server on server.port
+// NONE - No web environment</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="web" class="section-title"><span class="section-icon">🌐</span>Web Layer Testing</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>@WebMvcTest & MockMvc</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Controller Slice Test</span></div>
+                            <pre><code>@WebMvcTest(UserController.class)  // Only loads web layer
+class UserControllerTest {
+    
+    @Autowired
+    private MockMvc mockMvc;
+    
+    @MockBean
+    private UserService userService;
+    
+    @Test
+    void getUser_WhenExists_Returns200() throws Exception {
+        // Given
+        User user = new User(1L, "john@example.com", "John");
+        when(userService.findById(1L)).thenReturn(user);
+        
+        // When & Then
+        mockMvc.perform(get("/api/users/{id}", 1)
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(1))
+            .andExpect(jsonPath("$.email").value("john@example.com"))
+            .andExpect(jsonPath("$.name").value("John"));
+    }
+    
+    @Test
+    void getUser_WhenNotExists_Returns404() throws Exception {
+        when(userService.findById(999L))
+            .thenThrow(new ResourceNotFoundException("User", 999L));
+        
+        mockMvc.perform(get("/api/users/{id}", 999))
+            .andExpect(status().isNotFound());
+    }
+    
+    @Test
+    void createUser_WithValidData_Returns201() throws Exception {
+        User created = new User(1L, "john@example.com", "John");
+        when(userService.create(any())).thenReturn(created);
+        
+        mockMvc.perform(post("/api/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                        "email": "john@example.com",
+                        "name": "John"
+                    }
+                    """))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.id").value(1));
+    }
+    
+    @Test
+    void createUser_WithInvalidData_Returns400() throws Exception {
+        mockMvc.perform(post("/api/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                        "email": "invalid-email",
+                        "name": ""
+                    }
+                    """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.email").exists())
+            .andExpect(jsonPath("$.name").exists());
+    }
+}</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> @WebMvcTest Only Loads</h4>
+                            <ul>
+                                <li>@Controller, @RestController</li>
+                                <li>@ControllerAdvice</li>
+                                <li>@JsonComponent</li>
+                                <li>Converter, Filter, WebMvcConfigurer</li>
+                                <li><strong>NOT</strong> @Service, @Repository, @Component</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="data" class="section-title"><span class="section-icon">💾</span>Data Layer Testing</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>@DataJpaTest</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Repository Slice Test</span></div>
+                            <pre><code>@DataJpaTest  // Only loads JPA components
+class UserRepositoryTest {
+    
+    @Autowired
+    private TestEntityManager entityManager;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Test
+    void findByEmail_WhenExists_ReturnsUser() {
+        // Given
+        User user = new User("john@example.com", "John");
+        entityManager.persistAndFlush(user);
+        
+        // When
+        Optional&lt;User&gt; found = userRepository.findByEmail("john@example.com");
+        
+        // Then
+        assertThat(found).isPresent();
+        assertThat(found.get().getName()).isEqualTo("John");
+    }
+    
+    @Test
+    void findByStatus_ReturnsMatchingUsers() {
+        // Given
+        entityManager.persist(new User("active1@test.com", "Active1", UserStatus.ACTIVE));
+        entityManager.persist(new User("active2@test.com", "Active2", UserStatus.ACTIVE));
+        entityManager.persist(new User("inactive@test.com", "Inactive", UserStatus.INACTIVE));
+        entityManager.flush();
+        
+        // When
+        List&lt;User&gt; activeUsers = userRepository.findByStatus(UserStatus.ACTIVE);
+        
+        // Then
+        assertThat(activeUsers).hasSize(2);
+        assertThat(activeUsers).extracting(User::getStatus)
+            .containsOnly(UserStatus.ACTIVE);
+    }
+}
+
+// By default uses embedded H2
+// To use real database:
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Testcontainers
+class UserRepositoryTest {
+    
+    @Container
+    static PostgreSQLContainer&lt;?&gt; postgres = new PostgreSQLContainer&lt;&gt;("postgres:15")
+        .withDatabaseName("testdb");
+    
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+    }
+}</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Slice Test Annotations</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Annotation</th>
+                                        <th>Loads</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>@WebMvcTest</code></td>
+                                        <td>Web layer (controllers)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>@DataJpaTest</code></td>
+                                        <td>JPA layer (repositories)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>@JsonTest</code></td>
+                                        <td>JSON serialization</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>@RestClientTest</code></td>
+                                        <td>REST clients</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>@SpringBootTest</code></td>
+                                        <td>Full context</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>@Mock vs @MockBean?</p>
+                        </div>
+                        <div class="answer">
+                            <p><code>@Mock</code> is Mockito only, no Spring context. <code>@MockBean</code> creates
+                                mock AND adds to Spring context, replacing any existing bean. Use @MockBean in
+                                @SpringBootTest, @Mock in pure unit tests.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>@WebMvcTest vs @SpringBootTest?</p>
+                        </div>
+                        <div class="answer">
+                            <p><code>@WebMvcTest</code> loads only web layer (slice test) - fast.
+                                <code>@SpringBootTest</code> loads full context - slow but complete. Use @WebMvcTest for
+                                controller unit tests.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>How to test repositories?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Use <code>@DataJpaTest</code> - loads JPA components only, uses embedded H2 by default.
+                                For real database, use TestContainers with @AutoConfigureTestDatabase(replace = NONE).
+                            </p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>What is MockMvc?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Testing utility for Spring MVC. Simulates HTTP requests without starting server. Allows
+                                testing controllers with full MVC infrastructure (validation, filters, exception
+                                handlers).</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>Unit vs Integration test in Spring?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Unit:</strong> No Spring context, mock all dependencies, fast.
+                                <strong>Integration:</strong> Spring context, real beans (or @MockBean), slower. Start
+                                with unit tests, add integration tests for critical flows.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="transaction.html" class="nav-btn prev"><i
+                        class="fas fa-arrow-left"></i><span>Transaction</span></a>
+                <a href="microservices.html" class="nav-btn next"><span>Microservices</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

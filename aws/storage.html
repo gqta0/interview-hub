@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storage Services - AWS Cloud Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .topic-icon.aws {
+            background: var(--aws-gradient);
+        }
+
+        .topic-category {
+            color: #FF9900;
+        }
+
+        .q-number {
+            background: var(--aws-gradient);
+        }
+
+        .question {
+            background: rgba(255, 153, 0, 0.1);
+        }
+
+        .page-navigation .nav-btn:hover {
+            background: rgba(255, 153, 0, 0.1);
+            border-color: #FF9900;
+            color: #FF9900;
+        }
+
+        .back-to-top {
+            background: var(--aws-gradient);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#aws" class="nav-back"><i class="fas fa-arrow-left"></i> AWS Cloud</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon aws"><i class="fas fa-hdd"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">AWS Cloud</span>
+            <h1>Storage Services</h1>
+            <p class="topic-desc">S3, EBS, EFS, FSx, Storage Gateway - Giải pháp lưu trữ đám mây toàn diện</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#s3-basics">S3 Fundamentals</a></li>
+                <li><a href="#s3-classes">S3 Storage Classes</a></li>
+                <li><a href="#s3-features">S3 Advanced Features</a></li>
+                <li><a href="#s3-security">S3 Security</a></li>
+                <li><a href="#s3-performance">S3 Performance</a></li>
+                <li><a href="#ebs">EBS Volumes</a></li>
+                <li><a href="#ebs-advanced">EBS Advanced</a></li>
+                <li><a href="#efs">Amazon EFS</a></li>
+                <li><a href="#fsx">Amazon FSx</a></li>
+                <li><a href="#gateway">Storage Gateway</a></li>
+                <li><a href="#comparison">Storage Comparison</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <!-- S3 FUNDAMENTALS -->
+            <section id="s3-basics" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🪣</span>S3 Fundamentals</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>S3 Core Concepts</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">S3
+                                    Structure</span></div>
+                            <pre><code>S3 Global Service
+    │
+    └── Bucket (unique name globally, created in Region)
+            │
+            ├── Object (Key = full path)
+            │   ├── Key: folder1/folder2/file.txt
+            │   ├── Value: Content (max 5TB)
+            │   ├── Metadata: System/User-defined
+            │   ├── Tags: Key-value pairs (up to 10)
+            │   └── Version ID (if versioning enabled)
+            │
+            └── Object (Key = another path)
+
+Naming Rules:
+- 3-63 characters, lowercase
+- No uppercase, no underscore
+- Start with letter or number
+- Not an IP address format</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Object Size Limits</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Operation</th>
+                                        <th>Limit</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Single PUT</strong></td>
+                                        <td>5 GB max</td>
+                                        <td>One API call</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Multipart Upload</strong></td>
+                                        <td>5 TB max</td>
+                                        <td>Required >5GB, recommended >100MB</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Part Size</strong></td>
+                                        <td>5MB - 5GB</td>
+                                        <td>Up to 10,000 parts</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Metadata</strong></td>
+                                        <td>2 KB</td>
+                                        <td>User-defined metadata</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> S3 Consistency Model</h4>
+                            <ul>
+                                <li><strong>Strong Read-After-Write:</strong> Immediately see new/updated objects</li>
+                                <li><strong>Strong Consistency:</strong> List operations immediately reflect changes
+                                </li>
+                                <li>No extra cost, no performance impact</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- S3 STORAGE CLASSES -->
+            <section id="s3-classes" class="content-section">
+                <h2 class="section-title"><span class="section-icon">📊</span>S3 Storage Classes</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Storage Classes Comparison</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Storage Class</th>
+                                        <th>Durability</th>
+                                        <th>Availability</th>
+                                        <th>Min Storage</th>
+                                        <th>Retrieval Fee</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>S3 Standard</strong></td>
+                                        <td>99.999999999%</td>
+                                        <td>99.99%</td>
+                                        <td>None</td>
+                                        <td>None</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Intelligent-Tiering</strong></td>
+                                        <td>99.999999999%</td>
+                                        <td>99.9%</td>
+                                        <td>None</td>
+                                        <td>None</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Standard-IA</strong></td>
+                                        <td>99.999999999%</td>
+                                        <td>99.9%</td>
+                                        <td>30 days, 128KB</td>
+                                        <td>Per GB</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>One Zone-IA</strong></td>
+                                        <td>99.999999999%</td>
+                                        <td>99.5%</td>
+                                        <td>30 days, 128KB</td>
+                                        <td>Per GB</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Glacier Instant</strong></td>
+                                        <td>99.999999999%</td>
+                                        <td>99.9%</td>
+                                        <td>90 days, 128KB</td>
+                                        <td>Per GB</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Glacier Flexible</strong></td>
+                                        <td>99.999999999%</td>
+                                        <td>99.99%</td>
+                                        <td>90 days, 40KB</td>
+                                        <td>Per GB + Request</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Glacier Deep Archive</strong></td>
+                                        <td>99.999999999%</td>
+                                        <td>99.99%</td>
+                                        <td>180 days, 40KB</td>
+                                        <td>Per GB + Request</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Glacier Retrieval Options</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Glacier Flexible</th>
+                                        <th>Deep Archive</th>
+                                        <th>Cost</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Expedited</strong></td>
+                                        <td>1-5 minutes</td>
+                                        <td>N/A</td>
+                                        <td>$$$</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Standard</strong></td>
+                                        <td>3-5 hours</td>
+                                        <td>12 hours</td>
+                                        <td>$$</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Bulk</strong></td>
+                                        <td>5-12 hours</td>
+                                        <td>48 hours</td>
+                                        <td>$</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span
+                                    class="code-title">Intelligent-Tiering Tiers</span></div>
+                            <pre><code>Intelligent-Tiering Auto-Moves Objects:
+
+┌─────────────────────────────────────────────────────────────┐
+│  Frequent Access Tier ──(30 days no access)──→ Infrequent  │
+│         ↑                                          │        │
+│         └────────(accessed)────────────────────────┘        │
+│                                                             │
+│  Infrequent ──(90 days)──→ Archive Instant (opt-in)        │
+│  Archive Instant ──(180 days)──→ Archive (opt-in)          │
+│  Archive ──(730 days)──→ Deep Archive (opt-in)             │
+└─────────────────────────────────────────────────────────────┘
+
+Cost: Small monitoring fee per object (~$0.0025/1000 objects)</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Lifecycle Policies</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">JSON</span><span
+                                    class="code-title">Lifecycle Rule Example</span></div>
+                            <pre><code>{
+    "Rules": [
+        {
+            "ID": "Move to IA then Glacier",
+            "Status": "Enabled",
+            "Filter": {"Prefix": "logs/"},
+            "Transitions": [
+                {"Days": 30, "StorageClass": "STANDARD_IA"},
+                {"Days": 90, "StorageClass": "GLACIER"},
+                {"Days": 365, "StorageClass": "DEEP_ARCHIVE"}
+            ],
+            "Expiration": {"Days": 730},
+            "NoncurrentVersionTransitions": [
+                {"NoncurrentDays": 30, "StorageClass": "GLACIER"}
+            ],
+            "NoncurrentVersionExpiration": {"NoncurrentDays": 90}
+        }
+    ]
+}</code></pre>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>📦 Transition Actions</h4>
+                                <ul>
+                                    <li>Standard → Standard-IA (30 days min)</li>
+                                    <li>Standard-IA → One Zone-IA</li>
+                                    <li>Any → Glacier classes</li>
+                                    <li>Can't transition to Standard</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>🗑️ Expiration Actions</h4>
+                                <ul>
+                                    <li>Delete current versions</li>
+                                    <li>Delete previous versions</li>
+                                    <li>Delete incomplete multipart uploads</li>
+                                    <li>Delete expired delete markers</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- S3 ADVANCED FEATURES -->
+            <section id="s3-features" class="content-section">
+                <h2 class="section-title"><span class="section-icon">⚙️</span>S3 Advanced Features</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Versioning & Replication</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span
+                                    class="code-title">Versioning Behavior</span></div>
+                            <pre><code>PUT file.txt (v1) → Version ID: abc123
+PUT file.txt (v2) → Version ID: def456 (new version)
+DELETE file.txt  → Delete Marker added (object "hidden")
+                    Original versions still exist!
+
+GET file.txt      → Returns latest version or 404 if delete marker
+GET file.txt?versionId=abc123 → Returns specific version
+
+Permanently Delete:
+- DELETE file.txt?versionId=abc123 (removes that version)
+- Need MFA Delete to protect against accidental deletion</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Replication Types</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>CRR (Cross-Region)</th>
+                                        <th>SRR (Same-Region)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Use Case</strong></td>
+                                        <td>Compliance, lower latency, DR</td>
+                                        <td>Log aggregation, live replication</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Latency</strong></td>
+                                        <td>Within 15 minutes (RTC option)</td>
+                                        <td>Within 15 minutes</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Versioning</strong></td>
+                                        <td>Required on both buckets</td>
+                                        <td>Required on both buckets</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Delete Markers</strong></td>
+                                        <td>Optional</td>
+                                        <td>Optional</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Existing Objects</strong></td>
+                                        <td>S3 Batch Replication</td>
+                                        <td>S3 Batch Replication</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Replication Rules</h4>
+                            <ul>
+                                <li>No chaining replication (A→B→C not automatic)</li>
+                                <li>Deletions not replicated by default</li>
+                                <li>Delete markers can optionally replicate</li>
+                                <li>Version ID deletions never replicate</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>S3 Event Notifications</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Event
+                                    Destinations</span></div>
+                            <pre><code>S3 Events:
+- s3:ObjectCreated:* (Put, Post, Copy, CompleteMultipartUpload)
+- s3:ObjectRemoved:* (Delete, DeleteMarkerCreated)
+- s3:ObjectRestore:* (Post, Completed)
+- s3:Replication:* (OperationFailedReplication)
+
+Destinations:
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  SNS Topic  │     │  SQS Queue  │     │   Lambda    │
+└─────────────┘     └─────────────┘     └─────────────┘
+                           │
+                    EventBridge (all events, advanced filtering)</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> EventBridge Integration</h4>
+                            <ul>
+                                <li>Advanced filtering with JSON rules</li>
+                                <li>Multiple destinations (18+ AWS services)</li>
+                                <li>Archive and replay events</li>
+                                <li>Enables event-driven architectures</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>S3 Object Lock & Glacier Vault Lock</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Retention Modes</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Mode</th>
+                                        <th>Description</th>
+                                        <th>Override</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Governance</strong></td>
+                                        <td>Protects from most users</td>
+                                        <td>Users with special permission can</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Compliance</strong></td>
+                                        <td>No one can delete/modify</td>
+                                        <td>Not even root user until expiry</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Legal Hold</strong></td>
+                                        <td>Indefinite protection</td>
+                                        <td>Can be removed by authorized user</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> WORM Model</h4>
+                            <p><strong>Write Once Read Many:</strong> Object Lock enables WORM compliance for regulatory
+                                requirements (SEC, FINRA).</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- S3 SECURITY -->
+            <section id="s3-security" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔐</span>S3 Security</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Access Control</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Access
+                                    Evaluation</span></div>
+                            <pre><code>Request comes in:
+                    │
+    ┌───────────────┴───────────────┐
+    │   Block Public Access (BPA)   │ ← If enabled, public access denied
+    └───────────────┬───────────────┘
+                    │
+    ┌───────────────┴───────────────┐
+    │     Bucket Policy Check       │ ← Explicit Deny?
+    └───────────────┬───────────────┘
+                    │
+    ┌───────────────┴───────────────┐
+    │       IAM Policy Check        │ ← User has permission?
+    └───────────────┬───────────────┘
+                    │
+    ┌───────────────┴───────────────┐
+    │    ACL Check (if used)        │ ← Legacy, not recommended
+    └───────────────┬───────────────┘
+                    │
+            ACCESS GRANTED/DENIED
+
+Rule: Explicit Deny > Explicit Allow > Default Deny</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">JSON</span><span class="code-title">Common
+                                    Bucket Policies</span></div>
+                            <pre><code>// Force HTTPS
+{
+    "Effect": "Deny",
+    "Principal": "*",
+    "Action": "s3:*",
+    "Resource": "arn:aws:s3:::bucket/*",
+    "Condition": {"Bool": {"aws:SecureTransport": "false"}}
+}
+
+// Restrict to VPC Endpoint
+{
+    "Effect": "Deny",
+    "Principal": "*",
+    "Action": "s3:*",
+    "Resource": "arn:aws:s3:::bucket/*",
+    "Condition": {"StringNotEquals": {"aws:SourceVpce": "vpce-1234"}}
+}
+
+// Restrict to specific IP
+{
+    "Effect": "Allow",
+    "Principal": "*",
+    "Action": "s3:GetObject",
+    "Resource": "arn:aws:s3:::bucket/*",
+    "Condition": {"IpAddress": {"aws:SourceIp": "192.168.1.0/24"}}
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Encryption</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Key Management</th>
+                                        <th>Encryption</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>SSE-S3</strong></td>
+                                        <td>AWS managed (AES-256)</td>
+                                        <td>Server-side</td>
+                                        <td>Default, simple</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>SSE-KMS</strong></td>
+                                        <td>AWS KMS CMK</td>
+                                        <td>Server-side</td>
+                                        <td>Audit trail, key rotation, CMK policies</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>DSSE-KMS</strong></td>
+                                        <td>AWS KMS CMK (dual-layer)</td>
+                                        <td>Server-side</td>
+                                        <td>Compliance requiring 2 layers</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>SSE-C</strong></td>
+                                        <td>Customer-provided</td>
+                                        <td>Server-side</td>
+                                        <td>HTTPS required, full key control</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Client-Side</strong></td>
+                                        <td>Customer manages</td>
+                                        <td>Before upload</td>
+                                        <td>Maximum control</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> SSE-KMS Limitations</h4>
+                            <ul>
+                                <li>KMS API has quota limits (5,500 - 30,000 req/s)</li>
+                                <li>High-throughput buckets may hit KMS throttling</li>
+                                <li>Solution: Use S3 Bucket Keys (reduces KMS calls by 99%)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Pre-Signed URLs & Access Points</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Pre-Signed URL</span></div>
+                            <pre><code>// Generate pre-signed URL for download
+S3Presigner presigner = S3Presigner.create();
+
+GetObjectRequest getRequest = GetObjectRequest.builder()
+    .bucket("my-bucket")
+    .key("private/file.pdf")
+    .build();
+
+GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+    .signatureDuration(Duration.ofMinutes(15))
+    .getObjectRequest(getRequest)
+    .build();
+
+PresignedGetObjectRequest presignedRequest = 
+    presigner.presignGetObject(presignRequest);
+
+String url = presignedRequest.url().toString();
+// Share this URL - expires in 15 minutes</code></pre>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>🔗 Pre-Signed URLs</h4>
+                                <ul>
+                                    <li>Temporary access to private objects</li>
+                                    <li>Inherit permissions of creator</li>
+                                    <li>GET: 1 second - 7 days expiry</li>
+                                    <li>PUT: For uploads</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>🎯 Access Points</h4>
+                                <ul>
+                                    <li>Named network endpoints</li>
+                                    <li>Each has own DNS and policy</li>
+                                    <li>Simplify managing access at scale</li>
+                                    <li>VPC Access Points for internal access</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- S3 PERFORMANCE -->
+            <section id="s3-performance" class="content-section">
+                <h2 class="section-title"><span class="section-icon">⚡</span>S3 Performance</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Performance Optimization</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>S3 Request Limits</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Operation</th>
+                                        <th>Limit per Prefix</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>PUT/COPY/POST/DELETE</strong></td>
+                                        <td>3,500 requests/second</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>GET/HEAD</strong></td>
+                                        <td>5,500 requests/second</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span
+                                    class="code-title">Performance Strategies</span></div>
+                            <pre><code>1. Multi-Prefix Strategy:
+   bucket/folder1/file → 5,500 GET/s
+   bucket/folder2/file → 5,500 GET/s
+   Total: 11,000 GET/s (parallel)
+
+2. Multipart Upload:
+   ┌────────────────────────────────────┐
+   │  Large File (1 GB)                 │
+   │  ├─ Part 1 (100 MB) → Upload      │
+   │  ├─ Part 2 (100 MB) → Upload      │  ← Parallel uploads
+   │  ├─ ...                            │
+   │  └─ Part 10 → Upload              │
+   │  CompleteMultipartUpload          │
+   └────────────────────────────────────┘
+
+3. S3 Transfer Acceleration:
+   User → Nearest Edge Location → AWS Backbone → S3 Bucket
+
+4. Byte-Range Fetches (parallel downloads):
+   Large File → Parallel GET requests for byte ranges</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> S3 Select & Glacier Select</h4>
+                            <ul>
+                                <li>Filter data server-side using SQL</li>
+                                <li>Retrieve only needed data</li>
+                                <li>Up to 400% faster, 80% cheaper</li>
+                                <li>Supports CSV, JSON, Parquet</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- EBS VOLUMES -->
+            <section id="ebs" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💾</span>EBS Volumes</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>EBS Volume Types</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Max IOPS</th>
+                                        <th>Max Throughput</th>
+                                        <th>Size</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>gp3</strong></td>
+                                        <td>16,000</td>
+                                        <td>1,000 MB/s</td>
+                                        <td>1 GiB - 16 TiB</td>
+                                        <td>General purpose, baseline 3,000 IOPS</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>gp2</strong></td>
+                                        <td>16,000</td>
+                                        <td>250 MB/s</td>
+                                        <td>1 GiB - 16 TiB</td>
+                                        <td>Legacy, burst model (3 IOPS/GiB)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>io2</strong></td>
+                                        <td>64,000</td>
+                                        <td>1,000 MB/s</td>
+                                        <td>4 GiB - 16 TiB</td>
+                                        <td>Critical databases (500 IOPS/GiB)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>io2 Block Express</strong></td>
+                                        <td>256,000</td>
+                                        <td>4,000 MB/s</td>
+                                        <td>4 GiB - 64 TiB</td>
+                                        <td>Largest/most critical workloads</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>st1</strong></td>
+                                        <td>500</td>
+                                        <td>500 MB/s</td>
+                                        <td>125 GiB - 16 TiB</td>
+                                        <td>Big data, log processing</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>sc1</strong></td>
+                                        <td>250</td>
+                                        <td>250 MB/s</td>
+                                        <td>125 GiB - 16 TiB</td>
+                                        <td>Cold data, lowest cost</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Boot Volume</h4>
+                            <p>Only gp2, gp3, io1, io2 can be used as boot volumes. HDD types (st1, sc1) cannot.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- EBS ADVANCED -->
+            <section id="ebs-advanced" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔧</span>EBS Advanced</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Snapshots & Multi-Attach</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">EBS
+                                    Snapshots</span></div>
+                            <pre><code>Snapshot Behavior:
+┌─────────────────────────────────────────────────────────┐
+│  Full Volume: 100 GB                                    │
+│  Snapshot 1: Full copy (stored in S3, behind scenes)   │
+│  Snapshot 2: Only changed blocks (incremental)         │
+│  Snapshot 3: Only changed blocks (incremental)         │
+└─────────────────────────────────────────────────────────┘
+
+Features:
+- Copy snapshots across AZ or Region
+- Create AMI from snapshot
+- Snapshot Archive (75% cheaper, 24-72h restore)
+- Recycle Bin (protect from accidental delete, 1 day - 1 year)
+- Fast Snapshot Restore (FSR) - instant full performance</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Multi-Attach (io1/io2 only)</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Instances</strong></td>
+                                        <td>Up to 16 EC2 in same AZ</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Use Case</strong></td>
+                                        <td>Clustered apps (Teradata), higher availability</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Requirement</strong></td>
+                                        <td>Cluster-aware file system (not XFS, EXT4)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> EBS Encryption</h4>
+                            <ul>
+                                <li>Uses KMS keys (AES-256)</li>
+                                <li>Minimal latency impact</li>
+                                <li>Snapshots of encrypted volumes are encrypted</li>
+                                <li>To encrypt unencrypted volume: snapshot → copy with encryption → create volume</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- EFS -->
+            <section id="efs" class="content-section">
+                <h2 class="section-title"><span class="section-icon">📂</span>Amazon EFS</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>EFS Features</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Protocol</strong></td>
+                                        <td>NFSv4.1 (Linux only)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Scale</strong></td>
+                                        <td>Petabytes, auto-scaling</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Availability</strong></td>
+                                        <td>Multi-AZ (Regional) or Single AZ</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Concurrent Access</strong></td>
+                                        <td>1000s of EC2 instances</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>POSIX</strong></td>
+                                        <td>Standard file system semantics</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>EFS Performance & Storage Classes</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Mode</th>
+                                        <th>Throughput</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Elastic (default)</strong></td>
+                                        <td>Auto-scales up to 10 GB/s</td>
+                                        <td>Unpredictable workloads</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Provisioned</strong></td>
+                                        <td>Fixed throughput</td>
+                                        <td>Known requirements</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Bursting</strong></td>
+                                        <td>Scales with size</td>
+                                        <td>Legacy mode</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>📊 Storage Classes</h4>
+                                <ul>
+                                    <li><strong>Standard:</strong> Frequently accessed</li>
+                                    <li><strong>IA:</strong> Infrequent access (cost savings)</li>
+                                    <li><strong>One Zone:</strong> Single AZ (20% cheaper)</li>
+                                    <li><strong>One Zone-IA:</strong> Maximum savings</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>⚙️ Lifecycle Management</h4>
+                                <ul>
+                                    <li>Move files based on last access</li>
+                                    <li>7, 14, 30, 60, 90 days options</li>
+                                    <li>Up to 92% cost savings</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FSx -->
+            <section id="fsx" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🗄️</span>Amazon FSx</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>FSx Options</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>FSx Type</th>
+                                        <th>Protocol</th>
+                                        <th>Performance</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>FSx for Windows</strong></td>
+                                        <td>SMB, NTFS</td>
+                                        <td>2 GB/s, millions IOPS</td>
+                                        <td>Windows apps, AD integration, SQL Server</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>FSx for Lustre</strong></td>
+                                        <td>POSIX (Lustre)</td>
+                                        <td>100s GB/s, millions IOPS</td>
+                                        <td>HPC, ML, video processing</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>FSx for NetApp ONTAP</strong></td>
+                                        <td>NFS, SMB, iSCSI</td>
+                                        <td>GB/s level</td>
+                                        <td>Multi-protocol, compression, dedup</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>FSx for OpenZFS</strong></td>
+                                        <td>NFS</td>
+                                        <td>1 million IOPS</td>
+                                        <td>ZFS workloads migration</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> FSx for Lustre + S3</h4>
+                            <p>FSx for Lustre can be linked to S3 bucket. Data is lazy-loaded from S3 when accessed, and
+                                results can be written back to S3.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STORAGE GATEWAY -->
+            <section id="gateway" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🌉</span>Storage Gateway</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Gateway Types</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Interface</th>
+                                        <th>Use Case</th>
+                                        <th>Backend</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>S3 File Gateway</strong></td>
+                                        <td>NFS, SMB</td>
+                                        <td>File shares backed by S3</td>
+                                        <td>S3 Standard, IA, One Zone-IA</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>FSx File Gateway</strong></td>
+                                        <td>SMB</td>
+                                        <td>Windows file shares</td>
+                                        <td>FSx for Windows</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Volume Gateway</strong></td>
+                                        <td>iSCSI</td>
+                                        <td>Block storage (cached/stored)</td>
+                                        <td>S3 + EBS snapshots</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Tape Gateway</strong></td>
+                                        <td>iSCSI VTL</td>
+                                        <td>Backup with virtual tapes</td>
+                                        <td>S3, Glacier</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Hardware Appliance</h4>
+                            <ul>
+                                <li>On-premises appliance for sites without VM</li>
+                                <li>Works with all gateway types</li>
+                                <li>Can order from Amazon</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- COMPARISON -->
+            <section id="comparison" class="content-section">
+                <h2 class="section-title"><span class="section-icon">⚖️</span>Storage Comparison</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>When to Use What</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Storage</th>
+                                        <th>Type</th>
+                                        <th>Access</th>
+                                        <th>Best For</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>S3</strong></td>
+                                        <td>Object</td>
+                                        <td>HTTP/HTTPS API</td>
+                                        <td>Unlimited data, serverless, static hosting</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>EBS</strong></td>
+                                        <td>Block</td>
+                                        <td>Single EC2 (same AZ)</td>
+                                        <td>Boot volumes, databases, file systems</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>EFS</strong></td>
+                                        <td>File (NFS)</td>
+                                        <td>Multiple EC2 (multi-AZ)</td>
+                                        <td>Linux shared storage, CMS, web serving</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>FSx Windows</strong></td>
+                                        <td>File (SMB)</td>
+                                        <td>Multiple instances</td>
+                                        <td>Windows apps, SQL Server, AD</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>FSx Lustre</strong></td>
+                                        <td>File (Lustre)</td>
+                                        <td>HPC clusters</td>
+                                        <td>ML, HPC, video rendering</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Instance Store</strong></td>
+                                        <td>Block</td>
+                                        <td>Single EC2</td>
+                                        <td>Temporary storage, cache, buffers</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INTERVIEW QUESTIONS -->
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>S3 Storage Classes - khi nào dùng loại nào?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Standard:</strong> Data truy cập thường xuyên, milliseconds latency</li>
+                                <li><strong>Intelligent-Tiering:</strong> Access patterns không rõ, auto-optimize</li>
+                                <li><strong>Standard-IA:</strong> Data lưu >30 days, ít truy cập, cần quick retrieval
+                                </li>
+                                <li><strong>One Zone-IA:</strong> Data có thể recreate, secondary backups</li>
+                                <li><strong>Glacier Instant:</strong> Archive cần milliseconds access</li>
+                                <li><strong>Glacier Flexible:</strong> Archive 1-5 min đến 12 hrs retrieval</li>
+                                <li><strong>Deep Archive:</strong> Long-term (7-10 years), compliance, 12-48 hrs</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>S3 Replication - CRR vs SRR, requirements?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>CRR:</strong> Cross-Region - compliance, lower latency, disaster recovery</p>
+                            <p><strong>SRR:</strong> Same-Region - log aggregation, production/test sync</p>
+                            <p><strong>Requirements:</strong> Versioning enabled cả 2 buckets, IAM permissions, optional
+                                delete marker replication. Existing objects cần S3 Batch Replication.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>SSE-S3 vs SSE-KMS vs SSE-C?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>SSE-S3:</strong> AWS quản lý hoàn toàn, AES-256, default option, đơn giản
+                                    nhất</li>
+                                <li><strong>SSE-KMS:</strong> Dùng KMS CMK, audit trail qua CloudTrail, key rotation,
+                                    granular permissions. Lưu ý KMS throttling limits.</li>
+                                <li><strong>SSE-C:</strong> Customer cung cấp key mỗi request, HTTPS bắt buộc, AWS không
+                                    lưu key, full control</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>EBS gp3 vs io2? Khi nào dùng io2?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>gp3:</strong> General purpose, baseline 3,000 IOPS + 125 MB/s, can provision up
+                                to 16,000 IOPS, cost-effective cho hầu hết workloads.</p>
+                            <p><strong>io2:</strong> Cho critical databases cần guaranteed consistent IOPS (up to
+                                64,000), 99.999% durability, Multi-Attach capability. Chi phí cao hơn đáng kể.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>EBS vs EFS vs S3 - differences?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>EBS:</strong> Block storage, AZ-locked, single EC2 (io1/io2 multi-attach),
+                                    boot volumes, low latency</li>
+                                <li><strong>EFS:</strong> File storage (NFS), multi-AZ, 1000s EC2 concurrent, Linux
+                                    only, auto-scaling</li>
+                                <li><strong>S3:</strong> Object storage, unlimited, web accessible, serverless, event
+                                    notifications</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>S3 performance optimization?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Multi-prefix:</strong> 3,500 PUT/5,500 GET per prefix, parallelize với nhiều
+                                    prefixes</li>
+                                <li><strong>Multipart Upload:</strong> Parallel uploads cho files lớn, required >5GB
+                                </li>
+                                <li><strong>Transfer Acceleration:</strong> Dùng Edge locations cho global users</li>
+                                <li><strong>Byte-Range Fetches:</strong> Parallel downloads</li>
+                                <li><strong>S3 Select:</strong> Filter data server-side, giảm data transfer</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>FSx types - khi nào dùng gì?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>FSx Windows:</strong> Windows apps, SMB, Active Directory, SQL Server</li>
+                                <li><strong>FSx Lustre:</strong> HPC, ML training, video processing, link với S3</li>
+                                <li><strong>FSx NetApp ONTAP:</strong> Multi-protocol (NFS/SMB/iSCSI), deduplication
+                                </li>
+                                <li><strong>FSx OpenZFS:</strong> ZFS migrations, snapshots, clones</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>S3 Object Lock - Governance vs Compliance mode?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Governance:</strong> Protected from most users, nhưng users với special
+                                permissions có thể override/delete.</p>
+                            <p><strong>Compliance:</strong> Không ai có thể delete/modify, kể cả root user, cho đến khi
+                                retention period hết. Dùng cho regulatory requirements (SEC Rule 17a-4).</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="networking.html" class="nav-btn prev"><i
+                        class="fas fa-arrow-left"></i><span>Networking</span></a>
+                <a href="database.html" class="nav-btn next"><span>Database</span><i class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Boot Essentials - Spring Boot Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#spring" class="nav-back"><i class="fas fa-arrow-left"></i> Spring Boot</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon spring"><i class="fas fa-bolt"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">Spring Boot</span>
+            <h1>Spring Boot Essentials</h1>
+            <p class="topic-desc">Auto-configuration, Starters, Properties, Actuator</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#auto-config">Auto-Configuration</a></li>
+                <li><a href="#starters">Starters</a></li>
+                <li><a href="#properties">Properties & YAML</a></li>
+                <li><a href="#actuator">Actuator</a></li>
+                <li><a href="#devtools">DevTools</a></li>
+                <li><a href="#logging">Logging</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <section class="content-section">
+                <h2 id="auto-config" class="section-title"><span class="section-icon">⚡</span>Auto-Configuration</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>How Auto-Configuration Works</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <p>Spring Boot tự động cấu hình application dựa trên dependencies và properties.</p>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">@SpringBootApplication</span></div>
+                            <pre><code>@SpringBootApplication  // = @Configuration + @EnableAutoConfiguration + @ComponentScan
+public class Application {
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+}
+
+// @EnableAutoConfiguration triggers auto-config
+// Reads META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
+// (Spring Boot 3.x) or META-INF/spring.factories (Spring Boot 2.x)</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-cogs"></i> Auto-Configuration Flow</h4>
+                            <ul>
+                                <li><strong>1.</strong> Spring Boot scans for auto-configuration classes</li>
+                                <li><strong>2.</strong> Each class has @Conditional annotations</li>
+                                <li><strong>3.</strong> Conditions evaluated (class exists? property set?)</li>
+                                <li><strong>4.</strong> If conditions match, beans are created</li>
+                            </ul>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Conditional Annotations</span></div>
+                            <pre><code>// Built-in conditionals
+@ConditionalOnClass(DataSource.class)         // Class trên classpath
+@ConditionalOnMissingClass("...")             // Class KHÔNG có trên classpath
+@ConditionalOnBean(DataSource.class)          // Bean đã được định nghĩa
+@ConditionalOnMissingBean(DataSource.class)   // Bean CHƯA được định nghĩa
+@ConditionalOnProperty(name = "feature.enabled", havingValue = "true")
+@ConditionalOnWebApplication                   // Web application
+@ConditionalOnNotWebApplication
+
+// Example: DataSource auto-config
+@Configuration
+@ConditionalOnClass(DataSource.class)
+@ConditionalOnProperty(name = "spring.datasource.url")
+public class DataSourceAutoConfiguration {
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public DataSource dataSource() {
+        // Creates HikariDataSource if not already defined
+    }
+}
+
+// Exclude auto-config
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-lightbulb"></i> Debug Auto-Configuration</h4>
+                            <pre><code># application.properties
+debug=true
+
+# Hoặc command line
+java -jar app.jar --debug
+
+# Output shows: CONDITIONS EVALUATION REPORT
+# Positive matches: conditions met, beans created
+# Negative matches: conditions not met</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="starters" class="section-title"><span class="section-icon">📦</span>Starters</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Spring Boot Starters</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <p>Starters là curated dependency sets - một dependency mà bao gồm tất cả những gì cần.</p>
+
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Starter</th>
+                                        <th>Includes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>spring-boot-starter-web</code></td>
+                                        <td>Spring MVC, Tomcat, Jackson, Validation</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>spring-boot-starter-data-jpa</code></td>
+                                        <td>Spring Data JPA, Hibernate, HikariCP</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>spring-boot-starter-security</code></td>
+                                        <td>Spring Security</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>spring-boot-starter-test</code></td>
+                                        <td>JUnit, Mockito, AssertJ, JsonPath</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>spring-boot-starter-actuator</code></td>
+                                        <td>Monitoring endpoints</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>spring-boot-starter-validation</code></td>
+                                        <td>Hibernate Validator</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">XML</span><span class="code-title">pom.xml
+                                    Example</span></div>
+                            <pre><code>&lt;parent&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-parent&lt;/artifactId&gt;
+    &lt;version&gt;3.2.0&lt;/version&gt;
+&lt;/parent&gt;
+
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+        &lt;!-- No version - managed by parent --&gt;
+    &lt;/dependency&gt;
+    
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
+        &lt;scope&gt;test&lt;/scope&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="properties" class="section-title"><span class="section-icon">📋</span>Properties & YAML</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Configuration Properties</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Properties</span><span
+                                    class="code-title">application.properties</span></div>
+                            <pre><code># Server
+server.port=8080
+server.servlet.context-path=/api
+
+# Database
+spring.datasource.url=jdbc:mysql://localhost:3306/db
+spring.datasource.username=root
+spring.datasource.password=secret
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+# Logging
+logging.level.root=INFO
+logging.level.com.example=DEBUG
+logging.file.name=app.log</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">YAML</span><span
+                                    class="code-title">application.yml</span></div>
+                            <pre><code>server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/db
+    username: root
+    password: secret
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+# Profile-specific
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:h2:mem:testdb
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:mysql://prod-server:3306/db</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Property Sources Priority (high to low)</span></div>
+                            <pre><code>1. Command line arguments (--server.port=9090)
+2. SPRING_APPLICATION_JSON (inline JSON)
+3. ServletConfig/ServletContext parameters
+4. JNDI attributes
+5. System.getProperties()
+6. OS environment variables
+7. application-{profile}.properties (outside jar)
+8. application-{profile}.properties (inside jar)
+9. application.properties (outside jar)
+10. application.properties (inside jar)
+11. @PropertySource on @Configuration
+12. Default properties (SpringApplication.setDefaultProperties)</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="actuator" class="section-title"><span class="section-icon">📊</span>Actuator</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Production-Ready Features</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Key Endpoints</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Endpoint</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>/actuator/health</code></td>
+                                        <td>App health status + dependencies</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>/actuator/info</code></td>
+                                        <td>Application info</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>/actuator/metrics</code></td>
+                                        <td>JVM, HTTP, custom metrics</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>/actuator/env</code></td>
+                                        <td>Environment properties</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>/actuator/beans</code></td>
+                                        <td>All beans in context</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>/actuator/mappings</code></td>
+                                        <td>All @RequestMapping paths</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>/actuator/loggers</code></td>
+                                        <td>View/modify log levels</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>/actuator/threaddump</code></td>
+                                        <td>Thread dump</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>/actuator/prometheus</code></td>
+                                        <td>Prometheus format metrics</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Properties</span><span
+                                    class="code-title">Actuator Configuration</span></div>
+                            <pre><code># Expose endpoints
+management.endpoints.web.exposure.include=health,info,metrics,prometheus
+management.endpoints.web.exposure.include=*  # All endpoints (be careful!)
+
+# Health details
+management.endpoint.health.show-details=always
+management.endpoint.health.show-components=always
+
+# Custom path
+management.endpoints.web.base-path=/manage
+
+# Secure endpoints (Spring Security)
+management.endpoints.web.exposure.include=health,info
+# Other endpoints require authentication</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Custom
+                                    Health Indicator</span></div>
+                            <pre><code>@Component
+public class DatabaseHealthIndicator implements HealthIndicator {
+    
+    @Autowired
+    private DataSource dataSource;
+    
+    @Override
+    public Health health() {
+        try (Connection conn = dataSource.getConnection()) {
+            return Health.up()
+                .withDetail("database", "MySQL")
+                .withDetail("connection", "Valid")
+                .build();
+        } catch (SQLException e) {
+            return Health.down()
+                .withDetail("error", e.getMessage())
+                .build();
+        }
+    }
+}
+
+// Custom metrics
+@Component
+public class CustomMetrics {
+    private final Counter orderCounter;
+    
+    public CustomMetrics(MeterRegistry registry) {
+        this.orderCounter = registry.counter("orders.created");
+    }
+    
+    public void recordOrder() {
+        orderCounter.increment();
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="devtools" class="section-title"><span class="section-icon">🛠️</span>DevTools</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">XML</span><span class="code-title">Add
+                                    DevTools</span></div>
+                            <pre><code>&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-devtools&lt;/artifactId&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+    &lt;optional&gt;true&lt;/optional&gt;
+&lt;/dependency&gt;</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-magic"></i> DevTools Features</h4>
+                            <ul>
+                                <li><strong>Automatic Restart:</strong> Fast restart on file changes</li>
+                                <li><strong>LiveReload:</strong> Browser refresh on resource changes</li>
+                                <li><strong>Property Defaults:</strong> Disable caching for development</li>
+                                <li><strong>Remote Debug:</strong> Remote application updates</li>
+                            </ul>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> DevTools tự động disabled trong production
+                            </h4>
+                            <p>Khi chạy từ JAR hoặc với special classloader, DevTools tự động tắt.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="logging" class="section-title"><span class="section-icon">📝</span>Logging</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Properties</span><span
+                                    class="code-title">Logging Configuration</span></div>
+                            <pre><code># Log levels: TRACE, DEBUG, INFO, WARN, ERROR, OFF
+logging.level.root=INFO
+logging.level.org.springframework=WARN
+logging.level.com.example.myapp=DEBUG
+logging.level.org.hibernate.SQL=DEBUG
+
+# Log file
+logging.file.name=application.log
+logging.file.path=/var/log/myapp
+
+# Pattern
+logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n
+logging.pattern.file=%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n
+
+# Logback config file (for advanced config)
+logging.config=classpath:logback-spring.xml</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Using
+                                    Loggers</span></div>
+                            <pre><code>import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+@Service
+public class UserService {
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
+    
+    // Or with Lombok: @Slf4j
+    
+    public void createUser(User user) {
+        log.debug("Creating user: {}", user.getEmail());
+        log.info("User created successfully");
+        log.warn("User already exists: {}", user.getId());
+        log.error("Failed to create user", exception);
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>How does Spring Boot Auto-Configuration work?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Scans <code>AutoConfiguration.imports</code> files, evaluates @Conditional annotations,
+                                creates beans if conditions match. Example: if DataSource.class on classpath +
+                                spring.datasource.url set → creates DataSource bean.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>What is @SpringBootApplication?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Combines 3 annotations: <code>@Configuration</code> (Java config),
+                                <code>@EnableAutoConfiguration</code> (auto-config), <code>@ComponentScan</code> (scan
+                                current package and sub-packages).</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>What are Starters?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Curated dependency sets. One dependency brings all related libraries. Example:
+                                <code>spring-boot-starter-web</code> includes Spring MVC, Tomcat, Jackson without
+                                specifying each.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>How to externalize configuration?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Multiple options: application.properties/yml, environment variables, command line args,
+                                @ConfigurationProperties for type-safe binding. Priority: CLI args > env vars >
+                                application.properties.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>What is Actuator?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Production-ready features: health checks, metrics, env info, thread dumps. Endpoints like
+                                /health, /metrics, /prometheus. Essential for monitoring in production.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="core-concepts.html" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>Core
+                        Concepts</span></a>
+                <a href="web-mvc.html" class="nav-btn next"><span>Web MVC</span><i class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

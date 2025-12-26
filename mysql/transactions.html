@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transactions & ACID - MySQL Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#mysql" class="nav-back"><i class="fas fa-arrow-left"></i> MySQL</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon mysql"><i class="fas fa-exchange-alt"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">MySQL</span>
+            <h1>Transactions & ACID</h1>
+            <p class="topic-desc">ACID, Isolation Levels, Locking, Deadlocks</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#acid">ACID Properties</a></li>
+                <li><a href="#isolation">Isolation Levels</a></li>
+                <li><a href="#locking">Locking</a></li>
+                <li><a href="#deadlocks">Deadlocks</a></li>
+                <li><a href="#mvcc">MVCC</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <section class="content-section">
+                <h2 id="acid" class="section-title"><span class="section-icon">⚛️</span>ACID Properties</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Transaction Properties</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="key-points">
+                            <h4><i class="fas fa-check-circle"></i> ACID</h4>
+                            <ul>
+                                <li><strong>Atomicity:</strong> All or nothing - transaction commits completely or
+                                    rollbacks entirely</li>
+                                <li><strong>Consistency:</strong> Database goes from one valid state to another valid
+                                    state</li>
+                                <li><strong>Isolation:</strong> Concurrent transactions don't interfere with each other
+                                </li>
+                                <li><strong>Durability:</strong> Committed changes survive crashes</li>
+                            </ul>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span
+                                    class="code-title">Transaction Basics</span></div>
+                            <pre><code>-- Start transaction
+START TRANSACTION;
+-- or
+BEGIN;
+
+-- Perform operations
+UPDATE accounts SET balance = balance - 100 WHERE id = 1;
+UPDATE accounts SET balance = balance + 100 WHERE id = 2;
+
+-- Commit if all successful
+COMMIT;
+
+-- Or rollback on error
+ROLLBACK;
+
+-- Savepoints for partial rollback
+START TRANSACTION;
+UPDATE accounts SET balance = balance - 100 WHERE id = 1;
+SAVEPOINT sp1;
+UPDATE accounts SET balance = balance + 100 WHERE id = 2;
+-- If second update fails:
+ROLLBACK TO sp1;  -- Only rollback second update
+COMMIT;
+
+-- Auto-commit mode (default ON)
+SET autocommit = 0;  -- Disable auto-commit
+-- Now you must explicitly COMMIT</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="isolation" class="section-title"><span class="section-icon">🔐</span>Isolation Levels</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Concurrency Issues</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Read Phenomena</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Problem</th>
+                                        <th>Description</th>
+                                        <th>Example</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Dirty Read</strong></td>
+                                        <td>Read uncommitted data</td>
+                                        <td>T1 updates, T2 reads, T1 rollbacks → T2 has invalid data</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Non-Repeatable Read</strong></td>
+                                        <td>Same query returns different values</td>
+                                        <td>T1 reads, T2 updates & commits, T1 reads again → different value</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Phantom Read</strong></td>
+                                        <td>Same query returns different rows</td>
+                                        <td>T1 reads rows, T2 inserts & commits, T1 reads → new rows appear</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Isolation Levels</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Level</th>
+                                        <th>Dirty Read</th>
+                                        <th>Non-Repeatable</th>
+                                        <th>Phantom</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>READ UNCOMMITTED</code></td>
+                                        <td>✅ Possible</td>
+                                        <td>✅ Possible</td>
+                                        <td>✅ Possible</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>READ COMMITTED</code></td>
+                                        <td>❌ Prevented</td>
+                                        <td>✅ Possible</td>
+                                        <td>✅ Possible</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>REPEATABLE READ</code></td>
+                                        <td>❌ Prevented</td>
+                                        <td>❌ Prevented</td>
+                                        <td>✅ Possible*</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>SERIALIZABLE</code></td>
+                                        <td>❌ Prevented</td>
+                                        <td>❌ Prevented</td>
+                                        <td>❌ Prevented</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p style="font-size: 0.9em;">* InnoDB REPEATABLE READ prevents phantoms using gap locking
+                            </p>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Setting
+                                    Isolation Level</span></div>
+                            <pre><code>-- Check current level
+SELECT @@transaction_isolation;
+
+-- Set for session
+SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
+SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;  -- Default MySQL
+
+-- Set for next transaction only
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+START TRANSACTION;
+-- ...
+COMMIT;
+
+-- Global setting (requires SUPER privilege)
+SET GLOBAL TRANSACTION ISOLATION LEVEL READ COMMITTED;</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="locking" class="section-title"><span class="section-icon">🔒</span>Locking</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>InnoDB Locking</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Lock Types</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                        <th>Compatibility</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Shared (S)</strong></td>
+                                        <td>Read lock</td>
+                                        <td>Compatible with S, blocks X</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Exclusive (X)</strong></td>
+                                        <td>Write lock</td>
+                                        <td>Blocks both S and X</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Intention Shared (IS)</strong></td>
+                                        <td>Intent to get S lock on rows</td>
+                                        <td>Table-level indication</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Intention Exclusive (IX)</strong></td>
+                                        <td>Intent to get X lock on rows</td>
+                                        <td>Table-level indication</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Explicit
+                                    Locking</span></div>
+                            <pre><code>-- Shared lock (read lock)
+SELECT * FROM accounts WHERE id = 1 LOCK IN SHARE MODE;
+-- or (MySQL 8.0+)
+SELECT * FROM accounts WHERE id = 1 FOR SHARE;
+
+-- Exclusive lock (write lock)  
+SELECT * FROM accounts WHERE id = 1 FOR UPDATE;
+
+-- Skip locked rows (no waiting)
+SELECT * FROM tasks WHERE status = 'PENDING' 
+FOR UPDATE SKIP LOCKED LIMIT 1;
+
+-- Don't wait for lock (error immediately)
+SELECT * FROM accounts WHERE id = 1 FOR UPDATE NOWAIT;
+
+-- Lock specific tables (avoid for InnoDB, use row locks)
+LOCK TABLES users READ, orders WRITE;
+-- do something
+UNLOCK TABLES;</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Concept</span><span
+                                    class="code-title">InnoDB Row Lock Types</span></div>
+                            <pre><code>Record Lock:   Lock on index record
+               WHERE id = 5 → lock row with id=5
+
+Gap Lock:      Lock on gap between index records
+               Prevents inserts in gap
+               WHERE id BETWEEN 5 AND 10 → lock gap
+
+Next-Key Lock: Record Lock + Gap Lock
+               Default for REPEATABLE READ
+               Prevents phantoms
+
+Example:
+Index has: 1, 5, 10, 15
+Query: WHERE id = 10 FOR UPDATE
+
+Record lock on 10
+Gap lock on (5, 10) - prevents insert of 6,7,8,9
+= Next-key lock</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="deadlocks" class="section-title"><span class="section-icon">💀</span>Deadlocks</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Deadlock Detection & Prevention</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Scenario</span></div>
+                            <pre><code>Transaction 1:                    Transaction 2:
+--------------                    --------------
+BEGIN;                            BEGIN;
+UPDATE accounts SET...            UPDATE products SET...
+WHERE id = 1;                     WHERE id = 2;
+-- Holds lock on accounts.id=1   -- Holds lock on products.id=2
+
+UPDATE products SET...            UPDATE accounts SET...
+WHERE id = 2;                     WHERE id = 1;
+-- Waits for products.id=2       -- Waits for accounts.id=1
+
+💀 DEADLOCK! Both waiting for each other</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Deadlock
+                                    Handling</span></div>
+                            <pre><code>-- InnoDB automatically detects deadlocks
+-- Rolls back one transaction (victim), other continues
+
+-- Check deadlock info
+SHOW ENGINE INNODB STATUS;
+
+-- View recent deadlock
+SELECT * FROM performance_schema.events_errors_summary_by_thread_by_error
+WHERE error_name = 'ER_LOCK_DEADLOCK';
+
+-- Configure timeout
+SET innodb_lock_wait_timeout = 50;  -- seconds</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-check-circle"></i> Deadlock Prevention</h4>
+                            <ul>
+                                <li><strong>Consistent lock order:</strong> Always acquire locks in same order</li>
+                                <li><strong>Keep transactions short:</strong> Less time holding locks</li>
+                                <li><strong>Use appropriate isolation:</strong> Don't use higher than needed</li>
+                                <li><strong>Index properly:</strong> Reduce lock scope with precise queries</li>
+                                <li><strong>Retry on deadlock:</strong> Catch error and retry transaction</li>
+                            </ul>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Retry
+                                    Pattern</span></div>
+                            <pre><code>// Application-level retry for deadlocks
+int maxRetries = 3;
+for (int i = 0; i < maxRetries; i++) {
+    try {
+        executeTransaction();
+        break;  // Success
+    } catch (DeadlockException e) {
+        if (i == maxRetries - 1) throw e;
+        Thread.sleep(100 * (i + 1));  // Exponential backoff
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="mvcc" class="section-title"><span class="section-icon">📚</span>MVCC</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Multi-Version Concurrency Control</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Concept</span></div>
+                            <pre><code>MVCC - Instead of locking, keep multiple versions
+
+Each row has hidden columns:
+- DB_TRX_ID: Transaction that created/modified row
+- DB_ROLL_PTR: Pointer to undo log (previous version)
+
+Read Operation:
+- No locks! Read from snapshot
+- Transaction sees consistent view as of start time
+
+Write Operation:
+- Create new version
+- Old version in undo log
+- Only new version visible after commit
+
+Benefits:
+✅ Readers don't block writers
+✅ Writers don't block readers
+✅ Consistent reads without locking
+✅ High concurrency</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> MVCC in InnoDB</h4>
+                            <ul>
+                                <li>Default SELECT uses MVCC (consistent read)</li>
+                                <li>FOR UPDATE/LOCK IN SHARE MODE uses locking</li>
+                                <li>Undo logs purged after no longer needed</li>
+                                <li>Long transactions = large undo logs</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>What is ACID?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Atomicity:</strong> All or nothing. <strong>Consistency:</strong> Valid state to
+                                valid state. <strong>Isolation:</strong> Concurrent transactions isolated.
+                                <strong>Durability:</strong> Committed data persists.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>Difference between isolation levels?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>READ UNCOMMITTED:</strong> Dirty reads possible. <strong>READ COMMITTED:</strong>
+                                Only committed data. <strong>REPEATABLE READ:</strong> Same reads in transaction (MySQL
+                                default). <strong>SERIALIZABLE:</strong> Full isolation, slowest.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>What is a Deadlock and how to handle?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Two transactions waiting for each other's locks. InnoDB auto-detects and kills one.
+                                <strong>Prevent:</strong> Lock in consistent order, short transactions, proper indexing,
+                                retry logic in application.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>What is MVCC?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Multi-Version Concurrency Control. Keeps multiple row versions instead of locking.
+                                Readers see snapshot, writers create new versions. Enables high concurrency - readers
+                                don't block writers.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>SELECT FOR UPDATE vs LOCK IN SHARE MODE?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>FOR UPDATE:</strong> Exclusive lock (X), blocks all other locks. <strong>LOCK IN
+                                    SHARE MODE:</strong> Shared lock (S), allows other reads but blocks writes. Use FOR
+                                UPDATE when you plan to modify.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="indexing.html" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>Indexing</span></a>
+                <a href="optimization.html" class="nav-btn next"><span>Query Optimization</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

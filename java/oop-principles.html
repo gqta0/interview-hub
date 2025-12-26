@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OOP Principles & SOLID - Java Core Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#java" class="nav-back"><i class="fas fa-arrow-left"></i> Java Core</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon java"><i class="fas fa-cubes"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">Java Core</span>
+            <h1>OOP Principles & SOLID</h1>
+            <p class="topic-desc">Nền tảng lập trình hướng đối tượng và nguyên tắc thiết kế</p>
+        </div>
+        <div class="topic-stats">
+            <div class="stat"><span class="stat-value">4</span><span class="stat-label">OOP Pillars</span></div>
+            <div class="stat"><span class="stat-value">5</span><span class="stat-label">SOLID</span></div>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#encapsulation">Encapsulation</a></li>
+                <li><a href="#inheritance">Inheritance</a></li>
+                <li><a href="#polymorphism">Polymorphism</a></li>
+                <li><a href="#abstraction">Abstraction</a></li>
+                <li><a href="#solid-srp">S - Single Responsibility</a></li>
+                <li><a href="#solid-ocp">O - Open/Closed</a></li>
+                <li><a href="#solid-lsp">L - Liskov Substitution</a></li>
+                <li><a href="#solid-isp">I - Interface Segregation</a></li>
+                <li><a href="#solid-dip">D - Dependency Inversion</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <section class="content-section">
+                <h2 class="section-title"><span class="section-icon">🏛️</span>4 Trụ Cột của OOP</h2>
+
+                <div id="encapsulation" class="concept-card">
+                    <div class="concept-header">
+                        <h3>1. Encapsulation (Đóng gói)</h3>
+                        <span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <p><strong>Định nghĩa:</strong> Che giấu dữ liệu nội bộ và chỉ cho phép truy cập qua các phương
+                            thức public.</p>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Key Points</h4>
+                            <ul>
+                                <li>Access modifiers: <code>private</code>, <code>protected</code>, <code>public</code>,
+                                    <code>default</code></li>
+                                <li>Getter/setter kiểm soát truy cập</li>
+                                <li>Validation trước khi thay đổi dữ liệu</li>
+                            </ul>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Encapsulation Example</span></div>
+                            <pre><code>public class BankAccount {
+    private double balance;  // Hidden from outside
+    
+    public double getBalance() {
+        return balance;
+    }
+    
+    public void deposit(double amount) {
+        if (amount > 0) {
+            balance += amount;
+        }
+    }
+}</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Access Modifiers</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Modifier</th>
+                                        <th>Class</th>
+                                        <th>Package</th>
+                                        <th>Subclass</th>
+                                        <th>World</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>private</code></td>
+                                        <td>✅</td>
+                                        <td>❌</td>
+                                        <td>❌</td>
+                                        <td>❌</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>default</code></td>
+                                        <td>✅</td>
+                                        <td>✅</td>
+                                        <td>❌</td>
+                                        <td>❌</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>protected</code></td>
+                                        <td>✅</td>
+                                        <td>✅</td>
+                                        <td>✅</td>
+                                        <td>❌</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>public</code></td>
+                                        <td>✅</td>
+                                        <td>✅</td>
+                                        <td>✅</td>
+                                        <td>✅</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="inheritance" class="concept-card">
+                    <div class="concept-header">
+                        <h3>2. Inheritance (Kế thừa)</h3>
+                        <span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <p><strong>Định nghĩa:</strong> Class con thừa hưởng các thuộc tính và phương thức từ class cha
+                            (quan hệ IS-A).</p>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Key Points</h4>
+                            <ul>
+                                <li>Java chỉ hỗ trợ <strong>single inheritance</strong> cho class</li>
+                                <li>Sử dụng keyword <code>extends</code></li>
+                                <li>Constructor cha gọi qua <code>super()</code></li>
+                                <li><code>final</code> class không thể được kế thừa</li>
+                            </ul>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Inheritance Example</span></div>
+                            <pre><code>public class Animal {
+    protected String name;
+    public void eat() { System.out.println(name + " is eating"); }
+}
+
+public class Dog extends Animal {
+    public Dog(String name) { this.name = name; }
+    
+    @Override
+    public void eat() { System.out.println(name + " eating dog food"); }
+    
+    public void bark() { System.out.println("Woof!"); }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="polymorphism" class="concept-card">
+                    <div class="concept-header">
+                        <h3>3. Polymorphism (Đa hình)</h3>
+                        <span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <p><strong>Định nghĩa:</strong> Cùng một method có thể có hành vi khác nhau dựa trên đối tượng
+                            thực thi.</p>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>Compile-time (Overloading)</h4>
+                                <ul>
+                                    <li>Cùng tên, khác parameters</li>
+                                    <li>Static binding</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>Runtime (Overriding)</h4>
+                                <ul>
+                                    <li>Cùng signature, khác implementation</li>
+                                    <li>Dynamic binding</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Overloading vs Overriding</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Aspect</th>
+                                        <th>Overloading</th>
+                                        <th>Overriding</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Parameters</td>
+                                        <td>Must differ</td>
+                                        <td>Must be same</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Return Type</td>
+                                        <td>Can differ</td>
+                                        <td>Same/covariant</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Binding</td>
+                                        <td>Static</td>
+                                        <td>Dynamic</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Scope</td>
+                                        <td>Same class</td>
+                                        <td>Parent-child</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="abstraction" class="concept-card">
+                    <div class="concept-header">
+                        <h3>4. Abstraction (Trừu tượng)</h3>
+                        <span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <p><strong>Định nghĩa:</strong> Che giấu chi tiết implementation, chỉ hiển thị functionality cần
+                            thiết.</p>
+
+                        <div class="comparison-table">
+                            <h4>Abstract Class vs Interface</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Abstract Class</th>
+                                        <th>Interface</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Methods</td>
+                                        <td>Abstract + Concrete</td>
+                                        <td>Abstract + default/static</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Variables</td>
+                                        <td>Any type</td>
+                                        <td>public static final</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Constructor</td>
+                                        <td>Yes</td>
+                                        <td>No</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Inheritance</td>
+                                        <td>Single</td>
+                                        <td>Multiple</td>
+                                    </tr>
+                                    <tr>
+                                        <td>When to use</td>
+                                        <td>IS-A + shared code</td>
+                                        <td>CAN-DO contract</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 class="section-title"><span class="section-icon">🎯</span>SOLID Principles</h2>
+
+                <div id="solid-srp" class="concept-card">
+                    <div class="concept-header">
+                        <h3>S - Single Responsibility Principle</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <blockquote>"A class should have one, and only one, reason to change."</blockquote>
+                        <div class="code-comparison">
+                            <div class="code-block bad">
+                                <div class="code-header"><span class="code-lang">❌ Bad</span></div>
+                                <pre><code>class Employee {
+    void calculatePay() { }
+    void saveToDatabase() { }  // Violates SRP!
+    void generateReport() { }  // Violates SRP!
+}</code></pre>
+                            </div>
+                            <div class="code-block good">
+                                <div class="code-header"><span class="code-lang">✅ Good</span></div>
+                                <pre><code>class Employee { void calculatePay() { } }
+class EmployeeRepository { void save() { } }
+class EmployeeReportGenerator { void generate() { } }</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="solid-ocp" class="concept-card">
+                    <div class="concept-header">
+                        <h3>O - Open/Closed Principle</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <blockquote>"Open for extension, closed for modification."</blockquote>
+                        <div class="code-block good">
+                            <div class="code-header"><span class="code-lang">✅ Using Interface</span></div>
+                            <pre><code>interface PaymentMethod { void pay(double amount); }
+
+class CreditCard implements PaymentMethod { ... }
+class PayPal implements PaymentMethod { ... }
+class Crypto implements PaymentMethod { ... }  // Easy to add!
+
+class PaymentProcessor {
+    void process(PaymentMethod method, double amount) {
+        method.pay(amount);  // No modification needed
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="solid-lsp" class="concept-card">
+                    <div class="concept-header">
+                        <h3>L - Liskov Substitution Principle</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <blockquote>"Subclasses must be substitutable for their base classes."</blockquote>
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Classic Violation: Rectangle-Square</h4>
+                            <p>Square.setWidth() changes both width AND height - breaks Rectangle's expected behavior!
+                            </p>
+                        </div>
+                        <div class="key-points">
+                            <h4><i class="fas fa-check-circle"></i> LSP Rules</h4>
+                            <ul>
+                                <li>Preconditions cannot be strengthened in subclass</li>
+                                <li>Postconditions cannot be weakened</li>
+                                <li>Invariants must be preserved</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="solid-isp" class="concept-card">
+                    <div class="concept-header">
+                        <h3>I - Interface Segregation Principle</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <blockquote>"Clients should not depend on interfaces they don't use."</blockquote>
+                        <div class="code-block good">
+                            <div class="code-header"><span class="code-lang">✅ Split Interfaces</span></div>
+                            <pre><code>interface Workable { void work(); }
+interface Eatable { void eat(); }
+interface Sleepable { void sleep(); }
+
+class Human implements Workable, Eatable, Sleepable { ... }
+class Robot implements Workable { ... }  // No eat/sleep!</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="solid-dip" class="concept-card">
+                    <div class="concept-header">
+                        <h3>D - Dependency Inversion Principle</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <blockquote>"Depend on abstractions, not concretions."</blockquote>
+                        <div class="code-block good">
+                            <div class="code-header"><span class="code-lang">✅ Dependency Injection</span></div>
+                            <pre><code>interface Database { void save(String data); }
+
+class MySQLDatabase implements Database { ... }
+class MongoDB implements Database { ... }
+
+class UserService {
+    private final Database database;
+    
+    // Inject dependency via constructor
+    public UserService(Database database) {
+        this.database = database;
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>Abstraction vs Encapsulation?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Encapsulation:</strong> HOW to hide (access modifiers, getters/setters).
+                                <strong>Abstraction:</strong> WHAT to hide (interface, abstract class).</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>Why doesn't Java support multiple inheritance?</p>
+                        </div>
+                        <div class="answer">
+                            <p>To avoid <strong>Diamond Problem</strong>. If A extends B and C, and both have method
+                                foo(), which one to inherit? Java uses interfaces instead.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>Can static methods be overridden?</p>
+                        </div>
+                        <div class="answer">
+                            <p>No. They can only be <strong>hidden</strong>. Static methods use static binding
+                                (compile-time), not dynamic binding.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>When to use Abstract Class vs Interface?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Abstract Class:</strong> IS-A + shared code. <strong>Interface:</strong> CAN-DO
+                                capability, multiple inheritance of type.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="../index.html#java" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>Java
+                        Core</span></a>
+                <a href="collections.html" class="nav-btn next"><span>Collections Framework</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multithreading & Concurrency - Java Core Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#java" class="nav-back"><i class="fas fa-arrow-left"></i> Java Core</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon java"><i class="fas fa-sync-alt"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">Java Core</span>
+            <h1>Multithreading & Concurrency</h1>
+            <p class="topic-desc">Thread management, synchronization, và concurrent utilities</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#thread-basics">Thread Basics</a></li>
+                <li><a href="#thread-lifecycle">Thread Lifecycle</a></li>
+                <li><a href="#synchronization">Synchronization</a></li>
+                <li><a href="#volatile">Volatile & Atomic</a></li>
+                <li><a href="#locks">Locks (ReentrantLock)</a></li>
+                <li><a href="#executor">ExecutorService</a></li>
+                <li><a href="#completable">CompletableFuture</a></li>
+                <li><a href="#problems">Common Problems</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <section class="content-section">
+                <h2 id="thread-basics" class="section-title"><span class="section-icon">🧵</span>Thread Basics</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Creating Threads</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">3 Ways
+                                    to Create Thread</span></div>
+                            <pre><code>// 1. Extend Thread class
+class MyThread extends Thread {
+    @Override
+    public void run() {
+        System.out.println("Thread: " + Thread.currentThread().getName());
+    }
+}
+new MyThread().start();
+
+// 2. Implement Runnable (Preferred - allows extending another class)
+class MyRunnable implements Runnable {
+    @Override
+    public void run() {
+        System.out.println("Runnable running");
+    }
+}
+new Thread(new MyRunnable()).start();
+
+// 3. Lambda (Java 8+)
+new Thread(() -> System.out.println("Lambda thread")).start();
+
+// 4. Using Callable (returns value, can throw exception)
+Callable&lt;String&gt; callable = () -> {
+    return "Result";
+};
+ExecutorService executor = Executors.newSingleThreadExecutor();
+Future&lt;String&gt; future = executor.submit(callable);
+String result = future.get();  // Blocks until complete</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Runnable vs Callable</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Runnable</th>
+                                        <th>Callable</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Return value</td>
+                                        <td>void</td>
+                                        <td>V (generic)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Exception</td>
+                                        <td>Cannot throw checked</td>
+                                        <td>Can throw Exception</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Method</td>
+                                        <td>run()</td>
+                                        <td>call()</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Used with</td>
+                                        <td>Thread, Executor</td>
+                                        <td>ExecutorService only</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="thread-lifecycle" class="section-title"><span class="section-icon">🔄</span>Thread Lifecycle
+                </h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">States</span></div>
+                            <pre><code>    NEW ──start()──> RUNNABLE ──run complete──> TERMINATED
+                          │ ↑
+                          │ │
+             wait/sleep   ↓ │  notify/interrupt/time
+                     WAITING/TIMED_WAITING
+                          │ ↑
+                          │ │
+             synchronized ↓ │  lock acquired
+                       BLOCKED</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Thread States (Thread.State enum)</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>State</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>NEW</code></td>
+                                        <td>Thread created but not started</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>RUNNABLE</code></td>
+                                        <td>Running or ready to run</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>BLOCKED</code></td>
+                                        <td>Waiting for monitor lock</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>WAITING</code></td>
+                                        <td>wait(), join() without timeout</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>TIMED_WAITING</code></td>
+                                        <td>sleep(), wait(timeout), join(timeout)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>TERMINATED</code></td>
+                                        <td>Completed execution</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Common
+                                    Methods</span></div>
+                            <pre><code>// sleep() - pause current thread
+Thread.sleep(1000);  // RUNNABLE → TIMED_WAITING
+
+// join() - wait for thread to complete
+thread.join();       // Current thread waits for 'thread' to finish
+
+// wait/notify - communication between threads
+synchronized(lock) {
+    lock.wait();     // Release lock and wait
+    lock.notify();   // Wake up one waiting thread
+    lock.notifyAll(); // Wake up all waiting threads
+}
+
+// interrupt() - request thread to stop
+thread.interrupt();  // Sets interrupt flag
+// Inside thread:
+if (Thread.interrupted()) { // Clears flag
+    // Handle interrupt
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="synchronization" class="section-title"><span class="section-icon">🔐</span>Synchronization</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>synchronized Keyword</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Types
+                                    of Synchronization</span></div>
+                            <pre><code>public class Counter {
+    private int count = 0;
+    
+    // 1. Synchronized method - locks 'this' object
+    public synchronized void increment() {
+        count++;
+    }
+    
+    // 2. Synchronized block - locks specific object
+    public void incrementWithBlock() {
+        synchronized(this) {
+            count++;
+        }
+    }
+    
+    // 3. Static synchronized - locks Class object
+    private static int staticCount = 0;
+    public static synchronized void staticIncrement() {
+        staticCount++;
+    }
+    
+    // 4. Lock on specific object
+    private final Object lock = new Object();
+    public void incrementWithLock() {
+        synchronized(lock) {
+            count++;
+        }
+    }
+}</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Synchronization Issues</h4>
+                            <ul>
+                                <li><strong>Deadlock:</strong> Two threads waiting for each other's locks</li>
+                                <li><strong>Livelock:</strong> Threads keep responding to each other without progress
+                                </li>
+                                <li><strong>Starvation:</strong> Thread never gets CPU time</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="volatile" class="section-title"><span class="section-icon">⚡</span>Volatile & Atomic</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>volatile</h4>
+                                <ul>
+                                    <li>Visibility guarantee only</li>
+                                    <li>No atomicity for compound operations</li>
+                                    <li>Reads/writes directly from main memory</li>
+                                    <li>Example: <code>volatile boolean flag = true;</code></li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>Atomic Classes</h4>
+                                <ul>
+                                    <li>Visibility + Atomicity</li>
+                                    <li>Lock-free using CAS (Compare-And-Swap)</li>
+                                    <li>AtomicInteger, AtomicLong, AtomicReference</li>
+                                    <li>Example: <code>atomicInt.incrementAndGet();</code></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Volatile vs Atomic</span></div>
+                            <pre><code>// volatile - visibility only
+private volatile int count = 0;
+count++;  // NOT ATOMIC! (read, increment, write)
+
+// AtomicInteger - visibility + atomicity
+private AtomicInteger atomicCount = new AtomicInteger(0);
+atomicCount.incrementAndGet();  // ATOMIC (CAS operation)
+
+// Common Atomic operations
+atomicCount.get();
+atomicCount.set(10);
+atomicCount.compareAndSet(expected, newValue);
+atomicCount.getAndAdd(5);
+atomicCount.updateAndGet(x -> x * 2);</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-lightbulb"></i> When to use what?</h4>
+                            <ul>
+                                <li><strong>volatile:</strong> Simple flags (boolean stop flag)</li>
+                                <li><strong>Atomic:</strong> Counters, accumulators with compound operations</li>
+                                <li><strong>synchronized:</strong> Multiple variables need to be updated together</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="locks" class="section-title"><span class="section-icon">🔒</span>Locks</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>ReentrantLock</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>ReentrantLock vs synchronized</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>synchronized</th>
+                                        <th>ReentrantLock</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Try lock</td>
+                                        <td>❌</td>
+                                        <td>✅ tryLock()</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Timeout</td>
+                                        <td>❌</td>
+                                        <td>✅ tryLock(time, unit)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Interruptible</td>
+                                        <td>❌</td>
+                                        <td>✅ lockInterruptibly()</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Fairness</td>
+                                        <td>❌</td>
+                                        <td>✅ Fair mode available</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Multiple conditions</td>
+                                        <td>❌</td>
+                                        <td>✅ newCondition()</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Automatic release</td>
+                                        <td>✅</td>
+                                        <td>❌ Must unlock in finally</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">ReentrantLock Usage</span></div>
+                            <pre><code>private final ReentrantLock lock = new ReentrantLock();
+
+public void safeMethod() {
+    lock.lock();  // Acquire lock
+    try {
+        // Critical section
+    } finally {
+        lock.unlock();  // ALWAYS release in finally!
+    }
+}
+
+// Try lock with timeout
+if (lock.tryLock(1, TimeUnit.SECONDS)) {
+    try {
+        // Got the lock
+    } finally {
+        lock.unlock();
+    }
+} else {
+    // Couldn't get lock, do something else
+}
+
+// ReadWriteLock for read-heavy workloads
+ReadWriteLock rwLock = new ReentrantReadWriteLock();
+rwLock.readLock().lock();   // Multiple readers allowed
+rwLock.writeLock().lock();  // Exclusive write access</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="executor" class="section-title"><span class="section-icon">⚙️</span>ExecutorService</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Thread Pool Types</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Pool Type</th>
+                                        <th>Core/Max</th>
+                                        <th>Queue</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>newFixedThreadPool(n)</td>
+                                        <td>n / n</td>
+                                        <td>Unbounded</td>
+                                        <td>Known task count</td>
+                                    </tr>
+                                    <tr>
+                                        <td>newCachedThreadPool()</td>
+                                        <td>0 / MAX</td>
+                                        <td>SynchronousQueue</td>
+                                        <td>Short-lived tasks</td>
+                                    </tr>
+                                    <tr>
+                                        <td>newSingleThreadExecutor()</td>
+                                        <td>1 / 1</td>
+                                        <td>Unbounded</td>
+                                        <td>Sequential execution</td>
+                                    </tr>
+                                    <tr>
+                                        <td>newScheduledThreadPool(n)</td>
+                                        <td>n / MAX</td>
+                                        <td>DelayQueue</td>
+                                        <td>Scheduled/periodic</td>
+                                    </tr>
+                                    <tr>
+                                        <td>newWorkStealingPool()</td>
+                                        <td>N/A</td>
+                                        <td>N/A</td>
+                                        <td>Fork/Join, parallelism</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">ExecutorService Usage</span></div>
+                            <pre><code>// Create thread pool
+ExecutorService executor = Executors.newFixedThreadPool(4);
+
+// Submit tasks
+executor.execute(() -> System.out.println("Runnable"));
+Future&lt;String&gt; future = executor.submit(() -> "Callable result");
+
+// Get result (blocks)
+String result = future.get();
+String resultWithTimeout = future.get(5, TimeUnit.SECONDS);
+
+// Submit multiple tasks
+List&lt;Callable&lt;String&gt;&gt; tasks = Arrays.asList(
+    () -> "Task 1",
+    () -> "Task 2"
+);
+List&lt;Future&lt;String&gt;&gt; futures = executor.invokeAll(tasks);
+String firstResult = executor.invokeAny(tasks);  // First completed
+
+// ALWAYS shutdown!
+executor.shutdown();  // Graceful
+executor.shutdownNow();  // Immediate
+executor.awaitTermination(10, TimeUnit.SECONDS);</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> ThreadPoolExecutor Parameters</h4>
+                            <pre><code>new ThreadPoolExecutor(
+    corePoolSize,    // Minimum threads to keep
+    maximumPoolSize, // Maximum threads allowed
+    keepAliveTime,   // Idle time before killing excess threads
+    timeUnit,
+    workQueue,       // Queue for pending tasks
+    threadFactory,   // How to create threads
+    rejectionHandler // What to do when queue is full
+);</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="completable" class="section-title"><span class="section-icon">🚀</span>CompletableFuture</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Async Programming (Java 8+)</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">CompletableFuture Patterns</span></div>
+                            <pre><code>// Create async task
+CompletableFuture&lt;String&gt; future = CompletableFuture.supplyAsync(() -> {
+    return "Hello";
+});
+
+// Chain transformations
+future.thenApply(s -> s + " World")           // Transform result
+      .thenAccept(System.out::println)        // Consume result
+      .thenRun(() -> System.out.println("Done")); // Run after
+
+// Combine futures
+CompletableFuture&lt;String&gt; f1 = CompletableFuture.supplyAsync(() -> "Hello");
+CompletableFuture&lt;String&gt; f2 = CompletableFuture.supplyAsync(() -> "World");
+
+// Combine when both complete
+f1.thenCombine(f2, (s1, s2) -> s1 + " " + s2);
+
+// Run after both complete
+CompletableFuture.allOf(f1, f2).join();
+
+// Run after first completes
+CompletableFuture.anyOf(f1, f2);
+
+// Error handling
+future.exceptionally(ex -> "Default")
+      .handle((result, ex) -> {
+          if (ex != null) return "Error: " + ex.getMessage();
+          return result;
+      });</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="problems" class="section-title"><span class="section-icon">⚠️</span>Common Problems</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Deadlock</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Deadlock Example</span></div>
+                            <pre><code>// DEADLOCK: Thread 1 holds lock1, waits for lock2
+//           Thread 2 holds lock2, waits for lock1
+
+Object lock1 = new Object();
+Object lock2 = new Object();
+
+// Thread 1
+synchronized(lock1) {
+    synchronized(lock2) { /* work */ }
+}
+
+// Thread 2
+synchronized(lock2) {
+    synchronized(lock1) { /* work */ }  // DEADLOCK!
+}
+
+// SOLUTION: Always acquire locks in same order
+// Or use tryLock() with timeout</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-shield-alt"></i> How to Prevent Deadlock</h4>
+                            <ul>
+                                <li>Lock ordering - always acquire locks in same order</li>
+                                <li>Lock timeout - use tryLock() with timeout</li>
+                                <li>Deadlock detection - use JConsole, thread dumps</li>
+                                <li>Reduce lock scope - minimize critical sections</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>Difference between synchronized and ReentrantLock?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>ReentrantLock</strong> offers: tryLock(), timeout, interruptible locking, fair
+                                mode, multiple conditions. But requires manual unlock in finally block.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>What is volatile keyword?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Guarantees <strong>visibility</strong> - reads/writes go directly to main memory. Does
+                                NOT guarantee atomicity. Use for simple flags, not compound operations like counter++.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>Thread.sleep() vs Object.wait()?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>sleep():</strong> Pauses thread, keeps lock. <strong>wait():</strong> Releases
+                                lock and waits for notify(). wait() must be inside synchronized block.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>How to handle exceptions in ExecutorService?</p>
+                        </div>
+                        <div class="answer">
+                            <p>1) Wrap in try-catch inside task. 2) Use Future.get() which throws ExecutionException. 3)
+                                Override ThreadPoolExecutor.afterExecute(). 4) Set UncaughtExceptionHandler.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>What is ThreadLocal?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Provides thread-confined variables. Each thread has its own copy. Useful for: user
+                                sessions, DB connections, SimpleDateFormat (not thread-safe). Remember to call remove()
+                                to prevent memory leaks!</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="collections.html" class="nav-btn prev"><i
+                        class="fas fa-arrow-left"></i><span>Collections</span></a>
+                <a href="jvm-internals.html" class="nav-btn next"><span>JVM Internals</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

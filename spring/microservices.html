@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Microservices - Spring Boot Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#spring" class="nav-back"><i class="fas fa-arrow-left"></i> Spring Boot</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon spring"><i class="fas fa-cubes"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">Spring Boot</span>
+            <h1>Spring Microservices</h1>
+            <p class="topic-desc">Spring Cloud, Service Discovery, API Gateway, Circuit Breaker</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#concepts">Microservices Concepts</a></li>
+                <li><a href="#discovery">Service Discovery</a></li>
+                <li><a href="#gateway">API Gateway</a></li>
+                <li><a href="#circuit-breaker">Circuit Breaker</a></li>
+                <li><a href="#config">Config Server</a></li>
+                <li><a href="#communication">Service Communication</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <section class="content-section">
+                <h2 id="concepts" class="section-title"><span class="section-icon">🏗️</span>Microservices Concepts</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Microservices Architecture</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Architecture</span></div>
+                            <pre><code>┌─────────────────────────────────────────────────────────────┐
+│                        Clients                               │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    API Gateway                               │
+│              (Spring Cloud Gateway)                          │
+└─────────────────────────────────────────────────────────────┘
+                              │
+          ┌───────────────────┼───────────────────┐
+          ▼                   ▼                   ▼
+    ┌───────────┐       ┌───────────┐       ┌───────────┐
+    │  User     │       │  Order    │       │  Product  │
+    │  Service  │       │  Service  │       │  Service  │
+    └───────────┘       └───────────┘       └───────────┘
+          │                   │                   │
+          └─────────────────────────────────────────┘
+                              │
+                    ┌─────────┴─────────┐
+                    │  Service Registry │
+                    │    (Eureka)       │
+                    └───────────────────┘
+                              │
+                    ┌─────────┴─────────┐
+                    │   Config Server   │
+                    │ (Spring Cloud     │
+                    │      Config)      │
+                    └───────────────────┘</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Monolith vs Microservices</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Aspect</th>
+                                        <th>Monolith</th>
+                                        <th>Microservices</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Deployment</td>
+                                        <td>All-or-nothing</td>
+                                        <td>Independent per service</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Scaling</td>
+                                        <td>Scale entire app</td>
+                                        <td>Scale individual services</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Technology</td>
+                                        <td>Single stack</td>
+                                        <td>Polyglot possible</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Complexity</td>
+                                        <td>Simpler initially</td>
+                                        <td>Distributed complexity</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Team</td>
+                                        <td>Single team</td>
+                                        <td>Multiple autonomous teams</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="discovery" class="section-title"><span class="section-icon">🔍</span>Service Discovery</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Eureka Server & Client</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Eureka
+                                    Server</span></div>
+                            <pre><code>// Eureka Server
+@SpringBootApplication
+@EnableEurekaServer
+public class EurekaServerApplication { }
+
+// application.yml
+server:
+  port: 8761
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    registerWithEureka: false  # Server doesn't register itself
+    fetchRegistry: false
+    serviceUrl:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Eureka
+                                    Client (Microservice)</span></div>
+                            <pre><code>// User Service (Eureka Client)
+@SpringBootApplication
+@EnableDiscoveryClient  // Or @EnableEurekaClient
+public class UserServiceApplication { }
+
+// application.yml
+spring:
+  application:
+    name: user-service  # Used for service discovery
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    preferIpAddress: true
+
+// Calling other services
+@Service
+public class OrderService {
+    
+    @Autowired
+    private DiscoveryClient discoveryClient;
+    
+    public List&lt;ServiceInstance&gt; getUserServiceInstances() {
+        return discoveryClient.getInstances("user-service");
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="gateway" class="section-title"><span class="section-icon">🚪</span>API Gateway</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Spring Cloud Gateway</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">YAML</span><span class="code-title">Gateway
+                                    Configuration</span></div>
+                            <pre><code>spring:
+  cloud:
+    gateway:
+      routes:
+        # Route to user service
+        - id: user-service
+          uri: lb://user-service  # lb = load balanced via Eureka
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - StripPrefix=1       # Remove /api
+            - AddRequestHeader=X-Request-Source, gateway
+        
+        # Route to order service
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/api/orders/**
+            - Method=GET,POST
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: orderCircuitBreaker
+                fallbackUri: forward:/fallback/orders
+        
+        # Rate limiting
+        - id: limited-route
+          uri: lb://limited-service
+          predicates:
+            - Path=/api/limited/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Custom
+                                    Filter</span></div>
+                            <pre><code>@Component
+public class AuthenticationFilter implements GlobalFilter, Ordered {
+    
+    @Override
+    public Mono&lt;Void&gt; filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        String token = exchange.getRequest().getHeaders()
+            .getFirst("Authorization");
+        
+        if (token == null || !token.startsWith("Bearer ")) {
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
+        }
+        
+        // Validate token and forward
+        return chain.filter(exchange);
+    }
+    
+    @Override
+    public int getOrder() {
+        return -1;  // Run early
+    }
+}</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-check-circle"></i> Gateway Responsibilities</h4>
+                            <ul>
+                                <li><strong>Routing:</strong> Route requests to appropriate services</li>
+                                <li><strong>Load balancing:</strong> Distribute traffic across instances</li>
+                                <li><strong>Authentication:</strong> Validate tokens centrally</li>
+                                <li><strong>Rate limiting:</strong> Prevent abuse</li>
+                                <li><strong>Monitoring:</strong> Centralized logging and metrics</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="circuit-breaker" class="section-title"><span class="section-icon">⚡</span>Circuit Breaker</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Resilience4j</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">States</span></div>
+                            <pre><code>    CLOSED (normal)
+         │
+    failures > threshold
+         │
+         ▼
+    OPEN (fail fast)
+         │
+    wait timeout
+         │
+         ▼
+    HALF_OPEN (testing)
+         │
+    ┌────┴────┐
+success│      │failure
+    ▼         ▼
+  CLOSED    OPEN</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Resilience4j Usage</span></div>
+                            <pre><code>@Service
+public class OrderService {
+    
+    private final UserClient userClient;
+    
+    @CircuitBreaker(name = "userService", fallbackMethod = "getUserFallback")
+    @Retry(name = "userService")
+    @RateLimiter(name = "userService")
+    public User getUser(Long id) {
+        return userClient.getUser(id);
+    }
+    
+    // Fallback method - same signature + Exception
+    public User getUserFallback(Long id, Exception e) {
+        log.warn("Fallback for user {}: {}", id, e.getMessage());
+        return new User(id, "Unknown", "unknown@example.com");
+    }
+}
+
+// application.yml
+resilience4j:
+  circuitbreaker:
+    instances:
+      userService:
+        slidingWindowSize: 10           # Number of calls to evaluate
+        failureRateThreshold: 50        # % failures to open
+        waitDurationInOpenState: 10s    # Time before half-open
+        permittedNumberOfCallsInHalfOpenState: 3
+        
+  retry:
+    instances:
+      userService:
+        maxAttempts: 3
+        waitDuration: 500ms
+        
+  ratelimiter:
+    instances:
+      userService:
+        limitForPeriod: 10
+        limitRefreshPeriod: 1s</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="config" class="section-title"><span class="section-icon">⚙️</span>Config Server</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Centralized Configuration</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Config
+                                    Server</span></div>
+                            <pre><code>// Config Server
+@SpringBootApplication
+@EnableConfigServer
+public class ConfigServerApplication { }
+
+// application.yml
+server:
+  port: 8888
+
+spring:
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/example/config-repo
+          default-label: main
+          clone-on-start: true
+
+# Config repo structure:
+# config-repo/
+#   ├── application.yml           (shared by all)
+#   ├── user-service.yml          (user-service config)
+#   ├── user-service-dev.yml      (user-service dev profile)
+#   └── order-service.yml         (order-service config)</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">YAML</span><span class="code-title">Config
+                                    Client (Microservice)</span></div>
+                            <pre><code>spring:
+  application:
+    name: user-service
+  config:
+    import: optional:configserver:http://localhost:8888
+  profiles:
+    active: dev
+
+# Refresh config at runtime
+@RestController
+@RefreshScope  # Beans refreshed when config changes
+public class UserController {
+    
+    @Value("${user.greeting:Hello}")
+    private String greeting;  # Updated on /actuator/refresh
+}
+
+# Trigger refresh:
+# POST /actuator/refresh
+# Or use Spring Cloud Bus for broadcast</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="communication" class="section-title"><span class="section-icon">📡</span>Service Communication
+                </h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Communication Patterns</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Pattern</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Sync</td>
+                                        <td>REST (RestTemplate, WebClient)</td>
+                                        <td>Real-time responses</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Sync</td>
+                                        <td>OpenFeign (declarative client)</td>
+                                        <td>Clean service calls</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Async</td>
+                                        <td>Message Queue (Kafka, RabbitMQ)</td>
+                                        <td>Event-driven, decoupling</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">OpenFeign Client</span></div>
+                            <pre><code>// Enable Feign
+@SpringBootApplication
+@EnableFeignClients
+public class OrderServiceApplication { }
+
+// Declarative client
+@FeignClient(name = "user-service", fallback = UserClientFallback.class)
+public interface UserClient {
+    
+    @GetMapping("/users/{id}")
+    User getUser(@PathVariable Long id);
+    
+    @GetMapping("/users")
+    List&lt;User&gt; getUsers(@RequestParam List&lt;Long&gt; ids);
+}
+
+// Fallback implementation
+@Component
+public class UserClientFallback implements UserClient {
+    @Override
+    public User getUser(Long id) {
+        return new User(id, "Fallback User", "fallback@example.com");
+    }
+    
+    @Override
+    public List&lt;User&gt; getUsers(List&lt;Long&gt; ids) {
+        return List.of();
+    }
+}
+
+// Usage
+@Service
+public class OrderService {
+    
+    @Autowired
+    private UserClient userClient;
+    
+    public OrderDto getOrder(Long id) {
+        Order order = orderRepository.findById(id).orElseThrow();
+        User user = userClient.getUser(order.getUserId());  // Feign call
+        return new OrderDto(order, user);
+    }
+}</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">WebClient (Reactive)</span></div>
+                            <pre><code>@Service
+public class UserWebClient {
+    
+    private final WebClient webClient;
+    
+    public UserWebClient(WebClient.Builder builder) {
+        this.webClient = builder
+            .baseUrl("http://user-service")
+            .build();
+    }
+    
+    public Mono&lt;User&gt; getUser(Long id) {
+        return webClient.get()
+            .uri("/users/{id}", id)
+            .retrieve()
+            .bodyToMono(User.class)
+            .onErrorReturn(new User(id, "Fallback", "fallback@example.com"));
+    }
+    
+    public Flux&lt;User&gt; getUsers() {
+        return webClient.get()
+            .uri("/users")
+            .retrieve()
+            .bodyToFlux(User.class);
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>What is Service Discovery?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Mechanism for services to find each other dynamically. Services register with registry
+                                (Eureka). Clients query registry to get service locations. Enables dynamic scaling and
+                                load balancing.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>What is Circuit Breaker pattern?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Prevents cascade failures. States: <strong>CLOSED</strong> (normal),
+                                <strong>OPEN</strong> (fail fast), <strong>HALF-OPEN</strong> (testing). Opens when
+                                failure rate exceeds threshold, provides fallback response.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>Why use API Gateway?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Single entry point. Handles: routing, load balancing, authentication, rate limiting,
+                                monitoring. Clients don't need to know individual service locations.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>OpenFeign vs RestTemplate vs WebClient?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>RestTemplate:</strong> Legacy, synchronous. <strong>WebClient:</strong> Modern,
+                                reactive, non-blocking. <strong>OpenFeign:</strong> Declarative, interface-based
+                                (cleanest). Prefer Feign for simplicity, WebClient for reactive apps.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>How to handle distributed transactions?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Saga pattern:</strong> Sequence of local transactions with compensation on
+                                failure. <strong>Event sourcing:</strong> Store events, replay for consistency. Avoid
+                                2PC (Two-Phase Commit) in microservices - doesn't scale.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="testing.html" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>Testing</span></a>
+                <a href="../index.html#spring" class="nav-btn next"><span>Quay lại Spring Boot</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

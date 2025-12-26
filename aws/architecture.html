@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture Patterns - AWS Cloud Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .topic-icon.aws {
+            background: var(--aws-gradient);
+        }
+
+        .topic-category {
+            color: #FF9900;
+        }
+
+        .q-number {
+            background: var(--aws-gradient);
+        }
+
+        .question {
+            background: rgba(255, 153, 0, 0.1);
+        }
+
+        .page-navigation .nav-btn:hover {
+            background: rgba(255, 153, 0, 0.1);
+            border-color: #FF9900;
+            color: #FF9900;
+        }
+
+        .back-to-top {
+            background: var(--aws-gradient);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#aws" class="nav-back"><i class="fas fa-arrow-left"></i> AWS Cloud</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon aws"><i class="fas fa-sitemap"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">AWS Cloud</span>
+            <h1>Architecture Patterns</h1>
+            <p class="topic-desc">Well-Architected, HA/DR, Serverless, Cost Optimization - Kiến trúc AWS</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#well-architected">Well-Architected Framework</a></li>
+                <li><a href="#reliability">Reliability Pillar</a></li>
+                <li><a href="#ha-dr">HA & DR Strategies</a></li>
+                <li><a href="#performance">Performance Efficiency</a></li>
+                <li><a href="#security-pillar">Security Pillar</a></li>
+                <li><a href="#cost">Cost Optimization</a></li>
+                <li><a href="#serverless">Serverless Patterns</a></li>
+                <li><a href="#microservices">Microservices on AWS</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <!-- WELL-ARCHITECTED -->
+            <section id="well-architected" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🏛️</span>Well-Architected Framework</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>6 Pillars Overview</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Pillar</th>
+                                        <th>Focus</th>
+                                        <th>Key Concepts</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Operational Excellence</strong></td>
+                                        <td>Run & monitor systems</td>
+                                        <td>IaC, CI/CD, observability, runbooks</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Security</strong></td>
+                                        <td>Protect data & systems</td>
+                                        <td>IAM, encryption, defense in depth</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Reliability</strong></td>
+                                        <td>Recover from failure</td>
+                                        <td>HA, DR, fault tolerance</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Performance Efficiency</strong></td>
+                                        <td>Use resources efficiently</td>
+                                        <td>Right-sizing, caching, CDN</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Cost Optimization</strong></td>
+                                        <td>Avoid unnecessary costs</td>
+                                        <td>Reserved, Spot, rightsizing</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Sustainability</strong></td>
+                                        <td>Minimize environmental impact</td>
+                                        <td>Efficient resources, reduce waste</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> Well-Architected Tool</h4>
+                            <p>AWS service to review workloads against best practices. Generates improvement plans and
+                                tracks progress.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RELIABILITY -->
+            <section id="reliability" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔄</span>Reliability Pillar</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Design Principles</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span
+                                    class="code-title">Reliability Patterns</span></div>
+                            <pre><code>Reliability Design Principles:
+┌─────────────────────────────────────────────────────────────┐
+│  1. Automatically recover from failure                      │
+│     └── Health checks, Auto Scaling, Multi-AZ              │
+│                                                             │
+│  2. Test recovery procedures                                │
+│     └── Chaos engineering, game days                       │
+│                                                             │
+│  3. Scale horizontally                                      │
+│     └── Stateless apps, distribute load                    │
+│                                                             │
+│  4. Stop guessing capacity                                  │
+│     └── Auto Scaling, on-demand resources                  │
+│                                                             │
+│  5. Manage change through automation                        │
+│     └── IaC, CI/CD, immutable infrastructure               │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Fault Isolation</h4>
+                            <ul>
+                                <li><strong>Availability Zones:</strong> Physical separation, ~100km</li>
+                                <li><strong>Regions:</strong> Geographic separation</li>
+                                <li><strong>Cells/Shuffle Sharding:</strong> Logical isolation</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- HA & DR -->
+            <section id="ha-dr" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🛡️</span>HA & DR Strategies</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Disaster Recovery Options</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Strategy</th>
+                                        <th>RTO</th>
+                                        <th>RPO</th>
+                                        <th>Cost</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Backup & Restore</strong></td>
+                                        <td>Hours</td>
+                                        <td>Hours</td>
+                                        <td>$</td>
+                                        <td>Restore from backups in DR region</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Pilot Light</strong></td>
+                                        <td>10+ min</td>
+                                        <td>Minutes</td>
+                                        <td>$$</td>
+                                        <td>Core services running, scale on failover</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Warm Standby</strong></td>
+                                        <td>Minutes</td>
+                                        <td>Seconds</td>
+                                        <td>$$$</td>
+                                        <td>Scaled-down copy always running</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Multi-Site Active</strong></td>
+                                        <td>Real-time</td>
+                                        <td>Zero</td>
+                                        <td>$$$$</td>
+                                        <td>Full capacity in both regions</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">DR
+                                    Architecture</span></div>
+                            <pre><code>Multi-Region Active-Passive:
+┌─────────────────────────────────────────────────────────────┐
+│                        Route 53                             │
+│                    (Failover Routing)                       │
+│                    ┌───────┴───────┐                        │
+│                    ↓               ↓                        │
+│  ┌─────────────────────┐   ┌─────────────────────┐         │
+│  │   Primary: us-east-1│   │Secondary: us-west-2 │         │
+│  │                     │   │   (Standby)         │         │
+│  │  ┌───────────────┐  │   │  ┌───────────────┐  │         │
+│  │  │  ALB + ASG    │  │   │  │  ALB + ASG    │  │         │
+│  │  └───────────────┘  │   │  │  (min size)   │  │         │
+│  │         │           │   │  └───────────────┘  │         │
+│  │  ┌──────▼──────┐    │   │         │           │         │
+│  │  │ Aurora      │────┼───┼──┌──────▼──────┐    │         │
+│  │  │ Primary     │    │   │  │ Aurora      │    │         │
+│  │  └─────────────┘    │   │  │ Read Replica│    │         │
+│  └─────────────────────┘   │  └─────────────┘    │         │
+│                            └─────────────────────┘         │
+└─────────────────────────────────────────────────────────────┘
+
+Failover: 
+1. Route 53 health check fails
+2. DNS switches to secondary
+3. Aurora replica promoted to primary</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PERFORMANCE -->
+            <section id="performance" class="content-section">
+                <h2 class="section-title"><span class="section-icon">⚡</span>Performance Efficiency</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Performance Patterns</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>💾 Caching Layers</h4>
+                                <ul>
+                                    <li>CloudFront (edge)</li>
+                                    <li>ElastiCache (data)</li>
+                                    <li>API Gateway (API)</li>
+                                    <li>DAX (DynamoDB)</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>📊 Right-Sizing</h4>
+                                <ul>
+                                    <li>Compute Optimizer</li>
+                                    <li>Trusted Advisor</li>
+                                    <li>CloudWatch metrics</li>
+                                    <li>Cost Explorer</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span
+                                    class="code-title">Database Scaling</span></div>
+                            <pre><code>Database Scaling Strategies:
+┌─────────────────────────────────────────────────────────────┐
+│  Read Scaling                                               │
+│  ├── Read Replicas (RDS, Aurora)                           │
+│  ├── ElastiCache in front of DB                            │
+│  └── Aurora Auto Scaling for replicas                      │
+│                                                             │
+│  Write Scaling                                              │
+│  ├── Aurora Multi-Master (limited)                         │
+│  ├── DynamoDB (horizontal scaling)                         │
+│  └── Sharding (application-level)                          │
+│                                                             │
+│  Both                                                       │
+│  ├── Vertical scaling (bigger instance)                    │
+│  └── Switch to DynamoDB for infinite scale                 │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECURITY PILLAR -->
+            <section id="security-pillar" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔐</span>Security Pillar</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Defense in Depth</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span
+                                    class="code-title">Security Layers</span></div>
+                            <pre><code>Defense in Depth:
+┌─────────────────────────────────────────────────────────────┐
+│  Edge                                                       │
+│  ├── CloudFront + WAF + Shield                             │
+│  └── Route 53 DNS protection                               │
+├─────────────────────────────────────────────────────────────┤
+│  Network                                                    │
+│  ├── VPC (isolation)                                        │
+│  ├── Security Groups + NACLs                                │
+│  └── VPC Flow Logs                                          │
+├─────────────────────────────────────────────────────────────┤
+│  Compute                                                    │
+│  ├── IAM roles (no long-term credentials)                   │
+│  ├── Instance hardening                                     │
+│  └── Inspector (vulnerability scanning)                     │
+├─────────────────────────────────────────────────────────────┤
+│  Data                                                       │
+│  ├── Encryption at rest (KMS)                               │
+│  ├── Encryption in transit (TLS)                            │
+│  └── Macie (sensitive data discovery)                       │
+├─────────────────────────────────────────────────────────────┤
+│  Detection                                                  │
+│  ├── GuardDuty (threat detection)                           │
+│  ├── CloudTrail (API audit)                                 │
+│  └── Security Hub (central dashboard)                       │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- COST OPTIMIZATION -->
+            <section id="cost" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💰</span>Cost Optimization</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Cost Strategies</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Strategy</th>
+                                        <th>Savings</th>
+                                        <th>Effort</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Right-sizing</strong></td>
+                                        <td>10-70%</td>
+                                        <td>Low</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Reserved/Savings Plans</strong></td>
+                                        <td>30-72%</td>
+                                        <td>Low</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Spot Instances</strong></td>
+                                        <td>50-90%</td>
+                                        <td>Medium</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>S3 Lifecycle</strong></td>
+                                        <td>40-95%</td>
+                                        <td>Low</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Serverless</strong></td>
+                                        <td>Variable</td>
+                                        <td>High</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Cost Management Tools</h4>
+                            <ul>
+                                <li><strong>Cost Explorer:</strong> Analyze spending, forecast</li>
+                                <li><strong>Budgets:</strong> Alerts on spend/usage</li>
+                                <li><strong>Trusted Advisor:</strong> Optimization recommendations</li>
+                                <li><strong>Compute Optimizer:</strong> Right-sizing insights</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SERVERLESS -->
+            <section id="serverless" class="content-section">
+                <h2 class="section-title"><span class="section-icon">☁️</span>Serverless Patterns</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Common Architectures</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Web
+                                    Application</span></div>
+                            <pre><code>Serverless Web Application:
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│  CloudFront ──► S3 (static assets)                          │
+│       │                                                     │
+│       └──► API Gateway ──► Lambda ──► DynamoDB             │
+│                 │                                           │
+│                 └──► Cognito (auth)                         │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+
+Event Processing:
+┌─────────────────────────────────────────────────────────────┐
+│  S3 ──► EventBridge ──► Lambda ──► DynamoDB                │
+│                    │                                        │
+│                    └──► SQS (buffering) ──► Lambda         │
+│                              └──► DLQ (failures)           │
+└─────────────────────────────────────────────────────────────┘
+
+Data Pipeline:
+┌─────────────────────────────────────────────────────────────┐
+│  IoT/Apps ──► Kinesis Data Streams ──► Lambda ──► S3       │
+│                                    │                        │
+│                                    └──► Kinesis Firehose    │
+│                                          └──► Redshift      │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MICROSERVICES -->
+            <section id="microservices" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🧩</span>Microservices on AWS</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Service Patterns</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span
+                                    class="code-title">Microservices Architecture</span></div>
+                            <pre><code>Microservices on AWS:
+┌─────────────────────────────────────────────────────────────┐
+│                        API Gateway                          │
+│                            │                                │
+│  ┌─────────────────────────┼─────────────────────────┐     │
+│  │         Service Mesh (App Mesh / Istio)           │     │
+│  │                         │                          │     │
+│  │  ┌──────────┐  ┌────────┴──────┐  ┌──────────┐   │     │
+│  │  │ Service A│  │  Service B   │  │ Service C│   │     │
+│  │  │ (ECS)    │◄─┤  (Lambda)    │─►│ (EKS)    │   │     │
+│  │  └────┬─────┘  └───────┬──────┘  └────┬─────┘   │     │
+│  │       │                │               │         │     │
+│  │  ┌────▼─────┐   ┌──────▼──────┐  ┌────▼─────┐   │     │
+│  │  │ DynamoDB │   │   Aurora    │  │ ElastiC  │   │     │
+│  │  └──────────┘   └─────────────┘  └──────────┘   │     │
+│  └──────────────────────────────────────────────────┘     │
+│                                                             │
+│  Communication:                                             │
+│  ├── Sync: API calls, gRPC, App Mesh                       │
+│  └── Async: SQS, SNS, EventBridge                          │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>🔄 Patterns</h4>
+                                <ul>
+                                    <li>Database per service</li>
+                                    <li>Saga pattern (distributed tx)</li>
+                                    <li>Circuit breaker</li>
+                                    <li>CQRS / Event Sourcing</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>🔧 Services</h4>
+                                <ul>
+                                    <li>ECS / EKS / Lambda</li>
+                                    <li>App Mesh (service mesh)</li>
+                                    <li>Cloud Map (service discovery)</li>
+                                    <li>X-Ray (tracing)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INTERVIEW QUESTIONS -->
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>Well-Architected Framework 6 pillars?</p>
+                        </div>
+                        <div class="answer">
+                            <ol>
+                                <li>Operational Excellence (vận hành)</li>
+                                <li>Security (bảo mật)</li>
+                                <li>Reliability (độ tin cậy)</li>
+                                <li>Performance Efficiency (hiệu suất)</li>
+                                <li>Cost Optimization (tối ưu chi phí)</li>
+                                <li>Sustainability (bền vững)</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>DR strategies và RTO/RPO?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Backup & Restore:</strong> Hours/$</li>
+                                <li><strong>Pilot Light:</strong> 10+ min/$$</li>
+                                <li><strong>Warm Standby:</strong> Minutes/$$$</li>
+                                <li><strong>Multi-Site:</strong> Real-time/$$$$</li>
+                            </ul>
+                            <p><strong>RTO:</strong> Recovery Time Objective (downtime). <strong>RPO:</strong> Recovery
+                                Point Objective (data loss).</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>Thiết kế HA cho database?</p>
+                        </div>
+                        <div class="answer">
+                            <p>RDS/Aurora Multi-AZ cho HA trong region. Read Replicas cho read scaling. Aurora Global
+                                Database cho cross-region DR. ElastiCache để giảm load.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>Cost optimization strategies?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li>Right-sizing với Compute Optimizer</li>
+                                <li>Reserved Instances / Savings Plans</li>
+                                <li>Spot Instances cho fault-tolerant workloads</li>
+                                <li>S3 Lifecycle policies</li>
+                                <li>Delete unused resources</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>Serverless architecture components?</p>
+                        </div>
+                        <div class="answer">
+                            <p>API Gateway + Lambda + DynamoDB (backend). CloudFront + S3 (frontend). Cognito (auth).
+                                EventBridge/SQS (async). Step Functions (orchestration).</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>Defense in depth là gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Multiple security layers: Edge (WAF, Shield), Network (VPC, SG, NACL), Compute (IAM,
+                                hardening), Data (encryption), Detection (GuardDuty, CloudTrail). If one layer fails,
+                                others protect.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>Microservices communication patterns?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Sync:</strong> API Gateway, gRPC, App Mesh (service mesh)</li>
+                                <li><strong>Async:</strong> SQS (queue), SNS (pub/sub), EventBridge (events)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>Scaling strategies for web apps?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li>Horizontal: Auto Scaling Groups, multiple instances</li>
+                                <li>Caching: CloudFront, ElastiCache, API Gateway caching</li>
+                                <li>Database: Read replicas, connection pooling</li>
+                                <li>Async: Queue-based load leveling with SQS</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="monitoring.html" class="nav-btn prev"><i
+                        class="fas fa-arrow-left"></i><span>Monitoring</span></a>
+                <a href="../index.html#aws" class="nav-btn next"><span>AWS Cloud</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

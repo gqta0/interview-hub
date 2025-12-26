@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security & IAM - AWS Cloud Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .topic-icon.aws {
+            background: var(--aws-gradient);
+        }
+
+        .topic-category {
+            color: #FF9900;
+        }
+
+        .q-number {
+            background: var(--aws-gradient);
+        }
+
+        .question {
+            background: rgba(255, 153, 0, 0.1);
+        }
+
+        .page-navigation .nav-btn:hover {
+            background: rgba(255, 153, 0, 0.1);
+            border-color: #FF9900;
+            color: #FF9900;
+        }
+
+        .back-to-top {
+            background: var(--aws-gradient);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#aws" class="nav-back"><i class="fas fa-arrow-left"></i> AWS Cloud</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon aws"><i class="fas fa-shield-alt"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">AWS Cloud</span>
+            <h1>Security & IAM</h1>
+            <p class="topic-desc">IAM, KMS, Secrets Manager, WAF, Shield, GuardDuty - Bảo mật AWS toàn diện</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#iam-basics">IAM Fundamentals</a></li>
+                <li><a href="#iam-policies">IAM Policies</a></li>
+                <li><a href="#iam-advanced">IAM Advanced</a></li>
+                <li><a href="#organizations">AWS Organizations</a></li>
+                <li><a href="#kms">KMS & Encryption</a></li>
+                <li><a href="#secrets">Secrets Management</a></li>
+                <li><a href="#network-security">Network Security</a></li>
+                <li><a href="#threat">Threat Detection</a></li>
+                <li><a href="#compliance">Compliance & Audit</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <!-- IAM FUNDAMENTALS -->
+            <section id="iam-basics" class="content-section">
+                <h2 class="section-title"><span class="section-icon">👤</span>IAM Fundamentals</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>IAM Components</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">IAM
+                                    Structure</span></div>
+                            <pre><code>IAM Components:
+┌─────────────────────────────────────────────────────────────┐
+│  Users                                                      │
+│  ├── Long-term credentials (password, access keys)          │
+│  ├── One user per person/application                        │
+│  └── Can belong to multiple groups                          │
+├─────────────────────────────────────────────────────────────┤
+│  Groups                                                     │
+│  ├── Collection of users                                    │
+│  ├── Groups can only contain users (not other groups)       │
+│  └── Policies attached to groups affect all members         │
+├─────────────────────────────────────────────────────────────┤
+│  Roles                                                      │
+│  ├── Short-term credentials (STS tokens)                    │
+│  ├── For services (EC2, Lambda) to access AWS               │
+│  ├── Cross-account access                                   │
+│  └── Identity federation (SAML, OIDC)                       │
+├─────────────────────────────────────────────────────────────┤
+│  Policies                                                   │
+│  ├── JSON documents defining permissions                    │
+│  ├── Identity-based (attached to user/group/role)           │
+│  └── Resource-based (attached to resource)                  │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Best Practices</h4>
+                            <ul>
+                                <li>Never use root account for daily tasks</li>
+                                <li>Enable MFA for root and all users</li>
+                                <li>Use roles for applications (not access keys)</li>
+                                <li>Apply least privilege principle</li>
+                                <li>Use groups to assign permissions</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- IAM POLICIES -->
+            <section id="iam-policies" class="content-section">
+                <h2 class="section-title"><span class="section-icon">📋</span>IAM Policies</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Policy Structure & Evaluation</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">JSON</span><span class="code-title">Policy
+                                    Example</span></div>
+                            <pre><code>{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowS3ReadWrite",
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:PutObject"
+            ],
+            "Resource": "arn:aws:s3:::my-bucket/*",
+            "Condition": {
+                "IpAddress": {
+                    "aws:SourceIp": "192.168.1.0/24"
+                },
+                "Bool": {
+                    "aws:MultiFactorAuthPresent": "true"
+                }
+            }
+        },
+        {
+            "Sid": "DenyDelete",
+            "Effect": "Deny",
+            "Action": "s3:DeleteObject",
+            "Resource": "*"
+        }
+    ]
+}</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Policy
+                                    Evaluation Logic</span></div>
+                            <pre><code>Policy Evaluation Order:
+┌─────────────────────────────────────────────────────────────┐
+│  1. Explicit DENY     → If any policy denies → DENIED       │
+│  2. Organization SCP  → Must allow (if in org)              │
+│  3. Resource Policy   → Must allow (for cross-account)      │
+│  4. Identity Policy   → Must allow                          │
+│  5. Permission Boundary → Cannot exceed (if set)            │
+│  6. Session Policy    → Cannot exceed (if assumed role)     │
+│  7. Default           → If no explicit allow → DENIED       │
+└─────────────────────────────────────────────────────────────┘
+
+Effective Permissions = Intersection of all policies</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Policy Types</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Attached To</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>AWS Managed</strong></td>
+                                        <td>Users/Groups/Roles</td>
+                                        <td>Common use cases, AWS maintains</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Customer Managed</strong></td>
+                                        <td>Users/Groups/Roles</td>
+                                        <td>Custom requirements, you maintain</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Inline</strong></td>
+                                        <td>Single entity</td>
+                                        <td>Strict 1:1 relationship</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Resource-based</strong></td>
+                                        <td>Resources (S3, SQS)</td>
+                                        <td>Cross-account, resource-centric</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- IAM ADVANCED -->
+            <section id="iam-advanced" class="content-section">
+                <h2 class="section-title"><span class="section-icon">⚙️</span>IAM Advanced</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>AssumeRole & Federation</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span
+                                    class="code-title">Cross-Account Access</span></div>
+                            <pre><code>Cross-Account Role Assumption:
+┌─────────────────────────────────────────────────────────────┐
+│  Account A (111111111111)          Account B (222222222222) │
+│  ┌─────────────────────┐           ┌─────────────────────┐ │
+│  │  User/Role          │           │  S3 Bucket          │ │
+│  │  (needs access)     │           │  + Cross-Account    │ │
+│  │                     │           │    Role             │ │
+│  └──────────┬──────────┘           └──────────┬──────────┘ │
+│             │                                  │            │
+│             │ 1. AssumeRole                   │            │
+│             └──────────────────────────────────►            │
+│                                                │            │
+│             ◄──────────────────────────────────┘            │
+│               2. Temporary credentials (STS)                │
+│                                                             │
+│             3. Access S3 using temp credentials             │
+└─────────────────────────────────────────────────────────────┘
+
+Trust Policy (in Account B role):
+{
+    "Effect": "Allow",
+    "Principal": {"AWS": "arn:aws:iam::111111111111:root"},
+    "Action": "sts:AssumeRole",
+    "Condition": {"Bool": {"aws:MultiFactorAuthPresent": "true"}}
+}</code></pre>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>🔐 Permission Boundaries</h4>
+                                <ul>
+                                    <li>Maximum permissions a user/role can have</li>
+                                    <li>Used for delegation</li>
+                                    <li>Developer can create roles but limited</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>🎫 Identity Federation</h4>
+                                <ul>
+                                    <li>SAML 2.0 (corporate SSO)</li>
+                                    <li>OIDC (web/mobile apps)</li>
+                                    <li>AWS SSO / Identity Center</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AWS ORGANIZATIONS -->
+            <section id="organizations" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🏢</span>AWS Organizations</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Multi-Account Management</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span
+                                    class="code-title">Organization Structure</span></div>
+                            <pre><code>AWS Organization:
+┌─────────────────────────────────────────────────────────────┐
+│  Root (Organization)                                        │
+│  ├── Management Account (payer, SCP management)             │
+│  │                                                          │
+│  ├── OU: Production                                         │
+│  │   ├── Prod Account 1                                     │
+│  │   └── Prod Account 2                                     │
+│  │   └── SCP: DenyNonApprovedRegions                        │
+│  │                                                          │
+│  ├── OU: Development                                        │
+│  │   ├── Dev Account 1                                      │
+│  │   └── Dev Account 2                                      │
+│  │   └── SCP: DenyExpensiveInstances                        │
+│  │                                                          │
+│  └── OU: Security                                           │
+│      ├── Security Account (CloudTrail, Config)              │
+│      └── Log Archive Account                                │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>SCP vs IAM Policy</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>SCP</th>
+                                        <th>IAM Policy</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Scope</strong></td>
+                                        <td>Entire account/OU</td>
+                                        <td>User/Group/Role</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Grants Permissions</strong></td>
+                                        <td>No (only restricts)</td>
+                                        <td>Yes</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Affects Root</strong></td>
+                                        <td>Yes</td>
+                                        <td>No</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Purpose</strong></td>
+                                        <td>Guardrails</td>
+                                        <td>Permissions</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- KMS -->
+            <section id="kms" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔑</span>KMS & Encryption</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Key Management Service</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>KMS Key Types</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Management</th>
+                                        <th>Cost</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>AWS Owned</strong></td>
+                                        <td>AWS manages</td>
+                                        <td>Free</td>
+                                        <td>Default service encryption</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>AWS Managed</strong></td>
+                                        <td>AWS manages</td>
+                                        <td>Free</td>
+                                        <td>aws/service (auto-rotation)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Customer Managed (CMK)</strong></td>
+                                        <td>You manage</td>
+                                        <td>$1/month + API</td>
+                                        <td>Full control, audit, policies</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Imported</strong></td>
+                                        <td>BYOK</td>
+                                        <td>$1/month + API</td>
+                                        <td>Compliance requirements</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span
+                                    class="code-title">Envelope Encryption</span></div>
+                            <pre><code>Envelope Encryption (for data > 4KB):
+┌─────────────────────────────────────────────────────────────┐
+│  1. Generate Data Key                                       │
+│     └── KMS GenerateDataKey → Plaintext DEK + Encrypted DEK│
+│                                                             │
+│  2. Encrypt Data                                            │
+│     └── Use Plaintext DEK to encrypt your data locally     │
+│     └── Discard Plaintext DEK from memory                  │
+│                                                             │
+│  3. Store                                                   │
+│     └── Store Encrypted DEK + Encrypted Data together      │
+│                                                             │
+│  4. Decrypt                                                 │
+│     └── KMS Decrypt(Encrypted DEK) → Plaintext DEK         │
+│     └── Use Plaintext DEK to decrypt data                  │
+└─────────────────────────────────────────────────────────────┘
+
+Why: KMS Encrypt API limited to 4KB, DEK can encrypt any size</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Key Rotation</h4>
+                            <ul>
+                                <li>AWS Managed: Automatic (every year)</li>
+                                <li>Customer Managed: Enable auto-rotation (yearly) or manual</li>
+                                <li>Old key material kept for decryption</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECRETS MANAGEMENT -->
+            <section id="secrets" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔒</span>Secrets Management</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Secrets Manager vs Parameter Store</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Secrets Manager</th>
+                                        <th>Parameter Store</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Auto Rotation</strong></td>
+                                        <td>Built-in (Lambda)</td>
+                                        <td>No (manual)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Cost</strong></td>
+                                        <td>$0.40/secret/month</td>
+                                        <td>Free (Standard) / Paid (Advanced)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Size Limit</strong></td>
+                                        <td>64 KB</td>
+                                        <td>4 KB (Standard) / 8 KB (Advanced)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Cross-Account</strong></td>
+                                        <td>Yes (resource policy)</td>
+                                        <td>Limited</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>RDS Integration</strong></td>
+                                        <td>Native</td>
+                                        <td>Manual</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Use Case</strong></td>
+                                        <td>Database credentials, API keys</td>
+                                        <td>Configuration, feature flags</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> Secrets Manager Rotation</h4>
+                            <p>Automatic rotation for RDS, Redshift, DocumentDB credentials. Uses Lambda function to
+                                update secret and database password simultaneously.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- NETWORK SECURITY -->
+            <section id="network-security" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🛡️</span>Network Security</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>WAF, Shield & Firewall Manager</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Service</th>
+                                        <th>Protection</th>
+                                        <th>Layer</th>
+                                        <th>Cost</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>WAF</strong></td>
+                                        <td>SQL injection, XSS, IP blocking</td>
+                                        <td>Layer 7</td>
+                                        <td>Per rule + requests</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Shield Standard</strong></td>
+                                        <td>Common DDoS</td>
+                                        <td>Layer 3/4</td>
+                                        <td>Free</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Shield Advanced</strong></td>
+                                        <td>Sophisticated DDoS</td>
+                                        <td>Layer 3/4/7</td>
+                                        <td>$3,000/month</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Firewall Manager</strong></td>
+                                        <td>Centralized rule management</td>
+                                        <td>All</td>
+                                        <td>Per policy</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>🔥 WAF Rules</h4>
+                                <ul>
+                                    <li>AWS Managed Rules</li>
+                                    <li>Custom rules (rate limiting)</li>
+                                    <li>IP set rules</li>
+                                    <li>Geo-match rules</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>🛡️ Shield Advanced</h4>
+                                <ul>
+                                    <li>24/7 DDoS Response Team</li>
+                                    <li>Cost protection</li>
+                                    <li>Real-time metrics</li>
+                                    <li>WAF included</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- THREAT DETECTION -->
+            <section id="threat" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔍</span>Threat Detection</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Security Services</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Service</th>
+                                        <th>Purpose</th>
+                                        <th>Data Sources</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>GuardDuty</strong></td>
+                                        <td>Threat detection</td>
+                                        <td>CloudTrail, VPC Flow Logs, DNS</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Inspector</strong></td>
+                                        <td>Vulnerability assessment</td>
+                                        <td>EC2, ECR, Lambda</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Macie</strong></td>
+                                        <td>Sensitive data discovery</td>
+                                        <td>S3 buckets</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Security Hub</strong></td>
+                                        <td>Centralized security dashboard</td>
+                                        <td>All security services</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Detective</strong></td>
+                                        <td>Root cause analysis</td>
+                                        <td>Log data analysis</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> GuardDuty Findings</h4>
+                            <p>ML-based threat detection. Findings: cryptocurrency mining, compromised credentials,
+                                unauthorized access, data exfiltration. Integrates with EventBridge for automated
+                                response.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- COMPLIANCE -->
+            <section id="compliance" class="content-section">
+                <h2 class="section-title"><span class="section-icon">📊</span>Compliance & Audit</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>CloudTrail & Config</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Service</th>
+                                        <th>Purpose</th>
+                                        <th>Answers</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>CloudTrail</strong></td>
+                                        <td>API activity logging</td>
+                                        <td>Who did what when?</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Config</strong></td>
+                                        <td>Resource configuration tracking</td>
+                                        <td>What changed? Is it compliant?</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Artifact</strong></td>
+                                        <td>Compliance reports</td>
+                                        <td>AWS compliance docs</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> CloudTrail Best Practices</h4>
+                            <ul>
+                                <li>Enable in all regions</li>
+                                <li>Enable log file integrity validation</li>
+                                <li>Encrypt logs with KMS</li>
+                                <li>Store in separate security account</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INTERVIEW QUESTIONS -->
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>IAM Users vs Roles?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Users:</strong> Long-term credentials, for people, password/access keys</li>
+                                <li><strong>Roles:</strong> Temporary credentials (STS), for
+                                    services/cross-account/federation</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>SCP vs IAM Policy?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>SCP:</strong> Organization-level guardrails, doesn't grant permissions, restricts
+                                entire account including root.</p>
+                            <p><strong>IAM Policy:</strong> Grants permissions to user/group/role, doesn't affect root.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>Secrets Manager vs Parameter Store?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Secrets Manager:</strong> Auto-rotation, RDS integration, $0.40/secret/month
+                                </li>
+                                <li><strong>Parameter Store:</strong> Free tier, hierarchical, good for config values
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>KMS Envelope Encryption?</p>
+                        </div>
+                        <div class="answer">
+                            <p>KMS API only encrypts up to 4KB. For larger data: generate Data Key (DEK), encrypt data
+                                locally with DEK, store encrypted DEK + encrypted data. Decrypt by first decrypting DEK
+                                with KMS.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>WAF vs Shield?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>WAF:</strong> Layer 7, SQL injection, XSS, IP blocking, rate limiting</li>
+                                <li><strong>Shield:</strong> DDoS protection, Standard (free) for common attacks,
+                                    Advanced for sophisticated</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>GuardDuty làm gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p>ML-based threat detection service. Analyzes CloudTrail, VPC Flow Logs, DNS logs. Detects:
+                                cryptocurrency mining, compromised credentials, unauthorized access. Findings can
+                                trigger EventBridge → Lambda for automated response.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>Cross-account access flow?</p>
+                        </div>
+                        <div class="answer">
+                            <p>1. Create role in target account with trust policy allowing source account. 2. Source
+                                account user/role calls sts:AssumeRole. 3. STS returns temporary credentials. 4. Use
+                                temp creds to access target account resources.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>CloudTrail vs Config?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>CloudTrail:</strong> API audit log, who did what when</li>
+                                <li><strong>Config:</strong> Resource configuration tracking, compliance rules, what
+                                    changed</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="database.html" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>Database</span></a>
+                <a href="messaging.html" class="nav-btn next"><span>Messaging</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

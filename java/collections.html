@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collections Framework - Java Core Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#java" class="nav-back"><i class="fas fa-arrow-left"></i> Java Core</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon java"><i class="fas fa-layer-group"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">Java Core</span>
+            <h1>Collections Framework</h1>
+            <p class="topic-desc">List, Set, Map, Queue và các implementation phổ biến</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#hierarchy">Collection Hierarchy</a></li>
+                <li><a href="#list">List Interface</a></li>
+                <li><a href="#set">Set Interface</a></li>
+                <li><a href="#map">Map Interface</a></li>
+                <li><a href="#queue">Queue & Deque</a></li>
+                <li><a href="#concurrent">Concurrent Collections</a></li>
+                <li><a href="#comparison">Comparable vs Comparator</a></li>
+                <li><a href="#iterator">Iterator & Fail-Fast</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <section class="content-section">
+                <h2 id="hierarchy" class="section-title"><span class="section-icon">🗂️</span>Collection Hierarchy</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Hierarchy</span></div>
+                            <pre><code>                    Iterable
+                        │
+                   Collection
+          ┌─────────┼─────────┐
+         List      Set      Queue
+          │         │         │
+    ┌─────┼─────┐   │    ┌────┼────┐
+ArrayList  │  Vector │  PriorityQueue Deque
+      LinkedList    │              │
+               ┌────┼────┐    ArrayDeque
+            HashSet │  TreeSet
+                    │
+              LinkedHashSet
+
+           Map (separate hierarchy)
+            │
+    ┌───────┼───────┐
+ HashMap  TreeMap  LinkedHashMap
+    │
+ConcurrentHashMap</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="list" class="section-title"><span class="section-icon">📋</span>List Interface</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>ArrayList vs LinkedList vs Vector</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>ArrayList</th>
+                                        <th>LinkedList</th>
+                                        <th>Vector</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Structure</td>
+                                        <td>Dynamic Array</td>
+                                        <td>Doubly Linked List</td>
+                                        <td>Dynamic Array</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Get by index</td>
+                                        <td><strong>O(1)</strong></td>
+                                        <td>O(n)</td>
+                                        <td>O(1)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Add/Remove (end)</td>
+                                        <td>O(1)*</td>
+                                        <td><strong>O(1)</strong></td>
+                                        <td>O(1)*</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Add/Remove (middle)</td>
+                                        <td>O(n)</td>
+                                        <td><strong>O(1)</strong>**</td>
+                                        <td>O(n)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Memory</td>
+                                        <td>Less overhead</td>
+                                        <td>More (node pointers)</td>
+                                        <td>Less overhead</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Thread-safe</td>
+                                        <td>❌ No</td>
+                                        <td>❌ No</td>
+                                        <td>✅ Yes</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Growth</td>
+                                        <td>50%</td>
+                                        <td>N/A</td>
+                                        <td>100%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p>* Amortized O(1), ** O(1) if you have reference to node, O(n) to find position</p>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Usage
+                                    Examples</span></div>
+                            <pre><code>// ArrayList - best for random access, iteration
+List&lt;String&gt; arrayList = new ArrayList&lt;&gt;();
+arrayList.add("A");
+String element = arrayList.get(0);  // O(1)
+
+// LinkedList - best for frequent insertions/deletions
+List&lt;String&gt; linkedList = new LinkedList&lt;&gt;();
+linkedList.addFirst("A");  // O(1)
+linkedList.addLast("B");   // O(1)
+
+// Thread-safe alternatives (prefer over Vector)
+List&lt;String&gt; syncList = Collections.synchronizedList(new ArrayList&lt;&gt;());
+List&lt;String&gt; copyOnWrite = new CopyOnWriteArrayList&lt;&gt;();</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-lightbulb"></i> Khi nào dùng?</h4>
+                            <ul>
+                                <li><strong>ArrayList:</strong> 90% use cases - random access, iteration</li>
+                                <li><strong>LinkedList:</strong> Frequent add/remove at beginning, implement Queue/Deque
+                                </li>
+                                <li><strong>Vector:</strong> Legacy code only, prefer CopyOnWriteArrayList</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="set" class="section-title"><span class="section-icon">🔵</span>Set Interface</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>HashSet vs TreeSet vs LinkedHashSet</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>HashSet</th>
+                                        <th>TreeSet</th>
+                                        <th>LinkedHashSet</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Structure</td>
+                                        <td>HashMap</td>
+                                        <td>Red-Black Tree</td>
+                                        <td>LinkedHashMap</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Order</td>
+                                        <td>❌ No order</td>
+                                        <td>✅ Sorted</td>
+                                        <td>✅ Insertion order</td>
+                                    </tr>
+                                    <tr>
+                                        <td>add/remove/contains</td>
+                                        <td><strong>O(1)</strong></td>
+                                        <td>O(log n)</td>
+                                        <td>O(1)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Null values</td>
+                                        <td>✅ One null</td>
+                                        <td>❌ No (throws NPE)</td>
+                                        <td>✅ One null</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Thread-safe</td>
+                                        <td>❌</td>
+                                        <td>❌</td>
+                                        <td>❌</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">HashSet
+                                    Working</span></div>
+                            <pre><code>// HashSet uses HashMap internally
+Set&lt;String&gt; set = new HashSet&lt;&gt;();
+set.add("A");  // Stores as HashMap.put("A", PRESENT)
+
+// How HashSet works:
+// 1. Calculate hashCode() of element
+// 2. Find bucket using hash % capacity
+// 3. Check equals() if collision
+// 4. If equals() returns true, don't add (duplicate)
+
+// IMPORTANT: Override both hashCode() and equals()!
+public class Person {
+    private String id;
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Person)) return false;
+        return id.equals(((Person) o).id);
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);  // Must be consistent with equals
+    }
+}</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> hashCode() Contract</h4>
+                            <ul>
+                                <li>If <code>a.equals(b)</code> is true → <code>a.hashCode() == b.hashCode()</code></li>
+                                <li>If hashCode differs → objects are NOT equal</li>
+                                <li>Same hashCode doesn't mean equals (collision)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="map" class="section-title"><span class="section-icon">🗺️</span>Map Interface</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>HashMap Internal Working</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="key-points">
+                            <h4><i class="fas fa-cogs"></i> How HashMap Works</h4>
+                            <ul>
+                                <li><strong>Structure:</strong> Array of Node (bucket) + LinkedList/TreeMap</li>
+                                <li><strong>Default capacity:</strong> 16, Load factor: 0.75</li>
+                                <li><strong>Resize:</strong> When size > capacity * loadFactor, double capacity</li>
+                                <li><strong>Java 8+:</strong> LinkedList → TreeMap when bucket size > 8
+                                    (TREEIFY_THRESHOLD)</li>
+                            </ul>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">HashMap
+                                    put() Process</span></div>
+                            <pre><code>// Step by step: map.put(key, value)
+
+// 1. Calculate hash
+int hash = (key == null) ? 0 : key.hashCode() ^ (key.hashCode() >>> 16);
+
+// 2. Find bucket index
+int index = hash & (capacity - 1);  // Same as hash % capacity, but faster
+
+// 3. If bucket empty, add new Node
+// 4. If bucket has nodes:
+//    - Check if key exists (equals), if yes update value
+//    - If collision, add to LinkedList/TreeMap
+
+// Java 8: LinkedList -> TreeMap when bucket > 8 elements
+// This improves worst case from O(n) to O(log n)</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>HashMap vs TreeMap vs LinkedHashMap</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>HashMap</th>
+                                        <th>TreeMap</th>
+                                        <th>LinkedHashMap</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Order</td>
+                                        <td>No order</td>
+                                        <td>Key sorted</td>
+                                        <td>Insertion/Access order</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Time complexity</td>
+                                        <td>O(1)</td>
+                                        <td>O(log n)</td>
+                                        <td>O(1)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Null key</td>
+                                        <td>✅ One</td>
+                                        <td>❌ No</td>
+                                        <td>✅ One</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Use case</td>
+                                        <td>General purpose</td>
+                                        <td>Sorted data</td>
+                                        <td>LRU Cache</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="concurrent" class="section-title"><span class="section-icon">🔒</span>Concurrent Collections
+                </h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>ConcurrentHashMap</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>ConcurrentHashMap vs Hashtable vs SynchronizedMap</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>ConcurrentHashMap</th>
+                                        <th>Hashtable</th>
+                                        <th>SynchronizedMap</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Lock mechanism</td>
+                                        <td>Segment/Bucket level</td>
+                                        <td>Whole map</td>
+                                        <td>Whole map</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Null key/value</td>
+                                        <td>❌ Not allowed</td>
+                                        <td>❌ Not allowed</td>
+                                        <td>✅ Allowed</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Performance</td>
+                                        <td>Best</td>
+                                        <td>Poor</td>
+                                        <td>Poor</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Iterator</td>
+                                        <td>Fail-safe</td>
+                                        <td>Fail-fast</td>
+                                        <td>Fail-fast</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">ConcurrentHashMap Features</span></div>
+                            <pre><code>ConcurrentHashMap&lt;String, Integer&gt; map = new ConcurrentHashMap&lt;&gt;();
+
+// Atomic operations
+map.putIfAbsent("key", 1);
+map.computeIfAbsent("key", k -> expensiveOperation(k));
+map.computeIfPresent("key", (k, v) -> v + 1);
+map.merge("key", 1, Integer::sum);
+
+// Safe iteration - no ConcurrentModificationException
+for (Map.Entry&lt;String, Integer&gt; entry : map.entrySet()) {
+    // Safe to modify map during iteration
+    map.remove(entry.getKey());
+}</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> Other Concurrent Collections</h4>
+                            <ul>
+                                <li><strong>CopyOnWriteArrayList:</strong> Thread-safe ArrayList, copy on write</li>
+                                <li><strong>ConcurrentLinkedQueue:</strong> Non-blocking queue</li>
+                                <li><strong>BlockingQueue:</strong> LinkedBlockingQueue, ArrayBlockingQueue</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="comparison" class="section-title"><span class="section-icon">⚖️</span>Comparable vs Comparator
+                </h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Comparable</th>
+                                        <th>Comparator</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Package</td>
+                                        <td>java.lang</td>
+                                        <td>java.util</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Method</td>
+                                        <td>compareTo(T o)</td>
+                                        <td>compare(T o1, T o2)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Sorting logic</td>
+                                        <td>Inside class (natural)</td>
+                                        <td>Outside class (custom)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Flexibility</td>
+                                        <td>One way only</td>
+                                        <td>Multiple ways</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Modifies class</td>
+                                        <td>Yes</td>
+                                        <td>No</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Example</span></div>
+                            <pre><code>// Comparable - natural ordering (inside class)
+public class Person implements Comparable&lt;Person&gt; {
+    private String name;
+    private int age;
+    
+    @Override
+    public int compareTo(Person other) {
+        return this.name.compareTo(other.name);
+    }
+}
+
+// Comparator - custom ordering (outside class)
+Comparator&lt;Person&gt; byAge = (p1, p2) -> p1.age - p2.age;
+Comparator&lt;Person&gt; byName = Comparator.comparing(Person::getName);
+Comparator&lt;Person&gt; byAgeThenName = byAge.thenComparing(byName);
+
+// Usage
+Collections.sort(list);  // Uses Comparable
+Collections.sort(list, byAge);  // Uses Comparator
+list.sort(byAgeThenName);  // Java 8+</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="iterator" class="section-title"><span class="section-icon">🔄</span>Iterator &
+                    Fail-Fast/Fail-Safe</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Fail-Fast</th>
+                                        <th>Fail-Safe</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Behavior</td>
+                                        <td>Throws ConcurrentModificationException</td>
+                                        <td>No exception</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Works on</td>
+                                        <td>Original collection</td>
+                                        <td>Clone/Copy</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Memory</td>
+                                        <td>No extra</td>
+                                        <td>Extra for copy</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Examples</td>
+                                        <td>ArrayList, HashMap</td>
+                                        <td>ConcurrentHashMap, CopyOnWriteArrayList</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Safe
+                                    Removal During Iteration</span></div>
+                            <pre><code>List&lt;String&gt; list = new ArrayList&lt;&gt;(Arrays.asList("A", "B", "C"));
+
+// ❌ Wrong - ConcurrentModificationException
+for (String s : list) {
+    if (s.equals("B")) list.remove(s);
+}
+
+// ✅ Correct - Use Iterator.remove()
+Iterator&lt;String&gt; it = list.iterator();
+while (it.hasNext()) {
+    if (it.next().equals("B")) it.remove();
+}
+
+// ✅ Correct - Use removeIf() (Java 8+)
+list.removeIf(s -> s.equals("B"));</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>How does HashMap handle collisions?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Uses <strong>chaining</strong>. In Java 8+: LinkedList for ≤8 elements, TreeMap for >8
+                                elements (TREEIFY). This improves worst case from O(n) to O(log n).</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>Why is ConcurrentHashMap better than Hashtable?</p>
+                        </div>
+                        <div class="answer">
+                            <p>ConcurrentHashMap uses <strong>segment-level/bucket-level locking</strong> while
+                                Hashtable locks the entire map. CHM allows concurrent reads and limited concurrent
+                                writes.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>Difference between HashMap and TreeMap?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>HashMap:</strong> O(1) lookup, no order, allows null key.
+                                <strong>TreeMap:</strong> O(log n) lookup, sorted by keys, NO null key, implements
+                                NavigableMap.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>When would you use LinkedHashMap?</p>
+                        </div>
+                        <div class="answer">
+                            <p>When you need <strong>insertion order</strong> or <strong>access order</strong> (for LRU
+                                cache). It maintains a doubly-linked list of entries. Override
+                                <code>removeEldestEntry()</code> for LRU.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>What happens if two keys have same hashCode?</p>
+                        </div>
+                        <div class="answer">
+                            <p>They go to the <strong>same bucket</strong>. HashMap then uses <code>equals()</code> to
+                                determine if they're the same key. If not, both are stored (collision handling).</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="oop-principles.html" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>OOP
+                        Principles</span></a>
+                <a href="multithreading.html" class="nav-btn next"><span>Multithreading</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

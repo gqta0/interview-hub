@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Networking & CDN - AWS Cloud Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .topic-icon.aws {
+            background: var(--aws-gradient);
+        }
+
+        .topic-category {
+            color: #FF9900;
+        }
+
+        .q-number {
+            background: var(--aws-gradient);
+        }
+
+        .question {
+            background: rgba(255, 153, 0, 0.1);
+        }
+
+        .page-navigation .nav-btn:hover {
+            background: rgba(255, 153, 0, 0.1);
+            border-color: #FF9900;
+            color: #FF9900;
+        }
+
+        .back-to-top {
+            background: var(--aws-gradient);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#aws" class="nav-back"><i class="fas fa-arrow-left"></i> AWS Cloud</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon aws"><i class="fas fa-network-wired"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">AWS Cloud</span>
+            <h1>Networking & CDN</h1>
+            <p class="topic-desc">VPC, Route 53, CloudFront, ELB - Networking toàn diện trên AWS</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#vpc-basics">VPC Fundamentals</a></li>
+                <li><a href="#subnets">Subnets & Routing</a></li>
+                <li><a href="#security">Security Groups & NACLs</a></li>
+                <li><a href="#connectivity">VPC Connectivity</a></li>
+                <li><a href="#vpc-endpoints">VPC Endpoints</a></li>
+                <li><a href="#route53">Route 53</a></li>
+                <li><a href="#cloudfront">CloudFront</a></li>
+                <li><a href="#elb">Load Balancers</a></li>
+                <li><a href="#global">Global Accelerator</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <!-- VPC FUNDAMENTALS -->
+            <section id="vpc-basics" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🌐</span>VPC Fundamentals</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>VPC Core Concepts</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">VPC
+                                    Architecture</span></div>
+                            <pre><code>VPC (10.0.0.0/16) - Virtual Private Cloud
+│
+├── Availability Zone A
+│   ├── Public Subnet (10.0.1.0/24)
+│   │   ├── EC2 (web server)
+│   │   ├── NAT Gateway
+│   │   └── Route Table → IGW
+│   │
+│   └── Private Subnet (10.0.2.0/24)
+│       ├── EC2 (app server)
+│       ├── RDS (database)
+│       └── Route Table → NAT GW
+│
+├── Availability Zone B
+│   ├── Public Subnet (10.0.3.0/24)
+│   └── Private Subnet (10.0.4.0/24)
+│
+├── Internet Gateway (IGW) - VPC attachment
+├── NAT Gateway (per AZ) - Outbound for private
+└── VPC Flow Logs - Traffic monitoring</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>CIDR Ranges</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>CIDR</th>
+                                        <th>IPs</th>
+                                        <th>Usable IPs</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>/16</td>
+                                        <td>65,536</td>
+                                        <td>65,531</td>
+                                        <td>Largest VPC CIDR</td>
+                                    </tr>
+                                    <tr>
+                                        <td>/24</td>
+                                        <td>256</td>
+                                        <td>251</td>
+                                        <td>Common subnet size</td>
+                                    </tr>
+                                    <tr>
+                                        <td>/28</td>
+                                        <td>16</td>
+                                        <td>11</td>
+                                        <td>Smallest AWS subnet</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Reserved IPs (per subnet)</h4>
+                            <p>AWS reserves 5 IPs in each subnet: .0 (network), .1 (VPC router), .2 (DNS), .3 (future),
+                                .255 (broadcast)</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SUBNETS & ROUTING -->
+            <section id="subnets" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔀</span>Subnets & Routing</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Public vs Private Subnets</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Public Subnet</th>
+                                        <th>Private Subnet</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Route to Internet</strong></td>
+                                        <td>Via Internet Gateway</td>
+                                        <td>Via NAT Gateway/Instance</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Public IP</strong></td>
+                                        <td>Auto-assign enabled</td>
+                                        <td>No public IP</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Inbound from Internet</strong></td>
+                                        <td>Yes (via Security Group)</td>
+                                        <td>No direct access</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Use Cases</strong></td>
+                                        <td>Web servers, bastion</td>
+                                        <td>Databases, app tier</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">NAT
+                                    Gateway vs NAT Instance</span></div>
+                            <pre><code>NAT Gateway (Managed):
+├── Highly available within AZ
+├── Up to 100 Gbps bandwidth
+├── No Security Groups
+├── No maintenance required
+└── ~$0.045/hour + data processed
+
+NAT Instance (Self-managed):
+├── EC2 with special AMI
+├── Must disable source/dest check
+├── Security Groups apply
+├── Can be bastion host
+└── Instance cost (can use Spot)
+
+Best Practice: NAT Gateway per AZ for HA</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECURITY -->
+            <section id="security" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔒</span>Security Groups & NACLs</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Security Comparison</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Security Groups</th>
+                                        <th>NACLs</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Level</strong></td>
+                                        <td>Instance/ENI</td>
+                                        <td>Subnet</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>State</strong></td>
+                                        <td>Stateful</td>
+                                        <td>Stateless</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Rules</strong></td>
+                                        <td>Allow only</td>
+                                        <td>Allow & Deny</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Evaluation</strong></td>
+                                        <td>All rules</td>
+                                        <td>Order (lowest first)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Return Traffic</strong></td>
+                                        <td>Auto-allowed</td>
+                                        <td>Must explicitly allow</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Default</strong></td>
+                                        <td>Deny all inbound</td>
+                                        <td>Allow all</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span
+                                    class="code-title">Ephemeral Ports</span></div>
+                            <pre><code>Client Request Flow (Stateless NACL):
+
+Client (port 50000) → Server (port 443)
+Client (port 50000) ← Server (port 443)
+
+NACL must allow:
+- Inbound: Port 443 (HTTPS)
+- Outbound: Ephemeral ports 1024-65535
+
+Ephemeral Port Ranges:
+├── Linux: 32768-60999
+├── Windows: 49152-65535
+└── NAT Gateway: 1024-65535</code></pre>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>🛡️ Security Group Tips</h4>
+                                <ul>
+                                    <li>Reference other SGs (not IPs)</li>
+                                    <li>Chain SGs: ALB → App → DB</li>
+                                    <li>Default SG allows internal</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>📋 NACL Tips</h4>
+                                <ul>
+                                    <li>Rule order matters (100, 200...)</li>
+                                    <li>Subnet-level blocking</li>
+                                    <li>Defense in depth</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VPC CONNECTIVITY -->
+            <section id="connectivity" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔗</span>VPC Connectivity</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Connectivity Options</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Option</th>
+                                        <th>Use Case</th>
+                                        <th>Bandwidth</th>
+                                        <th>Cost</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>VPC Peering</strong></td>
+                                        <td>Connect 2 VPCs</td>
+                                        <td>No limit</td>
+                                        <td>Data transfer only</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Transit Gateway</strong></td>
+                                        <td>Hub for VPCs & on-prem</td>
+                                        <td>Up to 50 Gbps</td>
+                                        <td>Attachments + data</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Site-to-Site VPN</strong></td>
+                                        <td>On-prem to AWS</td>
+                                        <td>~1.25 Gbps</td>
+                                        <td>Per hour + data</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Direct Connect</strong></td>
+                                        <td>Dedicated on-prem</td>
+                                        <td>1-100 Gbps</td>
+                                        <td>Port + data out</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>PrivateLink</strong></td>
+                                        <td>Private service access</td>
+                                        <td>Interface-based</td>
+                                        <td>Per hour + data</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">VPC
+                                    Peering vs Transit Gateway</span></div>
+                            <pre><code>VPC Peering (Point-to-Point):
+VPC A ←→ VPC B
+VPC A ←→ VPC C
+VPC B ←→ VPC C
+Total: 3 connections for 3 VPCs
+Note: No transitive routing (A→B→C not allowed)
+
+Transit Gateway (Hub-and-Spoke):
+        ┌─────────────┐
+        │   Transit   │
+        │   Gateway   │
+        └──────┬──────┘
+         ┌─────┼─────┐
+         ↓     ↓     ↓
+       VPC A VPC B VPC C
+         ↓
+       On-prem (via VPN/DX)
+
+Total: 3 attachments, supports transitive routing</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Direct Connect</h4>
+                            <ul>
+                                <li><strong>Dedicated Connection:</strong> 1, 10, or 100 Gbps</li>
+                                <li><strong>Hosted Connection:</strong> 50 Mbps - 10 Gbps (via partner)</li>
+                                <li>Lead time: weeks to months</li>
+                                <li>VPN over DX for encryption</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VPC ENDPOINTS -->
+            <section id="vpc-endpoints" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔌</span>VPC Endpoints</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Gateway vs Interface Endpoints</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Gateway Endpoint</th>
+                                        <th>Interface Endpoint</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Services</strong></td>
+                                        <td>S3, DynamoDB only</td>
+                                        <td>70+ AWS services</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Cost</strong></td>
+                                        <td>Free</td>
+                                        <td>Per hour + data</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Implementation</strong></td>
+                                        <td>Route table entry</td>
+                                        <td>ENI in subnet</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Access from</strong></td>
+                                        <td>Same VPC only</td>
+                                        <td>VPC, on-prem, peered VPC</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>DNS</strong></td>
+                                        <td>Uses public DNS</td>
+                                        <td>Private DNS option</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> PrivateLink (Interface Endpoint)</h4>
+                            <p>Access AWS services or your own services privately without going through internet, NAT,
+                                or VPN. Expose your service to other VPCs via NLB + Endpoint Service.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ROUTE 53 -->
+            <section id="route53" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🌍</span>Route 53</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Routing Policies</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Policy</th>
+                                        <th>Description</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Simple</strong></td>
+                                        <td>Single resource</td>
+                                        <td>Basic routing</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Weighted</strong></td>
+                                        <td>% distribution</td>
+                                        <td>Blue/green, A/B testing</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Latency</strong></td>
+                                        <td>Lowest latency region</td>
+                                        <td>Global apps</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Failover</strong></td>
+                                        <td>Primary/secondary</td>
+                                        <td>DR (active-passive)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Geolocation</strong></td>
+                                        <td>User location</td>
+                                        <td>Content localization</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Geoproximity</strong></td>
+                                        <td>Resource location + bias</td>
+                                        <td>Traffic shifting</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Multi-value</strong></td>
+                                        <td>Multiple healthy records</td>
+                                        <td>Simple load balancing</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>IP-based</strong></td>
+                                        <td>Client IP CIDR</td>
+                                        <td>ISP-specific routing</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>❤️ Health Checks</h4>
+                                <ul>
+                                    <li>HTTP/HTTPS/TCP</li>
+                                    <li>Text search in response</li>
+                                    <li>Calculated checks</li>
+                                    <li>CloudWatch alarms</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>📝 Record Types</h4>
+                                <ul>
+                                    <li><strong>A:</strong> IPv4</li>
+                                    <li><strong>AAAA:</strong> IPv6</li>
+                                    <li><strong>CNAME:</strong> Hostname → Hostname</li>
+                                    <li><strong>Alias:</strong> AWS resource (free)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CLOUDFRONT -->
+            <section id="cloudfront" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🚀</span>CloudFront</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>CDN Features</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span
+                                    class="code-title">CloudFront Architecture</span></div>
+                            <pre><code>User Request Flow:
+                    ┌─────────────────────┐
+User → DNS → Route 53 → CloudFront Edge
+                    └──────────┬──────────┘
+                               │
+                    ┌──────────┴──────────┐
+                    │  Cache hit?         │
+                    │  Yes → Return cached │
+                    │  No → Origin fetch   │
+                    └──────────┬──────────┘
+                               │
+        ┌──────────────────────┼──────────────────────┐
+        ↓                      ↓                      ↓
+   S3 Bucket              ALB/EC2              Custom Origin
+   (static)             (dynamic)              (any HTTP)
+
+Origins can be:
+├── S3 bucket (with OAC for private)
+├── ALB, EC2, API Gateway
+├── Any HTTP server
+└── MediaStore, MediaPackage</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Cache Behaviors</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Setting</th>
+                                        <th>Options</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>TTL</strong></td>
+                                        <td>Min, Max, Default TTL (or Cache-Control header)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Cache Key</strong></td>
+                                        <td>URL, headers, cookies, query strings</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Viewer Protocol</strong></td>
+                                        <td>HTTP/HTTPS, HTTPS only, redirect</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Compression</strong></td>
+                                        <td>Gzip, Brotli</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Security Features</h4>
+                            <ul>
+                                <li><strong>OAC:</strong> Origin Access Control (S3 private access)</li>
+                                <li><strong>Signed URLs/Cookies:</strong> Private content</li>
+                                <li><strong>Geo Restriction:</strong> Allow/block countries</li>
+                                <li><strong>Field-Level Encryption:</strong> Encrypt sensitive data</li>
+                                <li><strong>WAF Integration:</strong> Web Application Firewall</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- LOAD BALANCERS -->
+            <section id="elb" class="content-section">
+                <h2 class="section-title"><span class="section-icon">⚖️</span>Elastic Load Balancing</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Load Balancer Types</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>ALB</th>
+                                        <th>NLB</th>
+                                        <th>GLB</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Layer</strong></td>
+                                        <td>7 (HTTP/HTTPS)</td>
+                                        <td>4 (TCP/UDP)</td>
+                                        <td>3 (IP packets)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Latency</strong></td>
+                                        <td>~400ms</td>
+                                        <td>~100μs</td>
+                                        <td>Variable</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Static IP</strong></td>
+                                        <td>No (use Global Acc)</td>
+                                        <td>Yes (Elastic IP)</td>
+                                        <td>No</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>SSL Termination</strong></td>
+                                        <td>Yes</td>
+                                        <td>Yes (TLS)</td>
+                                        <td>No</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Health Checks</strong></td>
+                                        <td>HTTP/HTTPS</td>
+                                        <td>TCP/HTTP/HTTPS</td>
+                                        <td>HTTP/HTTPS</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Use Case</strong></td>
+                                        <td>Web apps, microservices</td>
+                                        <td>Gaming, IoT, extreme perf</td>
+                                        <td>3rd party appliances</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">ALB
+                                    Routing</span></div>
+                            <pre><code>ALB Routing Rules (evaluated in order):
+┌─────────────────────────────────────────────────────────────┐
+│  Path-based:    /api/* → API Target Group                  │
+│                 /static/* → Static Target Group             │
+│                                                             │
+│  Host-based:    api.example.com → API Targets              │
+│                 www.example.com → Web Targets               │
+│                                                             │
+│  Header-based:  X-Custom: value → Special Targets          │
+│                                                             │
+│  Query String:  ?platform=mobile → Mobile Targets          │
+│                                                             │
+│  HTTP Method:   POST /orders → Write Targets               │
+│                                                             │
+│  Source IP:     10.0.0.0/8 → Internal Targets              │
+└─────────────────────────────────────────────────────────────┘
+
+Actions: Forward, Redirect, Fixed Response, Authenticate</code></pre>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>🎯 Target Types</h4>
+                                <ul>
+                                    <li>Instance ID</li>
+                                    <li>IP address (private)</li>
+                                    <li>Lambda function (ALB)</li>
+                                    <li>ALB (NLB target)</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>⚙️ Stickiness</h4>
+                                <ul>
+                                    <li>Duration-based (ALB cookie)</li>
+                                    <li>Application-based (custom)</li>
+                                    <li>Source IP (NLB)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GLOBAL ACCELERATOR -->
+            <section id="global" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🌐</span>Global Accelerator</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Global Accelerator vs CloudFront</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Global Accelerator</th>
+                                        <th>CloudFront</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Purpose</strong></td>
+                                        <td>Network layer acceleration</td>
+                                        <td>Content caching/CDN</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Caching</strong></td>
+                                        <td>No</td>
+                                        <td>Yes (edge caching)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Protocols</strong></td>
+                                        <td>TCP/UDP</td>
+                                        <td>HTTP/HTTPS</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Static IP</strong></td>
+                                        <td>2 Anycast IPs</td>
+                                        <td>No</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Use Case</strong></td>
+                                        <td>Non-HTTP, gaming, IoT</td>
+                                        <td>Web content, streaming</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> How It Works</h4>
+                            <p>Traffic enters AWS network at nearest Edge Location via Anycast IPs, then routes over AWS
+                                backbone to your endpoint. Improves latency by 60%+.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INTERVIEW QUESTIONS -->
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>Security Groups vs NACLs?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>SG:</strong> Instance level, stateful, allow only, all rules evaluated</li>
+                                <li><strong>NACL:</strong> Subnet level, stateless, allow/deny, ordered rules</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>VPC Peering vs Transit Gateway?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Peering:</strong> Point-to-point, no transitive, free, tốt cho ít VPCs.</p>
+                            <p><strong>TGW:</strong> Hub-and-spoke, transitive, có phí, tốt cho nhiều VPCs + on-prem.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>Gateway Endpoint vs Interface Endpoint?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Gateway:</strong> S3/DynamoDB only, free, route table entry</li>
+                                <li><strong>Interface:</strong> 70+ services, có phí, ENI trong subnet, private DNS</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>Route 53 routing policies?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Simple:</strong> Single resource</li>
+                                <li><strong>Weighted:</strong> % split traffic</li>
+                                <li><strong>Latency:</strong> Lowest latency region</li>
+                                <li><strong>Failover:</strong> Primary/secondary DR</li>
+                                <li><strong>Geolocation:</strong> User country/continent</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>ALB vs NLB?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>ALB:</strong> Layer 7, HTTP routing, path/host/header, ~400ms latency</li>
+                                <li><strong>NLB:</strong> Layer 4, TCP/UDP, static IP, ~100μs latency, extreme
+                                    performance</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>CloudFront OAC là gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Origin Access Control:</strong> Cho phép CloudFront access S3 bucket private.
+                                Bucket policy chỉ cho phép CloudFront distribution, users không thể access S3 trực tiếp.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>NAT Gateway vs NAT Instance?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>NAT GW:</strong> Managed, HA trong AZ, 100 Gbps, no SG, đắt hơn</li>
+                                <li><strong>NAT Instance:</strong> Self-managed, có SG, có thể dùng Spot, có thể làm
+                                    bastion</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>Global Accelerator vs CloudFront?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>GA:</strong> Network acceleration, TCP/UDP, static Anycast IPs, no caching
+                                </li>
+                                <li><strong>CF:</strong> Content caching/CDN, HTTP/HTTPS, dynamic DNS, edge caching</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="compute.html" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>Compute</span></a>
+                <a href="storage.html" class="nav-btn next"><span>Storage</span><i class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

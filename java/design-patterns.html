@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design Patterns - Java Core Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#java" class="nav-back"><i class="fas fa-arrow-left"></i> Java Core</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon java"><i class="fas fa-drafting-compass"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">Java Core</span>
+            <h1>Design Patterns</h1>
+            <p class="topic-desc">Creational, Structural, và Behavioral patterns phổ biến</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#creational">Creational Patterns</a></li>
+                <li><a href="#singleton">Singleton</a></li>
+                <li><a href="#factory">Factory & Abstract Factory</a></li>
+                <li><a href="#builder">Builder</a></li>
+                <li><a href="#structural">Structural Patterns</a></li>
+                <li><a href="#behavioral">Behavioral Patterns</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <section class="content-section">
+                <h2 id="creational" class="section-title"><span class="section-icon">🏭</span>Creational Patterns</h2>
+
+                <div id="singleton" class="concept-card">
+                    <div class="concept-header">
+                        <h3>Singleton Pattern</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <p>Đảm bảo một class chỉ có một instance duy nhất và cung cấp global access point.</p>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Thread-Safe Singleton Implementations</span></div>
+                            <pre><code>// 1. Eager Initialization - Simple, thread-safe
+public class EagerSingleton {
+    private static final EagerSingleton INSTANCE = new EagerSingleton();
+    private EagerSingleton() {}
+    public static EagerSingleton getInstance() { return INSTANCE; }
+}
+
+// 2. Bill Pugh (Initialization-on-demand holder) - RECOMMENDED
+public class BillPughSingleton {
+    private BillPughSingleton() {}
+    
+    private static class Holder {
+        private static final BillPughSingleton INSTANCE = new BillPughSingleton();
+    }
+    
+    public static BillPughSingleton getInstance() {
+        return Holder.INSTANCE;  // Lazy, thread-safe by JVM class loading
+    }
+}
+
+// 3. Enum Singleton - Simplest, serialization-safe
+public enum EnumSingleton {
+    INSTANCE;
+    
+    public void doSomething() { }
+}
+
+// 4. Double-Checked Locking (legacy)
+public class DCLSingleton {
+    private static volatile DCLSingleton instance;
+    private DCLSingleton() {}
+    
+    public static DCLSingleton getInstance() {
+        if (instance == null) {
+            synchronized (DCLSingleton.class) {
+                if (instance == null) {
+                    instance = new DCLSingleton();
+                }
+            }
+        }
+        return instance;
+    }
+}</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-star"></i> Best Approach: Enum Singleton</h4>
+                            <ul>
+                                <li>Thread-safe by JVM guarantee</li>
+                                <li>Serialization-safe (no extra work)</li>
+                                <li>Reflection-safe (cannot instantiate)</li>
+                                <li>Simple and concise</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="factory" class="concept-card">
+                    <div class="concept-header">
+                        <h3>Factory Method & Abstract Factory</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Factory
+                                    Method</span></div>
+                            <pre><code>// Product interface
+public interface Notification {
+    void send(String message);
+}
+
+// Concrete products
+public class EmailNotification implements Notification {
+    public void send(String message) { System.out.println("Email: " + message); }
+}
+public class SMSNotification implements Notification {
+    public void send(String message) { System.out.println("SMS: " + message); }
+}
+
+// Factory Method
+public class NotificationFactory {
+    public static Notification create(String type) {
+        return switch (type.toUpperCase()) {
+            case "EMAIL" -> new EmailNotification();
+            case "SMS" -> new SMSNotification();
+            default -> throw new IllegalArgumentException("Unknown type");
+        };
+    }
+}
+
+// Usage
+Notification email = NotificationFactory.create("EMAIL");
+email.send("Hello");</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Abstract Factory</span></div>
+                            <pre><code>// Abstract products
+public interface Button { void render(); }
+public interface Checkbox { void render(); }
+
+// Concrete products (Windows)
+public class WindowsButton implements Button { ... }
+public class WindowsCheckbox implements Checkbox { ... }
+
+// Concrete products (Mac)
+public class MacButton implements Button { ... }
+public class MacCheckbox implements Checkbox { ... }
+
+// Abstract Factory
+public interface GUIFactory {
+    Button createButton();
+    Checkbox createCheckbox();
+}
+
+// Concrete Factories
+public class WindowsFactory implements GUIFactory {
+    public Button createButton() { return new WindowsButton(); }
+    public Checkbox createCheckbox() { return new WindowsCheckbox(); }
+}
+
+public class MacFactory implements GUIFactory {
+    public Button createButton() { return new MacButton(); }
+    public Checkbox createCheckbox() { return new MacCheckbox(); }
+}
+
+// Client code works with any factory
+public class Application {
+    private GUIFactory factory;
+    
+    public Application(GUIFactory factory) {
+        this.factory = factory;
+    }
+    
+    public void createUI() {
+        Button button = factory.createButton();
+        Checkbox checkbox = factory.createCheckbox();
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="builder" class="concept-card">
+                    <div class="concept-header">
+                        <h3>Builder Pattern</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <p>Xây dựng object phức tạp step-by-step. Tách quá trình construction khỏi representation.</p>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Builder
+                                    Pattern</span></div>
+                            <pre><code>public class User {
+    private final String firstName;    // Required
+    private final String lastName;     // Required
+    private final int age;             // Optional
+    private final String email;        // Optional
+    private final String phone;        // Optional
+
+    private User(Builder builder) {
+        this.firstName = builder.firstName;
+        this.lastName = builder.lastName;
+        this.age = builder.age;
+        this.email = builder.email;
+        this.phone = builder.phone;
+    }
+
+    public static class Builder {
+        // Required parameters
+        private final String firstName;
+        private final String lastName;
+        
+        // Optional with defaults
+        private int age = 0;
+        private String email = "";
+        private String phone = "";
+
+        public Builder(String firstName, String lastName) {
+            this.firstName = firstName;
+            this.lastName = lastName;
+        }
+
+        public Builder age(int age) {
+            this.age = age;
+            return this;
+        }
+
+        public Builder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public Builder phone(String phone) {
+            this.phone = phone;
+            return this;
+        }
+
+        public User build() {
+            // Validation here
+            return new User(this);
+        }
+    }
+}
+
+// Usage - readable, no telescoping constructors
+User user = new User.Builder("John", "Doe")
+    .age(30)
+    .email("john@example.com")
+    .build();</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="structural" class="section-title"><span class="section-icon">🏗️</span>Structural Patterns</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Adapter, Decorator, Proxy</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Adapter
+                                    Pattern</span></div>
+                            <pre><code>// Existing interface you need to work with
+interface MediaPlayer {
+    void play(String filename);
+}
+
+// Incompatible class (from legacy/third-party)
+class AdvancedPlayer {
+    void playVlc(String filename) { System.out.println("VLC: " + filename); }
+    void playMp4(String filename) { System.out.println("MP4: " + filename); }
+}
+
+// Adapter - makes incompatible interface compatible
+class MediaAdapter implements MediaPlayer {
+    private AdvancedPlayer player = new AdvancedPlayer();
+    
+    @Override
+    public void play(String filename) {
+        if (filename.endsWith(".vlc")) player.playVlc(filename);
+        else if (filename.endsWith(".mp4")) player.playMp4(filename);
+    }
+}</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Decorator Pattern</span></div>
+                            <pre><code>// Component interface
+interface Coffee {
+    double getCost();
+    String getDescription();
+}
+
+// Concrete component
+class SimpleCoffee implements Coffee {
+    public double getCost() { return 1.0; }
+    public String getDescription() { return "Coffee"; }
+}
+
+// Decorator base
+abstract class CoffeeDecorator implements Coffee {
+    protected Coffee coffee;
+    public CoffeeDecorator(Coffee coffee) { this.coffee = coffee; }
+}
+
+// Concrete decorators
+class MilkDecorator extends CoffeeDecorator {
+    public MilkDecorator(Coffee coffee) { super(coffee); }
+    public double getCost() { return coffee.getCost() + 0.5; }
+    public String getDescription() { return coffee.getDescription() + ", Milk"; }
+}
+
+class SugarDecorator extends CoffeeDecorator {
+    public SugarDecorator(Coffee coffee) { super(coffee); }
+    public double getCost() { return coffee.getCost() + 0.2; }
+    public String getDescription() { return coffee.getDescription() + ", Sugar"; }
+}
+
+// Usage - stack decorators
+Coffee coffee = new SugarDecorator(new MilkDecorator(new SimpleCoffee()));
+// Cost: 1.7, Description: Coffee, Milk, Sugar</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Proxy
+                                    Pattern</span></div>
+                            <pre><code>interface Image {
+    void display();
+}
+
+// Real object (expensive to create)
+class RealImage implements Image {
+    private String filename;
+    
+    public RealImage(String filename) {
+        this.filename = filename;
+        loadFromDisk();  // Expensive operation
+    }
+    
+    private void loadFromDisk() {
+        System.out.println("Loading " + filename);
+    }
+    
+    public void display() { System.out.println("Displaying " + filename); }
+}
+
+// Proxy - controls access, lazy loading
+class ProxyImage implements Image {
+    private String filename;
+    private RealImage realImage;  // Lazy initialization
+    
+    public ProxyImage(String filename) {
+        this.filename = filename;
+    }
+    
+    public void display() {
+        if (realImage == null) {
+            realImage = new RealImage(filename);  // Load only when needed
+        }
+        realImage.display();
+    }
+}
+
+// Usage
+Image image = new ProxyImage("photo.jpg");  // Not loaded yet
+image.display();  // Loads and displays</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Structural Patterns Summary</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Pattern</th>
+                                        <th>Purpose</th>
+                                        <th>Java Example</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Adapter</strong></td>
+                                        <td>Convert interface to expected one</td>
+                                        <td>Arrays.asList(), InputStreamReader</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Decorator</strong></td>
+                                        <td>Add behavior dynamically</td>
+                                        <td>BufferedReader, Collections.unmodifiableList</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Proxy</strong></td>
+                                        <td>Control access, lazy loading</td>
+                                        <td>Spring AOP proxies, LazyInitializer</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Facade</strong></td>
+                                        <td>Simplify complex subsystem</td>
+                                        <td>JDBC DriverManager</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="behavioral" class="section-title"><span class="section-icon">🎭</span>Behavioral Patterns</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Strategy, Observer, Template Method</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Strategy Pattern</span></div>
+                            <pre><code>// Strategy interface
+interface PaymentStrategy {
+    void pay(double amount);
+}
+
+// Concrete strategies
+class CreditCardPayment implements PaymentStrategy {
+    private String cardNumber;
+    public CreditCardPayment(String card) { this.cardNumber = card; }
+    public void pay(double amount) {
+        System.out.println("Paid " + amount + " via Credit Card");
+    }
+}
+
+class PayPalPayment implements PaymentStrategy {
+    private String email;
+    public PayPalPayment(String email) { this.email = email; }
+    public void pay(double amount) {
+        System.out.println("Paid " + amount + " via PayPal");
+    }
+}
+
+// Context
+class ShoppingCart {
+    private PaymentStrategy paymentStrategy;
+    
+    public void setPaymentStrategy(PaymentStrategy strategy) {
+        this.paymentStrategy = strategy;
+    }
+    
+    public void checkout(double total) {
+        paymentStrategy.pay(total);
+    }
+}
+
+// Usage - swap strategies at runtime
+ShoppingCart cart = new ShoppingCart();
+cart.setPaymentStrategy(new CreditCardPayment("1234-5678"));
+cart.checkout(100.0);</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Observer Pattern</span></div>
+                            <pre><code>// Using built-in or custom implementation
+interface Observer {
+    void update(String event);
+}
+
+interface Subject {
+    void addObserver(Observer o);
+    void removeObserver(Observer o);
+    void notifyObservers(String event);
+}
+
+class NewsAgency implements Subject {
+    private List&lt;Observer&gt; observers = new ArrayList&lt;&gt;();
+    
+    public void addObserver(Observer o) { observers.add(o); }
+    public void removeObserver(Observer o) { observers.remove(o); }
+    
+    public void notifyObservers(String news) {
+        observers.forEach(o -> o.update(news));
+    }
+    
+    public void publishNews(String news) {
+        System.out.println("Publishing: " + news);
+        notifyObservers(news);
+    }
+}
+
+class NewsSubscriber implements Observer {
+    private String name;
+    public NewsSubscriber(String name) { this.name = name; }
+    
+    public void update(String event) {
+        System.out.println(name + " received: " + event);
+    }
+}
+
+// Usage
+NewsAgency agency = new NewsAgency();
+agency.addObserver(new NewsSubscriber("John"));
+agency.addObserver(new NewsSubscriber("Jane"));
+agency.publishNews("Breaking news!");</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Behavioral Patterns Summary</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Pattern</th>
+                                        <th>Purpose</th>
+                                        <th>Java Example</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Strategy</strong></td>
+                                        <td>Swap algorithms at runtime</td>
+                                        <td>Comparator, Collections.sort</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Observer</strong></td>
+                                        <td>Notify on state change</td>
+                                        <td>PropertyChangeListener, Event listeners</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Template Method</strong></td>
+                                        <td>Define algorithm skeleton</td>
+                                        <td>AbstractList, HttpServlet</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Chain of Responsibility</strong></td>
+                                        <td>Pass request along chain</td>
+                                        <td>Servlet Filters, Loggers</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>How to create thread-safe Singleton?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Best ways:</strong> 1) Enum singleton (recommended). 2) Bill Pugh holder pattern.
+                                3) Double-checked locking with volatile. Avoid lazy initialization without
+                                synchronization.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>Factory vs Abstract Factory?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Factory:</strong> Creates one type of product. <strong>Abstract Factory:</strong>
+                                Creates families of related products. Use Abstract Factory when products work together
+                                (e.g., UI components for different OS).</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>When to use Builder pattern?</p>
+                        </div>
+                        <div class="answer">
+                            <p>When object has many parameters (especially optional ones), when you need immutable
+                                objects, to avoid telescoping constructors, or when construction requires multiple
+                                steps.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>Decorator vs Proxy?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Decorator:</strong> Adds new behavior/responsibilities. <strong>Proxy:</strong>
+                                Controls access (lazy loading, security, caching). Decorator focuses on what, Proxy on
+                                access control.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>Strategy vs State pattern?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Similar structure but different intent. <strong>Strategy:</strong> Client chooses
+                                algorithm. <strong>State:</strong> Object changes behavior based on internal state
+                                (state transitions automatically).</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="exception-io.html" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>Exception &
+                        I/O</span></a>
+                <a href="strings-generics.html" class="nav-btn next"><span>String & Generics</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

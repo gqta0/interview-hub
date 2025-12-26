@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Fundamentals - MySQL Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#mysql" class="nav-back"><i class="fas fa-arrow-left"></i> MySQL</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon mysql"><i class="fas fa-database"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">MySQL</span>
+            <h1>SQL Fundamentals</h1>
+            <p class="topic-desc">SELECT, JOIN, Subqueries, Aggregate Functions, Window Functions</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#select">SELECT & Filtering</a></li>
+                <li><a href="#joins">JOINs</a></li>
+                <li><a href="#aggregate">Aggregate Functions</a></li>
+                <li><a href="#subqueries">Subqueries</a></li>
+                <li><a href="#window">Window Functions</a></li>
+                <li><a href="#cte">CTEs</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <section class="content-section">
+                <h2 id="select" class="section-title"><span class="section-icon">📋</span>SELECT & Filtering</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Basic Queries</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">SELECT
+                                    Order of Execution</span></div>
+                            <pre><code>-- Written order vs Execution order
+SELECT column           -- 5
+FROM table              -- 1
+WHERE condition         -- 2
+GROUP BY column         -- 3
+HAVING condition        -- 4
+ORDER BY column         -- 6
+LIMIT n                 -- 7</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span
+                                    class="code-title">Filtering Examples</span></div>
+                            <pre><code>-- Basic filtering
+SELECT * FROM users WHERE status = 'ACTIVE';
+
+-- Multiple conditions
+SELECT * FROM users 
+WHERE status = 'ACTIVE' AND created_at > '2024-01-01';
+
+-- IN clause
+SELECT * FROM users WHERE role IN ('ADMIN', 'MANAGER');
+
+-- BETWEEN
+SELECT * FROM orders WHERE amount BETWEEN 100 AND 500;
+
+-- LIKE patterns
+SELECT * FROM users WHERE email LIKE '%@gmail.com';
+SELECT * FROM users WHERE name LIKE 'John%';     -- Starts with
+SELECT * FROM users WHERE name LIKE '%son';      -- Ends with
+SELECT * FROM users WHERE name LIKE '%oh%';      -- Contains
+
+-- NULL handling
+SELECT * FROM users WHERE deleted_at IS NULL;
+SELECT * FROM users WHERE phone IS NOT NULL;
+
+-- DISTINCT
+SELECT DISTINCT department FROM employees;
+
+-- ORDER BY
+SELECT * FROM users ORDER BY created_at DESC, name ASC;
+
+-- LIMIT & OFFSET (pagination)
+SELECT * FROM users ORDER BY id LIMIT 10 OFFSET 20;  -- Page 3
+SELECT * FROM users ORDER BY id LIMIT 20, 10;        -- Same: skip 20, take 10</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="joins" class="section-title"><span class="section-icon">🔗</span>JOINs</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>JOIN Types</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Visual</span></div>
+                            <pre><code>INNER JOIN:     LEFT JOIN:      RIGHT JOIN:     FULL OUTER JOIN:
+   ┌───┐          ┌───┐            ┌───┐            ┌───┐
+  ╱     ╲        ╱█████╲          ╱     ╲█████     ╱█████╲
+ │   ███ │      │ █████ │        │   ███ │████   │ █████████ │
+  ╲     ╱        ╲█████╱          ╲     ╱█████     ╲█████╱
+   └───┘          └───┘            └───┘            └───┘
+ Only match     All left +       Right + match    All from both
+                match</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">JOIN
+                                    Examples</span></div>
+                            <pre><code>-- INNER JOIN: Only matching rows
+SELECT u.name, o.id AS order_id, o.amount
+FROM users u
+INNER JOIN orders o ON u.id = o.user_id;
+
+-- LEFT JOIN: All from left + matching from right
+SELECT u.name, o.id AS order_id
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id;
+-- Users without orders will have NULL for order columns
+
+-- Find users WITHOUT orders
+SELECT u.name
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+WHERE o.id IS NULL;
+
+-- RIGHT JOIN: All from right + matching from left
+SELECT u.name, o.id AS order_id
+FROM users u
+RIGHT JOIN orders o ON u.id = o.user_id;
+
+-- Multiple JOINs
+SELECT 
+    u.name,
+    o.id AS order_id,
+    p.name AS product_name
+FROM users u
+JOIN orders o ON u.id = o.user_id
+JOIN order_items oi ON o.id = oi.order_id
+JOIN products p ON oi.product_id = p.id;
+
+-- Self JOIN (hierarchical data)
+SELECT 
+    e.name AS employee,
+    m.name AS manager
+FROM employees e
+LEFT JOIN employees m ON e.manager_id = m.id;
+
+-- CROSS JOIN (cartesian product)
+SELECT * FROM colors CROSS JOIN sizes;
+-- Every color with every size</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>JOIN Comparison</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Returns</th>
+                                        <th>NULL handling</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>INNER JOIN</td>
+                                        <td>Matching rows only</td>
+                                        <td>Excludes non-matching</td>
+                                    </tr>
+                                    <tr>
+                                        <td>LEFT JOIN</td>
+                                        <td>All left + matching right</td>
+                                        <td>NULL for no match on right</td>
+                                    </tr>
+                                    <tr>
+                                        <td>RIGHT JOIN</td>
+                                        <td>All right + matching left</td>
+                                        <td>NULL for no match on left</td>
+                                    </tr>
+                                    <tr>
+                                        <td>CROSS JOIN</td>
+                                        <td>Cartesian product</td>
+                                        <td>All combinations</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="aggregate" class="section-title"><span class="section-icon">📊</span>Aggregate Functions</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>GROUP BY & Aggregations</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span
+                                    class="code-title">Aggregate Functions</span></div>
+                            <pre><code>-- Basic aggregates
+SELECT 
+    COUNT(*) AS total_orders,         -- Count all rows
+    COUNT(discount) AS with_discount, -- Count non-NULL
+    COUNT(DISTINCT user_id) AS unique_customers,
+    SUM(amount) AS total_amount,
+    AVG(amount) AS avg_amount,
+    MIN(amount) AS min_amount,
+    MAX(amount) AS max_amount
+FROM orders;
+
+-- GROUP BY
+SELECT 
+    user_id,
+    COUNT(*) AS order_count,
+    SUM(amount) AS total_spent
+FROM orders
+GROUP BY user_id;
+
+-- GROUP BY multiple columns
+SELECT 
+    YEAR(created_at) AS year,
+    MONTH(created_at) AS month,
+    COUNT(*) AS orders
+FROM orders
+GROUP BY YEAR(created_at), MONTH(created_at);
+
+-- HAVING (filter after GROUP BY)
+SELECT 
+    user_id,
+    COUNT(*) AS order_count
+FROM orders
+GROUP BY user_id
+HAVING COUNT(*) > 5;  -- Only users with more than 5 orders
+
+-- WHERE vs HAVING
+SELECT 
+    user_id,
+    SUM(amount) AS total
+FROM orders
+WHERE status = 'COMPLETED'    -- Filter rows BEFORE grouping
+GROUP BY user_id
+HAVING SUM(amount) > 1000;    -- Filter groups AFTER aggregation
+
+-- GROUP_CONCAT (MySQL specific)
+SELECT 
+    user_id,
+    GROUP_CONCAT(product_name ORDER BY product_name SEPARATOR ', ') AS products
+FROM orders
+JOIN products ON orders.product_id = products.id
+GROUP BY user_id;</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="subqueries" class="section-title"><span class="section-icon">🔄</span>Subqueries</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Subquery Types</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Subquery
+                                    Examples</span></div>
+                            <pre><code>-- Scalar subquery (returns single value)
+SELECT 
+    name,
+    salary,
+    (SELECT AVG(salary) FROM employees) AS avg_salary
+FROM employees;
+
+-- Subquery in WHERE
+SELECT * FROM users
+WHERE id IN (SELECT DISTINCT user_id FROM orders WHERE amount > 1000);
+
+-- Subquery with EXISTS (usually faster than IN)
+SELECT * FROM users u
+WHERE EXISTS (
+    SELECT 1 FROM orders o 
+    WHERE o.user_id = u.id AND o.amount > 1000
+);
+
+-- NOT EXISTS
+SELECT * FROM users u
+WHERE NOT EXISTS (
+    SELECT 1 FROM orders o WHERE o.user_id = u.id
+);
+
+-- Subquery in FROM (derived table)
+SELECT avg_by_dept.department, avg_by_dept.avg_salary
+FROM (
+    SELECT department, AVG(salary) AS avg_salary
+    FROM employees
+    GROUP BY department
+) AS avg_by_dept
+WHERE avg_by_dept.avg_salary > 50000;
+
+-- Correlated subquery (references outer query)
+SELECT 
+    e.name,
+    e.salary,
+    e.department
+FROM employees e
+WHERE e.salary > (
+    SELECT AVG(e2.salary) 
+    FROM employees e2 
+    WHERE e2.department = e.department  -- Correlated!
+);</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Performance Tips</h4>
+                            <ul>
+                                <li><strong>EXISTS vs IN:</strong> EXISTS often faster for large datasets</li>
+                                <li><strong>Correlated subqueries:</strong> Run for each row - can be slow</li>
+                                <li><strong>Consider JOINs:</strong> Often more efficient than subqueries</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="window" class="section-title"><span class="section-icon">🪟</span>Window Functions</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Analytic Functions</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Window
+                                    Function Examples</span></div>
+                            <pre><code>-- ROW_NUMBER: Unique number per row
+SELECT 
+    name,
+    department,
+    salary,
+    ROW_NUMBER() OVER (ORDER BY salary DESC) AS rank
+FROM employees;
+
+-- ROW_NUMBER with PARTITION (reset per group)
+SELECT 
+    name,
+    department,
+    salary,
+    ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC) AS dept_rank
+FROM employees;
+
+-- RANK vs DENSE_RANK
+SELECT 
+    name,
+    salary,
+    RANK() OVER (ORDER BY salary DESC) AS rank,        -- 1,2,2,4 (skip)
+    DENSE_RANK() OVER (ORDER BY salary DESC) AS dense  -- 1,2,2,3 (no skip)
+FROM employees;
+
+-- Running totals
+SELECT 
+    order_date,
+    amount,
+    SUM(amount) OVER (ORDER BY order_date) AS running_total
+FROM orders;
+
+-- Moving average
+SELECT 
+    order_date,
+    amount,
+    AVG(amount) OVER (
+        ORDER BY order_date 
+        ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+    ) AS moving_avg_3days
+FROM orders;
+
+-- LAG / LEAD (access previous/next row)
+SELECT 
+    order_date,
+    amount,
+    LAG(amount, 1) OVER (ORDER BY order_date) AS prev_amount,
+    LEAD(amount, 1) OVER (ORDER BY order_date) AS next_amount,
+    amount - LAG(amount, 1) OVER (ORDER BY order_date) AS change
+FROM orders;
+
+-- FIRST_VALUE / LAST_VALUE
+SELECT 
+    name,
+    department,
+    salary,
+    FIRST_VALUE(name) OVER (
+        PARTITION BY department ORDER BY salary DESC
+    ) AS highest_paid_in_dept
+FROM employees;
+
+-- NTILE (divide into buckets)
+SELECT 
+    name,
+    salary,
+    NTILE(4) OVER (ORDER BY salary DESC) AS quartile
+FROM employees;</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Common Window Functions</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Function</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>ROW_NUMBER()</code></td>
+                                        <td>Unique sequential number</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>RANK()</code></td>
+                                        <td>Rank with gaps on ties</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>DENSE_RANK()</code></td>
+                                        <td>Rank without gaps</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>LAG(col, n)</code></td>
+                                        <td>Value from n rows before</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>LEAD(col, n)</code></td>
+                                        <td>Value from n rows after</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>NTILE(n)</code></td>
+                                        <td>Divide into n buckets</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="cte" class="section-title"><span class="section-icon">📝</span>CTEs (Common Table Expressions)
+                </h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">CTE
+                                    Examples</span></div>
+                            <pre><code>-- Basic CTE
+WITH active_users AS (
+    SELECT id, name, email
+    FROM users
+    WHERE status = 'ACTIVE'
+)
+SELECT * FROM active_users WHERE name LIKE 'John%';
+
+-- Multiple CTEs
+WITH 
+    active_users AS (
+        SELECT id, name FROM users WHERE status = 'ACTIVE'
+    ),
+    user_orders AS (
+        SELECT user_id, COUNT(*) AS order_count
+        FROM orders
+        GROUP BY user_id
+    )
+SELECT 
+    u.name,
+    COALESCE(o.order_count, 0) AS orders
+FROM active_users u
+LEFT JOIN user_orders o ON u.id = o.user_id;
+
+-- Recursive CTE (hierarchical data)
+WITH RECURSIVE org_hierarchy AS (
+    -- Anchor: top-level managers
+    SELECT id, name, manager_id, 1 AS level
+    FROM employees
+    WHERE manager_id IS NULL
+    
+    UNION ALL
+    
+    -- Recursive: employees under each manager
+    SELECT e.id, e.name, e.manager_id, h.level + 1
+    FROM employees e
+    JOIN org_hierarchy h ON e.manager_id = h.id
+)
+SELECT * FROM org_hierarchy ORDER BY level, name;</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-lightbulb"></i> CTE Benefits</h4>
+                            <ul>
+                                <li>Improves readability (named subqueries)</li>
+                                <li>Can be referenced multiple times in main query</li>
+                                <li>Recursive CTEs for hierarchical data</li>
+                                <li>Often same performance as subquery (optimizer inline)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>Difference between WHERE and HAVING?</p>
+                        </div>
+                        <div class="answer">
+                            <p><code>WHERE</code> filters rows BEFORE grouping. <code>HAVING</code> filters groups AFTER
+                                aggregation. Use WHERE for row conditions, HAVING for aggregate conditions.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>LEFT JOIN vs INNER JOIN?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>INNER:</strong> Only matching rows from both tables. <strong>LEFT:</strong> All
+                                from left table + matching from right (NULL if no match). Use LEFT to include rows
+                                without matches.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>EXISTS vs IN?</p>
+                        </div>
+                        <div class="answer">
+                            <p><code>EXISTS</code> returns true/false, stops on first match. <code>IN</code> compares
+                                against list. EXISTS often faster for large datasets because it short-circuits.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>RANK vs DENSE_RANK?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Both rank rows. <strong>RANK:</strong> skips numbers on ties (1,2,2,4).
+                                <strong>DENSE_RANK:</strong> no gaps (1,2,2,3). Use DENSE_RANK when you need continuous
+                                ranking.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>What is a CTE?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Common Table Expression - named temporary result set. Improves readability, can be
+                                referenced multiple times. WITH clause defines CTE before main SELECT. Supports
+                                recursion for hierarchical data.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="../index.html#mysql" class="nav-btn prev"><i
+                        class="fas fa-arrow-left"></i><span>MySQL</span></a>
+                <a href="indexing.html" class="nav-btn next"><span>Indexing</span><i class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

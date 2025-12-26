@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Web MVC - Spring Boot Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#spring" class="nav-back"><i class="fas fa-arrow-left"></i> Spring Boot</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon spring"><i class="fas fa-globe"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">Spring Boot</span>
+            <h1>Spring Web MVC</h1>
+            <p class="topic-desc">REST Controllers, Request Handling, Exception Handling, Validation</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#dispatcher">DispatcherServlet</a></li>
+                <li><a href="#controllers">Controllers</a></li>
+                <li><a href="#request-mapping">Request Mapping</a></li>
+                <li><a href="#request-params">Request Parameters</a></li>
+                <li><a href="#response">Response Handling</a></li>
+                <li><a href="#validation">Validation</a></li>
+                <li><a href="#exception">Exception Handling</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <section class="content-section">
+                <h2 id="dispatcher" class="section-title"><span class="section-icon">🔄</span>DispatcherServlet</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Front Controller Pattern</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span></div>
+                            <pre><code>HTTP Request
+     ↓
+DispatcherServlet (Front Controller)
+     ↓
+HandlerMapping (find controller)
+     ↓
+HandlerAdapter (call controller method)
+     ↓
+Controller → Service → Repository
+     ↓
+ViewResolver (if returning view)
+     ↓
+HttpMessageConverter (if returning JSON/XML)
+     ↓
+HTTP Response</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-cogs"></i> Key Components</h4>
+                            <ul>
+                                <li><strong>DispatcherServlet:</strong> Central dispatcher, routes requests</li>
+                                <li><strong>HandlerMapping:</strong> Maps URL to controller method</li>
+                                <li><strong>HandlerAdapter:</strong> Invokes handler method</li>
+                                <li><strong>ViewResolver:</strong> Resolves view name to actual view</li>
+                                <li><strong>HttpMessageConverter:</strong> Converts objects to/from JSON/XML</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="controllers" class="section-title"><span class="section-icon">🎮</span>Controllers</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>@Controller vs @RestController</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>@Controller</th>
+                                        <th>@RestController</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Return type</td>
+                                        <td>View name (String)</td>
+                                        <td>Response body (JSON)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>@ResponseBody</td>
+                                        <td>Required on methods</td>
+                                        <td>Implicit (included)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Use case</td>
+                                        <td>MVC with templates</td>
+                                        <td>REST APIs</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">REST
+                                    Controller</span></div>
+                            <pre><code>@RestController  // = @Controller + @ResponseBody
+@RequestMapping("/api/users")
+public class UserController {
+    
+    private final UserService userService;
+    
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+    
+    @GetMapping
+    public List&lt;User&gt; getAllUsers() {
+        return userService.findAll();
+    }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity&lt;User&gt; getUser(@PathVariable Long id) {
+        return userService.findById(id)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
+    }
+    
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public User createUser(@Valid @RequestBody UserDto dto) {
+        return userService.create(dto);
+    }
+    
+    @PutMapping("/{id}")
+    public User updateUser(@PathVariable Long id, @Valid @RequestBody UserDto dto) {
+        return userService.update(id, dto);
+    }
+    
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUser(@PathVariable Long id) {
+        userService.delete(id);
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="request-mapping" class="section-title"><span class="section-icon">🗺️</span>Request Mapping</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">HTTP
+                                    Method Mappings</span></div>
+                            <pre><code>// General purpose
+@RequestMapping(value = "/users", method = RequestMethod.GET)
+
+// HTTP method specific (preferred)
+@GetMapping("/users")
+@PostMapping("/users")
+@PutMapping("/users/{id}")
+@PatchMapping("/users/{id}")
+@DeleteMapping("/users/{id}")
+
+// Path variables
+@GetMapping("/users/{id}/orders/{orderId}")
+public Order getOrder(@PathVariable Long id, @PathVariable Long orderId) { }
+
+// Multiple paths
+@GetMapping({"/users", "/members"})
+
+// Consumes & Produces
+@PostMapping(
+    value = "/users",
+    consumes = MediaType.APPLICATION_JSON_VALUE,
+    produces = MediaType.APPLICATION_JSON_VALUE
+)
+
+// Request headers
+@GetMapping(value = "/users", headers = "X-API-VERSION=1")
+
+// Request params in mapping
+@GetMapping(value = "/users", params = "active=true")</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="request-params" class="section-title"><span class="section-icon">📥</span>Request Parameters
+                </h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Extracting Request Data</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Parameter Annotations</span></div>
+                            <pre><code>// Path variable: /users/123
+@GetMapping("/users/{id}")
+public User getUser(@PathVariable Long id) { }
+
+@GetMapping("/users/{id}")
+public User getUser(@PathVariable("id") Long userId) { }  // Different name
+
+// Query parameters: /users?page=1&size=10
+@GetMapping("/users")
+public Page&lt;User&gt; getUsers(
+    @RequestParam(defaultValue = "0") int page,
+    @RequestParam(defaultValue = "10") int size,
+    @RequestParam(required = false) String search
+) { }
+
+// Request body (JSON → Object)
+@PostMapping("/users")
+public User create(@RequestBody UserDto dto) { }
+
+// Request headers
+@GetMapping("/users")
+public List&lt;User&gt; getUsers(@RequestHeader("Authorization") String auth) { }
+
+// Cookies
+@GetMapping("/users")
+public User getUser(@CookieValue("sessionId") String sessionId) { }
+
+// Matrix variables: /users;role=admin;active=true
+@GetMapping("/users")
+public List&lt;User&gt; getUsers(@MatrixVariable String role) { }
+
+// Model attribute (form data)
+@PostMapping("/users")
+public String createUser(@ModelAttribute UserForm form) { }
+
+// Servlet objects
+@GetMapping("/info")
+public void info(HttpServletRequest request, HttpServletResponse response) { }</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Annotation Summary</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Annotation</th>
+                                        <th>Source</th>
+                                        <th>Example URL</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>@PathVariable</code></td>
+                                        <td>URL path</td>
+                                        <td>/users/{id}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>@RequestParam</code></td>
+                                        <td>Query string</td>
+                                        <td>/users?name=John</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>@RequestBody</code></td>
+                                        <td>Request body</td>
+                                        <td>POST JSON</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>@RequestHeader</code></td>
+                                        <td>HTTP header</td>
+                                        <td>Authorization header</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>@CookieValue</code></td>
+                                        <td>Cookie</td>
+                                        <td>Session cookie</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="response" class="section-title"><span class="section-icon">📤</span>Response Handling</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">ResponseEntity</span></div>
+                            <pre><code>// Full control over response
+@GetMapping("/{id}")
+public ResponseEntity&lt;User&gt; getUser(@PathVariable Long id) {
+    return userService.findById(id)
+        .map(user -> ResponseEntity.ok(user))
+        .orElse(ResponseEntity.notFound().build());
+}
+
+// With headers
+@GetMapping("/{id}")
+public ResponseEntity&lt;User&gt; getUser(@PathVariable Long id) {
+    User user = userService.findById(id);
+    return ResponseEntity.ok()
+        .header("X-Custom-Header", "value")
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(user);
+}
+
+// Created with location
+@PostMapping
+public ResponseEntity&lt;User&gt; createUser(@RequestBody UserDto dto) {
+    User created = userService.create(dto);
+    URI location = URI.create("/api/users/" + created.getId());
+    return ResponseEntity.created(location).body(created);
+}
+
+// Static methods
+ResponseEntity.ok(body)                    // 200 + body
+ResponseEntity.ok().build()                // 200, no body
+ResponseEntity.notFound().build()          // 404
+ResponseEntity.badRequest().body(error)    // 400 + body
+ResponseEntity.noContent().build()         // 204
+ResponseEntity.status(HttpStatus.CONFLICT).build()
+
+// Using @ResponseStatus
+@DeleteMapping("/{id}")
+@ResponseStatus(HttpStatus.NO_CONTENT)
+public void delete(@PathVariable Long id) {
+    userService.delete(id);
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="validation" class="section-title"><span class="section-icon">✅</span>Validation</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Bean Validation (JSR-380)</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Validation Annotations</span></div>
+                            <pre><code>public class UserDto {
+    @NotNull(message = "Name is required")
+    @Size(min = 2, max = 50, message = "Name must be 2-50 characters")
+    private String name;
+    
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
+    private String email;
+    
+    @Min(value = 18, message = "Age must be at least 18")
+    @Max(value = 150, message = "Age must be at most 150")
+    private Integer age;
+    
+    @Pattern(regexp = "^\\+?[0-9]{10,14}$", message = "Invalid phone")
+    private String phone;
+    
+    @Past(message = "Birth date must be in the past")
+    private LocalDate birthDate;
+    
+    @NotEmpty(message = "Roles cannot be empty")
+    private List&lt;@NotBlank String&gt; roles;
+    
+    @Valid  // Nested validation
+    private AddressDto address;
+}
+
+// Controller
+@PostMapping
+public User create(@Valid @RequestBody UserDto dto) {
+    return userService.create(dto);
+}
+
+// Path variable validation
+@GetMapping("/{id}")
+public User getUser(@PathVariable @Min(1) Long id) { }</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Common Validation Annotations</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Annotation</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>@NotNull</code></td>
+                                        <td>Not null (but can be empty)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>@NotEmpty</code></td>
+                                        <td>Not null and not empty</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>@NotBlank</code></td>
+                                        <td>Not null and not whitespace only</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>@Size(min, max)</code></td>
+                                        <td>String/collection size</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>@Min/@Max</code></td>
+                                        <td>Numeric bounds</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>@Email</code></td>
+                                        <td>Valid email format</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>@Pattern(regexp)</code></td>
+                                        <td>Regex match</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>@Past/@Future</code></td>
+                                        <td>Date validation</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>@Valid</code></td>
+                                        <td>Cascade validation to nested objects</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="exception" class="section-title"><span class="section-icon">🚨</span>Exception Handling</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>@ControllerAdvice & @ExceptionHandler</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Global
+                                    Exception Handler</span></div>
+                            <pre><code>@RestControllerAdvice
+public class GlobalExceptionHandler {
+    
+    // Handle specific exception
+    @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleNotFound(ResourceNotFoundException ex) {
+        return new ErrorResponse(
+            HttpStatus.NOT_FOUND.value(),
+            ex.getMessage(),
+            LocalDateTime.now()
+        );
+    }
+    
+    // Handle validation errors
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map&lt;String, String&gt; handleValidation(MethodArgumentNotValidException ex) {
+        Map&lt;String, String&gt; errors = new HashMap&lt;&gt;();
+        ex.getBindingResult().getFieldErrors().forEach(error -> 
+            errors.put(error.getField(), error.getDefaultMessage())
+        );
+        return errors;
+    }
+    
+    // Handle constraint violations (@PathVariable, @RequestParam)
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleConstraint(ConstraintViolationException ex) {
+        return new ErrorResponse(400, ex.getMessage(), LocalDateTime.now());
+    }
+    
+    // Catch-all handler
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleGeneral(Exception ex) {
+        log.error("Unexpected error", ex);
+        return new ErrorResponse(500, "Internal server error", LocalDateTime.now());
+    }
+}
+
+// Error response DTO
+public record ErrorResponse(
+    int status,
+    String message,
+    LocalDateTime timestamp
+) {}</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Custom
+                                    Exceptions</span></div>
+                            <pre><code>// Custom exception with @ResponseStatus
+@ResponseStatus(HttpStatus.NOT_FOUND)
+public class ResourceNotFoundException extends RuntimeException {
+    public ResourceNotFoundException(String resource, Long id) {
+        super(String.format("%s not found with id: %d", resource, id));
+    }
+}
+
+// Usage in service
+public User findById(Long id) {
+    return userRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("User", id));
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>@Controller vs @RestController?</p>
+                        </div>
+                        <div class="answer">
+                            <p><code>@Controller</code> returns view name. <code>@RestController</code> = @Controller +
+                                @ResponseBody, returns response body directly (JSON). Use @RestController for REST APIs.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>What is DispatcherServlet?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Front controller that receives all requests and dispatches to handlers. Works with
+                                HandlerMapping (find controller), HandlerAdapter (invoke method), ViewResolver (resolve
+                                view).</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>@PathVariable vs @RequestParam?</p>
+                        </div>
+                        <div class="answer">
+                            <p><code>@PathVariable</code>: from URL path (/users/{id}). <code>@RequestParam</code>: from
+                                query string (/users?name=John). PathVariable for resource ID, RequestParam for
+                                filtering/pagination.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>How to handle validation?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Use Bean Validation (JSR-380): annotations like @NotNull, @Email, @Size on DTO fields.
+                                Add @Valid on @RequestBody. Handle MethodArgumentNotValidException in @ControllerAdvice.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>What is @ControllerAdvice?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Global exception handler for all controllers. Use @ExceptionHandler methods to handle
+                                specific exceptions. @RestControllerAdvice for REST APIs (includes @ResponseBody).</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="boot-essentials.html" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>Boot
+                        Essentials</span></a>
+                <a href="data-jpa.html" class="nav-btn next"><span>Spring Data JPA</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

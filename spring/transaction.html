@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Management - Spring Boot Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#spring" class="nav-back"><i class="fas fa-arrow-left"></i> Spring Boot</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon spring"><i class="fas fa-exchange-alt"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">Spring Boot</span>
+            <h1>Transaction Management</h1>
+            <p class="topic-desc">@Transactional, Propagation, Isolation levels, Rollback</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#basics">Transaction Basics</a></li>
+                <li><a href="#transactional">@Transactional</a></li>
+                <li><a href="#propagation">Propagation</a></li>
+                <li><a href="#isolation">Isolation Levels</a></li>
+                <li><a href="#rollback">Rollback Rules</a></li>
+                <li><a href="#pitfalls">Common Pitfalls</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <section class="content-section">
+                <h2 id="basics" class="section-title"><span class="section-icon">📚</span>Transaction Basics</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>ACID Properties</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="key-points">
+                            <h4><i class="fas fa-check-circle"></i> ACID</h4>
+                            <ul>
+                                <li><strong>Atomicity:</strong> All or nothing - toàn bộ thành công hoặc toàn bộ
+                                    rollback</li>
+                                <li><strong>Consistency:</strong> Database stays valid - từ trạng thái hợp lệ sang trạng
+                                    thái hợp lệ khác</li>
+                                <li><strong>Isolation:</strong> Transactions isolated - không ảnh hưởng lẫn nhau</li>
+                                <li><strong>Durability:</strong> Committed = permanent - dữ liệu được lưu vĩnh viễn</li>
+                            </ul>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Transaction Example</span></div>
+                            <pre><code>// Money transfer - must be atomic
+@Transactional
+public void transfer(Long fromId, Long toId, BigDecimal amount) {
+    Account from = accountRepository.findById(fromId).orElseThrow();
+    Account to = accountRepository.findById(toId).orElseThrow();
+    
+    from.withdraw(amount);  // Debit from sender
+    to.deposit(amount);     // Credit to receiver
+    
+    accountRepository.save(from);
+    accountRepository.save(to);
+    
+    // If any exception here, both save() are rolled back
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="transactional" class="section-title"><span class="section-icon">🏷️</span>@Transactional</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Declarative Transaction</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">@Transactional Usage</span></div>
+                            <pre><code>// On class - applies to all public methods
+@Service
+@Transactional
+public class UserService {
+    // All public methods are transactional
+}
+
+// On method - overrides class-level
+@Service
+@Transactional(readOnly = true)  // Default read-only
+public class UserService {
+    
+    public List&lt;User&gt; findAll() {
+        // Read-only transaction (optimized)
+        return userRepository.findAll();
+    }
+    
+    @Transactional  // Override: read-write
+    public User create(UserDto dto) {
+        return userRepository.save(mapper.toEntity(dto));
+    }
+    
+    @Transactional(
+        propagation = Propagation.REQUIRED,
+        isolation = Isolation.READ_COMMITTED,
+        timeout = 30,
+        readOnly = false,
+        rollbackFor = Exception.class
+    )
+    public void complexOperation() { }
+}</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>@Transactional Attributes</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Attribute</th>
+                                        <th>Default</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>propagation</code></td>
+                                        <td>REQUIRED</td>
+                                        <td>How to handle existing transaction</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>isolation</code></td>
+                                        <td>DEFAULT</td>
+                                        <td>Transaction isolation level</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>timeout</code></td>
+                                        <td>-1 (none)</td>
+                                        <td>Seconds before timeout</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>readOnly</code></td>
+                                        <td>false</td>
+                                        <td>Optimization hint for read-only</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>rollbackFor</code></td>
+                                        <td>RuntimeException</td>
+                                        <td>Exceptions that trigger rollback</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>noRollbackFor</code></td>
+                                        <td>-</td>
+                                        <td>Exceptions that don't rollback</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="propagation" class="section-title"><span class="section-icon">🔄</span>Propagation</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Transaction Propagation</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Propagation</th>
+                                        <th>Existing Tx</th>
+                                        <th>No Existing Tx</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>REQUIRED</code></td>
+                                        <td>Join</td>
+                                        <td>Create new</td>
+                                        <td>Default, most common</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>REQUIRES_NEW</code></td>
+                                        <td>Suspend, create new</td>
+                                        <td>Create new</td>
+                                        <td>Audit logs, independent ops</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>NESTED</code></td>
+                                        <td>Nested (savepoint)</td>
+                                        <td>Create new</td>
+                                        <td>Partial rollback</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>SUPPORTS</code></td>
+                                        <td>Join</td>
+                                        <td>Run non-tx</td>
+                                        <td>Optional tx</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>NOT_SUPPORTED</code></td>
+                                        <td>Suspend</td>
+                                        <td>Run non-tx</td>
+                                        <td>Non-transactional code</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>MANDATORY</code></td>
+                                        <td>Join</td>
+                                        <td>Exception!</td>
+                                        <td>Must have existing tx</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>NEVER</code></td>
+                                        <td>Exception!</td>
+                                        <td>Run non-tx</td>
+                                        <td>Must not have tx</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Propagation Examples</span></div>
+                            <pre><code>@Service
+public class OrderService {
+    
+    @Autowired
+    private AuditService auditService;
+    
+    @Transactional
+    public void createOrder(OrderDto dto) {
+        Order order = orderRepository.save(new Order(dto));
+        
+        // Audit log should persist even if order fails later
+        auditService.logOrderCreation(order);  // REQUIRES_NEW
+        
+        // This might fail, but audit log is already committed
+        processPayment(order);
+    }
+}
+
+@Service
+public class AuditService {
+    
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logOrderCreation(Order order) {
+        // Runs in separate transaction
+        // Commits independently of parent
+        auditRepository.save(new AuditLog("ORDER_CREATED", order.getId()));
+    }
+}
+
+// NESTED example - partial rollback
+@Transactional
+public void processOrders(List&lt;OrderDto&gt; orders) {
+    for (OrderDto dto : orders) {
+        try {
+            processOneOrder(dto);  // NESTED
+        } catch (Exception e) {
+            // Only this order rolled back, continue with others
+            log.error("Failed to process order", e);
+        }
+    }
+}
+
+@Transactional(propagation = Propagation.NESTED)
+public void processOneOrder(OrderDto dto) {
+    // If fails, only this is rolled back (savepoint)
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="isolation" class="section-title"><span class="section-icon">🔐</span>Isolation Levels</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Transaction Isolation</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Isolation Issues</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Issue</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Dirty Read</strong></td>
+                                        <td>Read uncommitted data from other tx</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Non-Repeatable Read</strong></td>
+                                        <td>Same query returns different data (update)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Phantom Read</strong></td>
+                                        <td>Same query returns different rows (insert/delete)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Isolation Levels</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Level</th>
+                                        <th>Dirty Read</th>
+                                        <th>Non-Repeatable</th>
+                                        <th>Phantom</th>
+                                        <th>Performance</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>READ_UNCOMMITTED</code></td>
+                                        <td>✅ Yes</td>
+                                        <td>✅ Yes</td>
+                                        <td>✅ Yes</td>
+                                        <td>Fastest</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>READ_COMMITTED</code></td>
+                                        <td>❌ No</td>
+                                        <td>✅ Yes</td>
+                                        <td>✅ Yes</td>
+                                        <td>Fast (default)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>REPEATABLE_READ</code></td>
+                                        <td>❌ No</td>
+                                        <td>❌ No</td>
+                                        <td>✅ Yes</td>
+                                        <td>Slower</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>SERIALIZABLE</code></td>
+                                        <td>❌ No</td>
+                                        <td>❌ No</td>
+                                        <td>❌ No</td>
+                                        <td>Slowest</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Isolation Usage</span></div>
+                            <pre><code>// Reporting - prevent phantom reads
+@Transactional(isolation = Isolation.SERIALIZABLE)
+public Report generateMonthlyReport() {
+    // Need consistent snapshot
+    BigDecimal total = orderRepository.sumByMonth(month);
+    List&lt;Order&gt; orders = orderRepository.findByMonth(month);
+    // ...
+}
+
+// High-concurrency - allow some inconsistency for performance
+@Transactional(isolation = Isolation.READ_COMMITTED)
+public List&lt;Product&gt; searchProducts(String keyword) {
+    return productRepository.search(keyword);
+}
+
+// MySQL default: REPEATABLE_READ
+// PostgreSQL default: READ_COMMITTED</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="rollback" class="section-title"><span class="section-icon">⏪</span>Rollback Rules</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Rollback Configuration</span></div>
+                            <pre><code>// Default: Rollback on RuntimeException, Error
+// NO rollback on checked Exception
+
+@Transactional
+public void defaultBehavior() {
+    throw new RuntimeException();  // Rollback ✅
+}
+
+@Transactional
+public void checkedExceptionNoRollback() throws IOException {
+    throw new IOException();  // NO Rollback ❌
+}
+
+// Rollback on all exceptions
+@Transactional(rollbackFor = Exception.class)
+public void rollbackOnAll() throws Exception {
+    throw new IOException();  // Rollback ✅
+}
+
+// Rollback on specific exceptions
+@Transactional(rollbackFor = {BusinessException.class, IOException.class})
+public void rollbackOnSpecific() { }
+
+// NO rollback on specific exceptions
+@Transactional(noRollbackFor = ValidationException.class)
+public void noRollbackOnValidation() {
+    throw new ValidationException();  // NO Rollback
+}
+
+// Programmatic rollback
+@Transactional
+public void programmaticRollback() {
+    try {
+        doSomething();
+    } catch (Exception e) {
+        // Mark for rollback even if we catch the exception
+        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="pitfalls" class="section-title"><span class="section-icon">⚠️</span>Common Pitfalls</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>@Transactional Traps</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Self-Invocation Problem</span></div>
+                            <pre><code>@Service
+public class UserService {
+    
+    public void createUsers(List&lt;UserDto&gt; dtos) {
+        for (UserDto dto : dtos) {
+            createUser(dto);  // ❌ Self-invocation - @Transactional ignored!
+        }
+    }
+    
+    @Transactional
+    public void createUser(UserDto dto) {
+        // This transaction is NOT created!
+        // Because called from same class
+    }
+}
+
+// Solution 1: Inject self
+@Service
+public class UserService {
+    @Autowired
+    private UserService self;  // Inject proxy
+    
+    public void createUsers(List&lt;UserDto&gt; dtos) {
+        for (UserDto dto : dtos) {
+            self.createUser(dto);  // ✅ Calls through proxy
+        }
+    }
+}
+
+// Solution 2: Separate service
+@Service
+public class UserBatchService {
+    @Autowired
+    private UserService userService;
+    
+    public void createUsers(List&lt;UserDto&gt; dtos) {
+        for (UserDto dto : dtos) {
+            userService.createUser(dto);  // ✅ Calls external bean
+        }
+    }
+}</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Other Common Mistakes</h4>
+                            <ul>
+                                <li><strong>Private method:</strong> @Transactional on private method = ignored (proxy
+                                    can't intercept)</li>
+                                <li><strong>Checked exception:</strong> Default doesn't rollback on checked exceptions
+                                </li>
+                                <li><strong>Catch exception:</strong> Catching exception prevents rollback</li>
+                                <li><strong>Missing @EnableTransactionManagement:</strong> (Spring Boot auto-configures,
+                                    but not plain Spring)</li>
+                            </ul>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Exception Handling Trap</span></div>
+                            <pre><code>@Transactional
+public void trappedRollback() {
+    try {
+        doSomething();
+    } catch (Exception e) {
+        log.error("Error", e);
+        // ❌ Exception caught, transaction commits despite error!
+    }
+}
+
+// Fix: Re-throw or mark rollback
+@Transactional
+public void properRollback() {
+    try {
+        doSomething();
+    } catch (Exception e) {
+        log.error("Error", e);
+        throw e;  // ✅ Re-throw to trigger rollback
+    }
+}
+
+// Or mark rollback explicitly
+@Transactional
+public void explicitRollback() {
+    try {
+        doSomething();
+    } catch (Exception e) {
+        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>What is @Transactional and how does it work?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Declarative transaction management. Spring creates <strong>proxy</strong> around bean,
+                                starts transaction before method, commits after success or rollbacks on exception. Uses
+                                AOP under the hood.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>REQUIRED vs REQUIRES_NEW?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>REQUIRED:</strong> Join existing tx or create new (default).
+                                <strong>REQUIRES_NEW:</strong> Always create new, suspend existing. Use REQUIRES_NEW for
+                                independent operations like audit logs.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>Why doesn't @Transactional work on private methods?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Spring uses <strong>proxy-based AOP</strong>. Proxy can only intercept calls from outside
+                                the object. Private methods called internally bypass proxy. Solution: separate into
+                                different class.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>What is self-invocation problem?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Calling @Transactional method from same class = bypasses proxy = no transaction!
+                                Solution: inject self or move method to separate service.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>Default rollback behavior?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Rollback on <strong>RuntimeException and Error</strong>. NO rollback on checked
+                                Exception. Use <code>rollbackFor = Exception.class</code> to rollback on all exceptions.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="security.html" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>Security</span></a>
+                <a href="testing.html" class="nav-btn next"><span>Testing</span><i class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

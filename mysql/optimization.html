@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Query Optimization - MySQL Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#mysql" class="nav-back"><i class="fas fa-arrow-left"></i> MySQL</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon mysql"><i class="fas fa-tachometer-alt"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">MySQL</span>
+            <h1>Query Optimization</h1>
+            <p class="topic-desc">Query Tuning, Slow Query Log, Profiling, Best Practices</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#slow-query">Slow Query Log</a></li>
+                <li><a href="#profiling">Query Profiling</a></li>
+                <li><a href="#patterns">Optimization Patterns</a></li>
+                <li><a href="#joins">JOIN Optimization</a></li>
+                <li><a href="#subquery">Subquery Optimization</a></li>
+                <li><a href="#pagination">Pagination</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <section class="content-section">
+                <h2 id="slow-query" class="section-title"><span class="section-icon">🐌</span>Slow Query Log</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Identifying Slow Queries</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Enable
+                                    Slow Query Log</span></div>
+                            <pre><code>-- Check current settings
+SHOW VARIABLES LIKE 'slow_query%';
+SHOW VARIABLES LIKE 'long_query_time';
+
+-- Enable slow query log
+SET GLOBAL slow_query_log = 'ON';
+SET GLOBAL long_query_time = 1;  -- Log queries > 1 second
+SET GLOBAL log_queries_not_using_indexes = 'ON';
+
+-- Or in my.cnf
+[mysqld]
+slow_query_log = 1
+slow_query_log_file = /var/log/mysql/slow.log
+long_query_time = 1
+log_queries_not_using_indexes = 1
+
+-- Analyze slow query log
+mysqldumpslow -s t /var/log/mysql/slow.log  -- Sort by time
+mysqldumpslow -s c /var/log/mysql/slow.log  -- Sort by count
+
+-- Performance Schema (more detailed)
+SELECT * FROM performance_schema.events_statements_summary_by_digest
+ORDER BY sum_timer_wait DESC LIMIT 10;</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="profiling" class="section-title"><span class="section-icon">📊</span>Query Profiling</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Analyzing Query Execution</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">EXPLAIN
+                                    ANALYZE (MySQL 8.0.18+)</span></div>
+                            <pre><code>-- EXPLAIN shows plan
+EXPLAIN SELECT * FROM users WHERE status = 'ACTIVE';
+
+-- EXPLAIN ANALYZE actually runs and shows timing
+EXPLAIN ANALYZE SELECT * FROM users WHERE status = 'ACTIVE';
+
+/*
+-> Filter: (users.status = 'ACTIVE')  (cost=1.05 rows=5) (actual time=0.023..0.089 rows=3 loops=1)
+    -> Table scan on users  (cost=1.05 rows=10) (actual time=0.019..0.067 rows=10 loops=1)
+*/
+
+-- Key metrics:
+-- cost: Estimated cost
+-- rows: Estimated row count
+-- actual time: first_row..last_row in ms
+-- loops: How many times executed</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Session
+                                    Status Variables</span></div>
+                            <pre><code>-- Reset counters
+FLUSH STATUS;
+
+-- Run your query
+SELECT * FROM users WHERE ...;
+
+-- Check what happened
+SHOW SESSION STATUS LIKE 'Handler%';
+SHOW SESSION STATUS LIKE 'Select%';
+SHOW SESSION STATUS LIKE 'Sort%';
+SHOW SESSION STATUS LIKE 'Created_tmp%';
+
+-- Key indicators:
+-- Handler_read_rnd_next: Full table scans (high = bad)
+-- Handler_read_key: Index lookups (good)
+-- Created_tmp_tables: Temp tables used
+-- Created_tmp_disk_tables: Disk temp tables (bad!)
+-- Sort_merge_passes: Sort needed multiple passes</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="patterns" class="section-title"><span class="section-icon">✨</span>Optimization Patterns</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Common Optimizations</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span
+                                    class="code-title">Index-Friendly Queries</span></div>
+                            <pre><code>-- ❌ Function on indexed column - can't use index
+SELECT * FROM users WHERE YEAR(created_at) = 2024;
+SELECT * FROM users WHERE UPPER(name) = 'JOHN';
+
+-- ✅ Rewrite to use index
+SELECT * FROM users WHERE created_at >= '2024-01-01' 
+                      AND created_at < '2025-01-01';
+SELECT * FROM users WHERE name = 'JOHN';  -- Use case-insensitive collation
+
+
+-- ❌ Implicit type conversion
+SELECT * FROM users WHERE phone = 84123456789;  -- phone is VARCHAR
+
+-- ✅ Correct type
+SELECT * FROM users WHERE phone = '84123456789';
+
+
+-- ❌ Leading wildcard prevents index
+SELECT * FROM products WHERE name LIKE '%phone%';
+
+-- ✅ FULLTEXT index for text search
+CREATE FULLTEXT INDEX idx_ft_name ON products(name);
+SELECT * FROM products WHERE MATCH(name) AGAINST('phone');
+
+
+-- ❌ OR can prevent index optimization
+SELECT * FROM users WHERE email = 'a@b.com' OR name = 'John';
+
+-- ✅ UNION for different indexes
+SELECT * FROM users WHERE email = 'a@b.com'
+UNION ALL
+SELECT * FROM users WHERE name = 'John' AND email != 'a@b.com';</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">SELECT
+                                    Optimization</span></div>
+                            <pre><code>-- ❌ SELECT * fetches unnecessary columns
+SELECT * FROM users WHERE id = 1;
+
+-- ✅ Select only needed columns (can use covering index)
+SELECT id, name, email FROM users WHERE id = 1;
+
+
+-- ❌ COUNT(*) on large table
+SELECT COUNT(*) FROM users;  -- Scans entire table in InnoDB
+
+-- ✅ Use approximate if exact not needed
+SELECT table_rows FROM information_schema.tables 
+WHERE table_name = 'users';
+
+
+-- ❌ Checking existence with COUNT
+IF (SELECT COUNT(*) FROM users WHERE email = ?) > 0 THEN...
+
+-- ✅ Use EXISTS (stops at first match)
+IF EXISTS (SELECT 1 FROM users WHERE email = ?) THEN...
+
+
+-- ❌ DISTINCT on large result sets
+SELECT DISTINCT category FROM products;
+
+-- ✅ GROUP BY often more efficient
+SELECT category FROM products GROUP BY category;</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="joins" class="section-title"><span class="section-icon">🔗</span>JOIN Optimization</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">JOIN
+                                    Best Practices</span></div>
+                            <pre><code>-- Index JOIN columns
+-- Both sides of JOIN should have indexes
+CREATE INDEX idx_orders_user_id ON orders(user_id);
+
+SELECT u.name, o.amount
+FROM users u
+JOIN orders o ON u.id = o.user_id;  -- o.user_id indexed
+
+
+-- ❌ JOIN then filter
+SELECT * FROM orders o
+JOIN order_items oi ON o.id = oi.order_id
+JOIN products p ON oi.product_id = p.id
+WHERE o.user_id = 123;
+
+-- ✅ Filter early, reduce rows before JOIN
+SELECT * FROM orders o
+JOIN order_items oi ON o.id = oi.order_id
+JOIN products p ON oi.product_id = p.id
+WHERE o.user_id = 123;
+-- With proper index on orders(user_id), optimizer does this automatically
+
+
+-- Small table JOIN large table
+-- Put smaller table first (optimizer usually handles this)
+SELECT * FROM categories c  -- Small
+JOIN products p ON c.id = p.category_id;  -- Large
+
+
+-- ❌ Multiple ORs in JOIN
+SELECT * FROM users u
+JOIN orders o ON u.id = o.user_id OR u.id = o.manager_id;
+
+-- ✅ UNION approach
+SELECT * FROM users u JOIN orders o ON u.id = o.user_id
+UNION
+SELECT * FROM users u JOIN orders o ON u.id = o.manager_id;</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="subquery" class="section-title"><span class="section-icon">🔄</span>Subquery Optimization</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Subquery
+                                    vs JOIN</span></div>
+                            <pre><code>-- ❌ Correlated subquery - runs for each row!
+SELECT *
+FROM products p
+WHERE price > (
+    SELECT AVG(price) FROM products WHERE category_id = p.category_id
+);
+
+-- ✅ Rewrite with JOIN
+SELECT p.*
+FROM products p
+JOIN (
+    SELECT category_id, AVG(price) as avg_price
+    FROM products
+    GROUP BY category_id
+) avg ON p.category_id = avg.category_id
+WHERE p.price > avg.avg_price;
+
+
+-- IN vs EXISTS
+-- ❌ IN with large subquery result
+SELECT * FROM users 
+WHERE id IN (SELECT user_id FROM orders WHERE amount > 1000);
+
+-- ✅ EXISTS (stops at first match)
+SELECT * FROM users u
+WHERE EXISTS (
+    SELECT 1 FROM orders o 
+    WHERE o.user_id = u.id AND o.amount > 1000
+);
+
+
+-- ❌ Scalar subquery in SELECT (runs per row)
+SELECT 
+    name,
+    (SELECT COUNT(*) FROM orders WHERE user_id = u.id) as order_count
+FROM users u;
+
+-- ✅ LEFT JOIN with GROUP BY
+SELECT u.name, COUNT(o.id) as order_count
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+GROUP BY u.id, u.name;</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="pagination" class="section-title"><span class="section-icon">📄</span>Pagination</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Efficient Pagination</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span
+                                    class="code-title">Pagination Patterns</span></div>
+                            <pre><code>-- ❌ Large OFFSET is slow
+-- MySQL still reads and discards OFFSET rows
+SELECT * FROM users ORDER BY id LIMIT 10 OFFSET 100000;
+-- Reads 100,010 rows, returns 10!
+
+
+-- ✅ Seek/Keyset Pagination (remember last id)
+-- First page
+SELECT * FROM users ORDER BY id LIMIT 10;
+-- Returns ids 1-10
+
+-- Next page (pass last_id = 10)
+SELECT * FROM users WHERE id > 10 ORDER BY id LIMIT 10;
+-- Directly seeks to id > 10, very fast!
+
+
+-- ✅ For sorting by non-unique column
+SELECT * FROM users 
+WHERE (created_at, id) > ('2024-01-15 10:00:00', 500)
+ORDER BY created_at, id 
+LIMIT 10;
+
+
+-- ✅ Deferred JOIN for complex queries
+-- Instead of:
+SELECT * FROM products ORDER BY created_at DESC LIMIT 10 OFFSET 10000;
+
+-- Use:
+SELECT p.* 
+FROM products p
+JOIN (
+    SELECT id FROM products ORDER BY created_at DESC LIMIT 10 OFFSET 10000
+) AS sub ON p.id = sub.id
+ORDER BY p.created_at DESC;
+-- Inner query only fetches IDs (smaller, can use covering index)
+
+
+-- Total count optimization
+-- ❌ Don't get exact count for every page
+SELECT COUNT(*) FROM products WHERE category = 'electronics';
+
+-- ✅ Use estimation or cap
+-- Show "1000+" instead of exact count
+SELECT SQL_CALC_FOUND_ROWS * FROM products LIMIT 10;
+-- Then: SELECT FOUND_ROWS();  -- But deprecated in MySQL 8.0.17+</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Pagination Comparison</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Method</th>
+                                        <th>Pros</th>
+                                        <th>Cons</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>OFFSET</td>
+                                        <td>Simple, allows jump to page</td>
+                                        <td>Slow at large offsets</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Keyset</td>
+                                        <td>Constant performance</td>
+                                        <td>Can't jump to arbitrary page</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Deferred JOIN</td>
+                                        <td>Better than plain OFFSET</td>
+                                        <td>More complex query</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>How to find slow queries?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Enable <strong>slow query log</strong> with long_query_time threshold. Use
+                                <code>mysqldumpslow</code> to analyze. Also check Performance Schema
+                                events_statements_summary tables.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>Why OFFSET is slow for large values?</p>
+                        </div>
+                        <div class="answer">
+                            <p>MySQL reads and discards OFFSET rows before returning LIMIT rows. OFFSET 100000 LIMIT 10
+                                = read 100,010 rows. Use <strong>keyset pagination</strong> (WHERE id > last_id)
+                                instead.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>Correlated subquery vs JOIN?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Correlated subquery runs once per outer row - O(n×m). JOIN is usually optimized to O(n+m)
+                                with proper indexes. Prefer JOIN or rewrite as derived table.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>Why can't index be used with LIKE '%keyword%'?</p>
+                        </div>
+                        <div class="answer">
+                            <p>B-Tree indexes are sorted left-to-right. Leading wildcard means no prefix to search. Use
+                                <strong>FULLTEXT index</strong> for text search or suffix arrays for contains search.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>EXISTS vs IN performance?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>EXISTS</strong> stops at first match (short-circuit). <strong>IN</strong>
+                                evaluates entire subquery. EXISTS better for large subquery results, IN better for small
+                                sets. Modern optimizer often equalizes them.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="transactions.html" class="nav-btn prev"><i
+                        class="fas fa-arrow-left"></i><span>Transactions</span></a>
+                <a href="design.html" class="nav-btn next"><span>Database Design</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JVM Internals - Java Core Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#java" class="nav-back"><i class="fas fa-arrow-left"></i> Java Core</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon java"><i class="fas fa-microchip"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">Java Core</span>
+            <h1>JVM Internals</h1>
+            <p class="topic-desc">Memory model, Garbage Collection, Class Loading, JIT Compilation</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#architecture">JVM Architecture</a></li>
+                <li><a href="#memory">Memory Model</a></li>
+                <li><a href="#classloader">Class Loading</a></li>
+                <li><a href="#gc">Garbage Collection</a></li>
+                <li><a href="#gc-algorithms">GC Algorithms</a></li>
+                <li><a href="#jit">JIT Compilation</a></li>
+                <li><a href="#tuning">JVM Tuning</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <section class="content-section">
+                <h2 id="architecture" class="section-title"><span class="section-icon">🏗️</span>JVM Architecture</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Architecture</span></div>
+                            <pre><code>┌─────────────────────────────────────────────────────────────┐
+│                        JVM                                  │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │              Class Loader Subsystem                   │  │
+│  │   Bootstrap → Extension → Application ClassLoader    │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                           ↓                                 │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │                 Runtime Data Areas                    │  │
+│  │  ┌─────────┐ ┌─────────┐ ┌────────┐ ┌────────────┐  │  │
+│  │  │ Method  │ │  Heap   │ │  Stack │ │ PC Register│  │  │
+│  │  │  Area   │ │(Objects)│ │(Thread)│ │  (Thread)  │  │  │
+│  │  └─────────┘ └─────────┘ └────────┘ └────────────┘  │  │
+│  │              ┌──────────────────────┐                │  │
+│  │              │   Native Method Stack │                │  │
+│  │              └──────────────────────┘                │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                           ↓                                 │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │                 Execution Engine                      │  │
+│  │     Interpreter ─→ JIT Compiler ─→ GC                │  │
+│  └──────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="memory" class="section-title"><span class="section-icon">🧠</span>Memory Model</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Memory Areas</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Area</th>
+                                        <th>Scope</th>
+                                        <th>Stores</th>
+                                        <th>Error</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Heap</strong></td>
+                                        <td>All threads</td>
+                                        <td>Objects, instance variables</td>
+                                        <td>OutOfMemoryError</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Stack</strong></td>
+                                        <td>Per thread</td>
+                                        <td>Local variables, method calls</td>
+                                        <td>StackOverflowError</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Metaspace</strong></td>
+                                        <td>All threads</td>
+                                        <td>Class metadata, static vars</td>
+                                        <td>OutOfMemoryError</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>PC Register</strong></td>
+                                        <td>Per thread</td>
+                                        <td>Current instruction address</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Native Stack</strong></td>
+                                        <td>Per thread</td>
+                                        <td>Native method calls</td>
+                                        <td>StackOverflowError</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Heap Structure</span></div>
+                            <pre><code>                      HEAP MEMORY
+┌────────────────────────────────────────────────────┐
+│                   YOUNG GENERATION                  │
+│  ┌─────────┐  ┌───────────┐  ┌───────────┐        │
+│  │  Eden   │  │ Survivor0 │  │ Survivor1 │        │
+│  │ (new)   │  │   (S0)    │  │   (S1)    │        │
+│  └─────────┘  └───────────┘  └───────────┘        │
+│         Minor GC (frequent, fast)                  │
+├────────────────────────────────────────────────────┤
+│                   OLD GENERATION                    │
+│  ┌──────────────────────────────────────────────┐ │
+│  │   Long-lived objects (survived Minor GC)     │ │
+│  │                                              │ │
+│  └──────────────────────────────────────────────┘ │
+│         Major/Full GC (less frequent, slow)       │
+└────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-memory"></i> Object Lifecycle in Heap</h4>
+                            <ul>
+                                <li><strong>1.</strong> New object created in Eden space</li>
+                                <li><strong>2.</strong> Minor GC: Survivors move to S0 or S1 (alternating)</li>
+                                <li><strong>3.</strong> After surviving multiple Minor GCs (threshold), move to Old Gen
+                                </li>
+                                <li><strong>4.</strong> Major GC cleans Old Gen when full</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="classloader" class="section-title"><span class="section-icon">📦</span>Class Loading</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>ClassLoader Hierarchy</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Hierarchy</span></div>
+                            <pre><code>Bootstrap ClassLoader (C/C++)
+        ↓ (parent)
+    ├── java.lang, java.util, rt.jar
+        ↓
+Extension/Platform ClassLoader
+        ↓ (parent)
+    ├── jre/lib/ext/*.jar
+        ↓
+Application/System ClassLoader
+        ↓ (parent)
+    ├── CLASSPATH, -cp
+        ↓
+Custom ClassLoader</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-cogs"></i> Class Loading Process</h4>
+                            <ul>
+                                <li><strong>Loading:</strong> Read .class file, create Class object</li>
+                                <li><strong>Linking:</strong>
+                                    <ul>
+                                        <li>Verification: Verify bytecode</li>
+                                        <li>Preparation: Allocate memory for static vars (default values)</li>
+                                        <li>Resolution: Replace symbolic refs with direct refs</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Initialization:</strong> Execute static blocks, initialize static vars</li>
+                            </ul>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> Delegation Model</h4>
+                            <p>ClassLoader asks parent first before loading itself (parent-first delegation). This
+                                ensures core Java classes are loaded by Bootstrap ClassLoader.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="gc" class="section-title"><span class="section-icon">🗑️</span>Garbage Collection</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>GC Basics</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="key-points">
+                            <h4><i class="fas fa-recycle"></i> How GC Identifies Garbage</h4>
+                            <ul>
+                                <li><strong>Reference Counting:</strong> Count references (not used - circular reference
+                                    problem)</li>
+                                <li><strong>Tracing (Mark and Sweep):</strong> Start from GC roots, mark reachable
+                                    objects</li>
+                            </ul>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">GC Roots</span></div>
+                            <pre><code>GC Roots - Starting points for reachability:
+├── Local variables in stack frames
+├── Active threads
+├── Static fields of loaded classes
+├── JNI references
+└── Objects held by synchronized monitors
+
+Mark-and-Sweep Algorithm:
+1. MARK: Traverse from GC roots, mark all reachable objects
+2. SWEEP: Free memory of unmarked objects
+3. COMPACT: Move surviving objects together (optional)</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>GC Types</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Area</th>
+                                        <th>When</th>
+                                        <th>Impact</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Minor GC</td>
+                                        <td>Young Gen</td>
+                                        <td>Eden full</td>
+                                        <td>Fast (ms)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Major GC</td>
+                                        <td>Old Gen</td>
+                                        <td>Old Gen full</td>
+                                        <td>Slow (seconds)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Full GC</td>
+                                        <td>Entire Heap + Metaspace</td>
+                                        <td>Major + Metaspace</td>
+                                        <td>Slowest</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="gc-algorithms" class="section-title"><span class="section-icon">⚙️</span>GC Algorithms</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Available GC Options</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>GC</th>
+                                        <th>Flag</th>
+                                        <th>Characteristics</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Serial GC</strong></td>
+                                        <td>-XX:+UseSerialGC</td>
+                                        <td>Single thread, STW</td>
+                                        <td>Small apps, single CPU</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Parallel GC</strong></td>
+                                        <td>-XX:+UseParallelGC</td>
+                                        <td>Multi-thread, STW</td>
+                                        <td>Throughput priority</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>G1 GC</strong></td>
+                                        <td>-XX:+UseG1GC</td>
+                                        <td>Region-based, concurrent</td>
+                                        <td>Default since Java 9</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ZGC</strong></td>
+                                        <td>-XX:+UseZGC</td>
+                                        <td>Low latency (< 10ms)</td>
+                                        <td>Large heaps, low latency</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Shenandoah</strong></td>
+                                        <td>-XX:+UseShenandoahGC</td>
+                                        <td>Ultra-low pause</td>
+                                        <td>Latency-sensitive</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-star"></i> G1 GC (Default since Java 9)</h4>
+                            <ul>
+                                <li>Divides heap into equal-sized regions</li>
+                                <li>Prioritizes regions with most garbage (Garbage First)</li>
+                                <li>Concurrent marking, incremental compaction</li>
+                                <li>Target pause time: <code>-XX:MaxGCPauseMillis=200</code></li>
+                            </ul>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Shell</span><span
+                                    class="code-title">Monitor GC</span></div>
+                            <pre><code># Enable GC logging
+-Xlog:gc*:file=gc.log:time,uptime:filecount=5,filesize=10m
+
+# View GC info
+jstat -gc &lt;pid&gt; 1000   # Every 1 second
+jcmd &lt;pid&gt; GC.heap_info
+
+# Force GC (not recommended in production)
+System.gc();  // Only suggests, not guarantees</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="jit" class="section-title"><span class="section-icon">🚀</span>JIT Compilation</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="key-points">
+                            <h4><i class="fas fa-bolt"></i> How JIT Works</h4>
+                            <ul>
+                                <li><strong>Interpreter:</strong> Executes bytecode line by line (slow, starts fast)
+                                </li>
+                                <li><strong>JIT Compiler:</strong> Compiles hot code to native (fast, compilation
+                                    overhead)</li>
+                                <li><strong>Tiered Compilation:</strong> Combines both - interpret first, compile when
+                                    hot</li>
+                            </ul>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Tiered Compilation</span></div>
+                            <pre><code>Level 0: Interpreter
+    ↓ (method called multiple times)
+Level 1: C1 - Simple compilation
+    ↓ (method is hot)
+Level 2: C1 - Limited profiling
+    ↓
+Level 3: C1 - Full profiling
+    ↓ (very hot method)
+Level 4: C2 - Aggressive optimization
+
+Optimizations include:
+- Method inlining
+- Loop unrolling
+- Dead code elimination
+- Escape analysis (stack allocation)</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="tuning" class="section-title"><span class="section-icon">🔧</span>JVM Tuning</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Common JVM Parameters</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Shell</span><span class="code-title">Memory
+                                    Settings</span></div>
+                            <pre><code># Heap size
+-Xms512m          # Initial heap size
+-Xmx2g            # Maximum heap size
+-Xmn256m          # Young generation size
+
+# Metaspace
+-XX:MetaspaceSize=128m
+-XX:MaxMetaspaceSize=256m
+
+# Stack size
+-Xss256k          # Thread stack size
+
+# GC tuning
+-XX:+UseG1GC
+-XX:MaxGCPauseMillis=200
+-XX:G1HeapRegionSize=16m
+-XX:InitiatingHeapOccupancyPercent=45
+
+# Debugging
+-XX:+HeapDumpOnOutOfMemoryError
+-XX:HeapDumpPath=/path/to/dump.hprof
+-XX:+PrintGCDetails (deprecated, use -Xlog:gc)</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Common Memory Issues</h4>
+                            <ul>
+                                <li><strong>OutOfMemoryError: Heap:</strong> Increase -Xmx or fix memory leak</li>
+                                <li><strong>OutOfMemoryError: Metaspace:</strong> Increase MaxMetaspaceSize (classloader
+                                    leak)</li>
+                                <li><strong>StackOverflowError:</strong> Deep recursion, increase -Xss</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>Explain JVM memory model?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Heap:</strong> Objects (shared). <strong>Stack:</strong> Local vars, method calls
+                                (per thread). <strong>Metaspace:</strong> Class metadata. <strong>PC Register:</strong>
+                                Current instruction.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>How does G1 GC work?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Divides heap into <strong>regions</strong>. Collects regions with most garbage first.
+                                Uses concurrent marking. Target pause time with <code>MaxGCPauseMillis</code>.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>What causes memory leak in Java?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Objects still referenced but not needed: <strong>Static collections</strong>, unclosed
+                                resources, listeners not removed, <strong>ThreadLocal</strong> not cleaned, inner class
+                                holding outer reference.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>What is ClassLoader delegation model?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Parent-first delegation:</strong> Child asks parent to load first. Prevents
+                                loading core classes from untrusted sources. Bootstrap → Extension → Application →
+                                Custom.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>When is an object eligible for GC?</p>
+                        </div>
+                        <div class="answer">
+                            <p>When there are <strong>no reachable references</strong> from GC roots. Setting reference
+                                to null, reassigning, going out of scope. finalize() is deprecated - use
+                                try-with-resources.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="multithreading.html" class="nav-btn prev"><i
+                        class="fas fa-arrow-left"></i><span>Multithreading</span></a>
+                <a href="java8-features.html" class="nav-btn next"><span>Java 8+ Features</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

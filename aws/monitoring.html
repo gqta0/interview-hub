@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring & Logging - AWS Cloud Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .topic-icon.aws {
+            background: var(--aws-gradient);
+        }
+
+        .topic-category {
+            color: #FF9900;
+        }
+
+        .q-number {
+            background: var(--aws-gradient);
+        }
+
+        .question {
+            background: rgba(255, 153, 0, 0.1);
+        }
+
+        .page-navigation .nav-btn:hover {
+            background: rgba(255, 153, 0, 0.1);
+            border-color: #FF9900;
+            color: #FF9900;
+        }
+
+        .back-to-top {
+            background: var(--aws-gradient);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#aws" class="nav-back"><i class="fas fa-arrow-left"></i> AWS Cloud</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon aws"><i class="fas fa-chart-line"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">AWS Cloud</span>
+            <h1>Monitoring & Logging</h1>
+            <p class="topic-desc">CloudWatch, X-Ray, CloudTrail - Giám sát và log trên AWS</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#cw-metrics">CloudWatch Metrics</a></li>
+                <li><a href="#cw-alarms">CloudWatch Alarms</a></li>
+                <li><a href="#cw-logs">CloudWatch Logs</a></li>
+                <li><a href="#cw-insights">Logs Insights & Contributor</a></li>
+                <li><a href="#xray">AWS X-Ray</a></li>
+                <li><a href="#cloudtrail">CloudTrail</a></li>
+                <li><a href="#config">AWS Config</a></li>
+                <li><a href="#observability">Observability Stack</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <!-- CLOUDWATCH METRICS -->
+            <section id="cw-metrics" class="content-section">
+                <h2 class="section-title"><span class="section-icon">📊</span>CloudWatch Metrics</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Metrics Fundamentals</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Metrics
+                                    Structure</span></div>
+                            <pre><code>CloudWatch Metrics:
+┌─────────────────────────────────────────────────────────────┐
+│  Namespace: AWS/EC2                                         │
+│  ├── Metric: CPUUtilization                                 │
+│  │   └── Dimensions: InstanceId=i-123, InstanceType=t3      │
+│  │       └── Datapoints: timestamp + value                  │
+│  │                                                          │
+│  └── Metric: NetworkIn                                      │
+│      └── Dimensions: InstanceId=i-123                       │
+└─────────────────────────────────────────────────────────────┘
+
+Key Concepts:
+- Namespace: Container for metrics (AWS/ServiceName or custom)
+- Metric: Time-ordered data points
+- Dimension: Name/value pair to filter (max 30 per metric)
+- Resolution: Standard (1 minute), High (1 second)</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>EC2 Metrics</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Metric</th>
+                                        <th>Description</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>CPUUtilization</strong></td>
+                                        <td>CPU usage %</td>
+                                        <td>Built-in</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>NetworkIn/Out</strong></td>
+                                        <td>Network bytes</td>
+                                        <td>Built-in</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>DiskRead/WriteOps</strong></td>
+                                        <td>Disk operations</td>
+                                        <td>Instance store only</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>StatusCheckFailed</strong></td>
+                                        <td>Health check</td>
+                                        <td>Built-in</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>MemoryUtilization</strong></td>
+                                        <td>RAM usage %</td>
+                                        <td>⚠️ Requires CW Agent</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>DiskSpaceUtilization</strong></td>
+                                        <td>Disk usage %</td>
+                                        <td>⚠️ Requires CW Agent</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Memory & Disk</h4>
+                            <p>RAM and disk usage are NOT available by default. You must install CloudWatch Agent to
+                                collect these metrics.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Custom Metrics</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Publishing Custom Metrics</span></div>
+                            <pre><code>CloudWatchClient cloudWatch = CloudWatchClient.create();
+
+// Put custom metric
+PutMetricDataRequest request = PutMetricDataRequest.builder()
+    .namespace("MyApp/Orders")
+    .metricData(MetricDatum.builder()
+        .metricName("OrdersProcessed")
+        .value(42.0)
+        .unit(StandardUnit.COUNT)
+        .dimensions(
+            Dimension.builder().name("Environment").value("Prod").build(),
+            Dimension.builder().name("Region").value("us-east-1").build()
+        )
+        .storageResolution(1) // High resolution (1 second)
+        .build())
+    .build();
+
+cloudWatch.putMetricData(request);</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Custom Metrics Notes</h4>
+                            <ul>
+                                <li>Standard resolution: 1-minute minimum (free)</li>
+                                <li>High resolution: 1-second ($0.30 per metric/month)</li>
+                                <li>Can use PutMetricData API or CloudWatch Agent</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CLOUDWATCH ALARMS -->
+            <section id="cw-alarms" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔔</span>CloudWatch Alarms</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Alarm Components</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Alarm
+                                    States</span></div>
+                            <pre><code>Alarm States:
+┌─────────────────────────────────────────────────────────────┐
+│  OK                    ALARM               INSUFFICIENT_DATA│
+│  ├── Metric below      ├── Metric above    ├── Not enough  │
+│  │   threshold         │   threshold       │   data points │
+│  │                     │                   │               │
+│  └── Actions:          └── Actions:        └── Actions:    │
+│      - None usually        - SNS notify        - Optional   │
+│                            - Auto Scaling                   │
+│                            - EC2 actions                    │
+│                            - Lambda                         │
+└─────────────────────────────────────────────────────────────┘
+
+Alarm Evaluation:
+- Period: Aggregation time (60s, 300s...)
+- Evaluation Periods: How many periods to evaluate
+- Datapoints to Alarm: How many periods must breach
+
+Example: 3 out of 5 periods with CPU > 80%</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Alarm Actions</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Action Type</th>
+                                        <th>Example</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>SNS Notification</strong></td>
+                                        <td>Email, SMS, Lambda trigger</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Auto Scaling</strong></td>
+                                        <td>Scale out/in policy</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>EC2 Actions</strong></td>
+                                        <td>Stop, terminate, reboot, recover</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Systems Manager</strong></td>
+                                        <td>OpsItem creation</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> Composite Alarms</h4>
+                            <p>Combine multiple alarms with AND/OR logic. Reduces alarm noise by triggering only when
+                                multiple conditions are met.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CLOUDWATCH LOGS -->
+            <section id="cw-logs" class="content-section">
+                <h2 class="section-title"><span class="section-icon">📝</span>CloudWatch Logs</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Log Structure</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Logs
+                                    Hierarchy</span></div>
+                            <pre><code>CloudWatch Logs Structure:
+┌─────────────────────────────────────────────────────────────┐
+│  Log Group: /aws/lambda/my-function                         │
+│  ├── Retention: 1 day - Never expire                        │
+│  ├── Encryption: KMS optional                               │
+│  ├── Metric Filter: Extract metrics from logs              │
+│  │                                                          │
+│  └── Log Streams (per instance/container)                   │
+│      ├── 2024/01/15/[$LATEST]abc123                        │
+│      │   └── Log Events (individual log entries)           │
+│      │       ├── START RequestId: xxx                      │
+│      │       ├── INFO Processing order...                  │
+│      │       └── END RequestId: xxx                        │
+│      └── 2024/01/15/[$LATEST]def456                        │
+└─────────────────────────────────────────────────────────────┘
+
+Log Sources:
+├── Lambda (automatic)
+├── ECS/Fargate (awslogs driver)
+├── EC2 (CloudWatch Agent)
+├── API Gateway, CloudTrail
+└── VPC Flow Logs, Route 53</code></pre>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>📊 Metric Filters</h4>
+                                <ul>
+                                    <li>Parse log patterns</li>
+                                    <li>Create metrics from logs</li>
+                                    <li>Trigger alarms</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>📤 Log Export</h4>
+                                <ul>
+                                    <li>S3 (batch, near real-time)</li>
+                                    <li>Kinesis Data Firehose</li>
+                                    <li>Lambda (subscription)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- LOGS INSIGHTS -->
+            <section id="cw-insights" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔍</span>Logs Insights & Contributor</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>CloudWatch Logs Insights</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Query
+                                    Examples</span></div>
+                            <pre><code>-- Top 20 most recent errors
+fields @timestamp, @message
+| filter @message like /ERROR/
+| sort @timestamp desc
+| limit 20
+
+-- Latency percentiles by API
+fields @timestamp, @message
+| parse @message /Duration: (?<duration>[\d.]+) ms/
+| stats avg(duration) as avg_ms, 
+        pct(duration, 95) as p95_ms,
+        pct(duration, 99) as p99_ms
+  by bin(1h)
+
+-- Count errors per Lambda function
+fields @timestamp, @message, @logStream
+| filter @message like /ERROR/
+| stats count() as error_count by @logStream
+| sort error_count desc</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> CloudWatch Container/Lambda Insights</h4>
+                            <ul>
+                                <li><strong>Container Insights:</strong> ECS/EKS metrics - CPU, memory, network per
+                                    container</li>
+                                <li><strong>Lambda Insights:</strong> Cold starts, memory usage, errors per function
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- X-RAY -->
+            <section id="xray" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔬</span>AWS X-Ray</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Distributed Tracing</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">X-Ray
+                                    Concepts</span></div>
+                            <pre><code>X-Ray Trace:
+┌─────────────────────────────────────────────────────────────┐
+│  Trace (end-to-end request)                                 │
+│  │                                                          │
+│  └── Segment: API Gateway (100ms)                           │
+│      └── Subsegment: Auth check (10ms)                      │
+│                                                             │
+│      └── Segment: Lambda (500ms)                            │
+│          ├── Subsegment: DynamoDB query (50ms)              │
+│          └── Subsegment: S3 getObject (100ms)              │
+│                                                             │
+│          └── Segment: External API (200ms)                  │
+│                                                             │
+│  Annotations: Key-value pairs (indexed, searchable)         │
+│  Metadata: Additional data (not indexed)                    │
+└─────────────────────────────────────────────────────────────┘
+
+Sampling: Control trace volume (default: 1 req/s + 5% of additional)</code></pre>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>📦 SDK Integration</h4>
+                                <ul>
+                                    <li>X-Ray SDK for Java, Python, Node</li>
+                                    <li>Auto-instruments AWS SDK calls</li>
+                                    <li>HTTP client instrumentation</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>🔗 Supported Services</h4>
+                                <ul>
+                                    <li>Lambda (built-in)</li>
+                                    <li>API Gateway, ECS, EKS</li>
+                                    <li>EC2, Elastic Beanstalk</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CLOUDTRAIL -->
+            <section id="cloudtrail" class="content-section">
+                <h2 class="section-title"><span class="section-icon">📋</span>CloudTrail</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>API Audit Logging</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Event Types</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                        <th>Enabled By</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Management Events</strong></td>
+                                        <td>Control plane (create, modify resources)</td>
+                                        <td>Default</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Data Events</strong></td>
+                                        <td>Data plane (S3 object, Lambda invocation)</td>
+                                        <td>Manual (extra cost)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Insights Events</strong></td>
+                                        <td>Unusual activity detection</td>
+                                        <td>Manual (extra cost)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> CloudTrail Best Practices</h4>
+                            <ul>
+                                <li>Enable in all regions (Organization trail)</li>
+                                <li>Enable log file integrity validation</li>
+                                <li>Encrypt with KMS</li>
+                                <li>Store in separate security account</li>
+                                <li>Integrate with CloudWatch Logs for alerting</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AWS CONFIG -->
+            <section id="config" class="content-section">
+                <h2 class="section-title"><span class="section-icon">⚙️</span>AWS Config</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Resource Configuration Tracking</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Config
+                                    vs CloudTrail</span></div>
+                            <pre><code>CloudTrail vs Config:
+┌─────────────────────────────────────────────────────────────┐
+│  CloudTrail                     │  Config                   │
+│  ─────────────────────────────  │  ─────────────────────    │
+│  WHO did WHAT and WHEN?         │  WHAT is the current     │
+│                                 │  configuration?           │
+│  - API call history             │  - Resource configuration │
+│  - User identity                │  - Compliance status      │
+│  - Source IP                    │  - Config timeline        │
+│  - Request parameters           │  - Relationships          │
+│                                 │                           │
+│  Example: Who modified SG?      │  Example: Is S3 public?  │
+└─────────────────────────────────────────────────────────────┘
+
+Config Rules:
+├── AWS Managed: 400+ predefined rules
+├── Custom Rules: Lambda-based evaluation
+└── Conformance Packs: Compliance frameworks (HIPAA, PCI)</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- OBSERVABILITY STACK -->
+            <section id="observability" class="content-section">
+                <h2 class="section-title"><span class="section-icon">👁️</span>Observability Stack</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Unified Monitoring</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">AWS
+                                    Observability Services</span></div>
+                            <pre><code>Three Pillars of Observability:
+┌─────────────────────────────────────────────────────────────┐
+│  METRICS          │  LOGS              │  TRACES            │
+│  CloudWatch       │  CloudWatch Logs   │  X-Ray            │
+│  Metrics          │                    │                   │
+│                   │                    │                   │
+│  ○ What happened? │  ○ Why?            │  ○ Where exactly? │
+│  ○ Number-based   │  ○ Text-based      │  ○ Request flow   │
+└─────────────────────────────────────────────────────────────┘
+
+Additional Services:
+├── CloudWatch Dashboards: Unified visualization
+├── CloudWatch ServiceLens: X-Ray + Metrics + Logs integration
+├── CloudWatch Synthetics: Canary monitoring (uptime)
+├── CloudWatch RUM: Real User Monitoring (browser)
+└── CloudWatch Evidently: Feature flags + A/B testing</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INTERVIEW QUESTIONS -->
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>EC2 có những metrics nào mặc định? RAM thì sao?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Mặc định:</strong> CPU, Network, Disk (instance store), Status checks.</p>
+                            <p><strong>RAM, Disk usage:</strong> KHÔNG có mặc định, cần CloudWatch Agent.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>CloudWatch Alarm states?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>OK:</strong> Metric below threshold</li>
+                                <li><strong>ALARM:</strong> Metric breached threshold</li>
+                                <li><strong>INSUFFICIENT_DATA:</strong> Not enough data points</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>CloudTrail vs CloudWatch Logs?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>CloudTrail:</strong> API audit, who did what when, security/compliance</li>
+                                <li><strong>CW Logs:</strong> Application logs, system logs, troubleshooting</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>X-Ray dùng để làm gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Distributed tracing cho microservices. Track requests across services (Lambda → DynamoDB
+                                → S3). Identify bottlenecks, errors, latency. Uses segments, subsegments, annotations.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>CloudTrail Management vs Data Events?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Management:</strong> Control plane operations (CreateBucket,
+                                    ModifySecurityGroup) - default enabled</li>
+                                <li><strong>Data:</strong> Data plane operations (S3 GetObject, Lambda Invoke) - extra
+                                    cost</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>AWS Config làm gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Track resource configuration changes over time. Evaluate compliance with Config Rules.
+                                Answer "what is the current config?" vs CloudTrail's "who made what API call?"</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>CloudWatch Logs Insights?</p>
+                        </div>
+                        <div class="answer">
+                            <p>SQL-like query language for logs. Search, filter, aggregate log data. Create
+                                visualizations. Query multiple log groups. Pay per data scanned.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>Custom Metrics resolution?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Standard:</strong> 1 minute minimum, included in pricing</li>
+                                <li><strong>High resolution:</strong> 1 second, extra $0.30/metric/month</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="messaging.html" class="nav-btn prev"><i
+                        class="fas fa-arrow-left"></i><span>Messaging</span></a>
+                <a href="architecture.html" class="nav-btn next"><span>Architecture</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

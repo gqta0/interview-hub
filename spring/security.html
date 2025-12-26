@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Security - Spring Boot Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#spring" class="nav-back"><i class="fas fa-arrow-left"></i> Spring Boot</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon spring"><i class="fas fa-shield-alt"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">Spring Boot</span>
+            <h1>Spring Security</h1>
+            <p class="topic-desc">Authentication, Authorization, JWT, OAuth2, Method Security</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#architecture">Security Architecture</a></li>
+                <li><a href="#authentication">Authentication</a></li>
+                <li><a href="#authorization">Authorization</a></li>
+                <li><a href="#jwt">JWT Authentication</a></li>
+                <li><a href="#method-security">Method Security</a></li>
+                <li><a href="#csrf">CSRF & CORS</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <section class="content-section">
+                <h2 id="architecture" class="section-title"><span class="section-icon">🏗️</span>Security Architecture
+                </h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Filter Chain</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span></div>
+                            <pre><code>HTTP Request
+     ↓
+DelegatingFilterProxy
+     ↓
+FilterChainProxy
+     ↓
+┌─────────────────────────────────────────┐
+│         Security Filter Chain           │
+│  ├── SecurityContextPersistenceFilter   │
+│  ├── UsernamePasswordAuthFilter         │
+│  ├── BasicAuthFilter                    │
+│  ├── ExceptionTranslationFilter         │
+│  └── FilterSecurityInterceptor          │
+└─────────────────────────────────────────┘
+     ↓
+Authentication Manager
+     ↓
+Authentication Provider
+     ↓
+UserDetailsService
+     ↓
+Controller (if authorized)</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Key Components</h4>
+                            <ul>
+                                <li><strong>SecurityContextHolder:</strong> Holds current user's security context</li>
+                                <li><strong>Authentication:</strong> Represents current user's credentials/details</li>
+                                <li><strong>AuthenticationManager:</strong> Processes authentication requests</li>
+                                <li><strong>UserDetailsService:</strong> Loads user data from database</li>
+                                <li><strong>GrantedAuthority:</strong> Represents permissions (roles)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="authentication" class="section-title"><span class="section-icon">🔐</span>Authentication</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Security Configuration</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Spring
+                                    Security 6.x Config</span></div>
+                            <pre><code>@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+    
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
+            .csrf(csrf -> csrf.disable())  // Disable for REST API
+            .sessionManagement(session -> 
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/users/**").hasAnyRole("USER", "ADMIN")
+                .anyRequest().authenticated()
+            )
+            .httpBasic(Customizer.withDefaults())  // Basic auth
+            .build();
+    }
+    
+    @Bean
+    public UserDetailsService userDetailsService() {
+        UserDetails user = User.builder()
+            .username("user")
+            .password(passwordEncoder().encode("password"))
+            .roles("USER")
+            .build();
+        return new InMemoryUserDetailsManager(user);
+    }
+    
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Custom
+                                    UserDetailsService</span></div>
+                            <pre><code>@Service
+public class CustomUserDetailsService implements UserDetailsService {
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Override
+    public UserDetails loadUserByUsername(String username) 
+            throws UsernameNotFoundException {
+        User user = userRepository.findByEmail(username)
+            .orElseThrow(() -> new UsernameNotFoundException(
+                "User not found: " + username));
+        
+        return org.springframework.security.core.userdetails.User.builder()
+            .username(user.getEmail())
+            .password(user.getPassword())
+            .authorities(user.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                .toList())
+            .build();
+    }
+}
+
+// Get current user
+@GetMapping("/me")
+public User getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
+    return userService.findByEmail(userDetails.getUsername());
+}
+
+// Or from SecurityContext
+Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+String username = auth.getName();</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="authorization" class="section-title"><span class="section-icon">🛡️</span>Authorization</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Request
+                                    Authorization</span></div>
+                            <pre><code>// URL-based authorization
+.authorizeHttpRequests(auth -> auth
+    // Public endpoints
+    .requestMatchers("/", "/home", "/public/**").permitAll()
+    .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+    
+    // Role-based (ROLE_ prefix added automatically)
+    .requestMatchers("/api/admin/**").hasRole("ADMIN")
+    .requestMatchers("/api/users/**").hasAnyRole("USER", "ADMIN")
+    
+    // Authority-based (exact match)
+    .requestMatchers("/api/reports/**").hasAuthority("READ_REPORTS")
+    
+    // Multiple conditions
+    .requestMatchers("/api/secure/**").authenticated()
+    
+    // Custom access decision
+    .requestMatchers("/api/custom/**").access((auth, context) -> {
+        boolean hasAdminRole = auth.get().getAuthorities().stream()
+            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        return new AuthorizationDecision(hasAdminRole);
+    })
+    
+    // Default
+    .anyRequest().authenticated()
+)</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>hasRole vs hasAuthority</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Method</th>
+                                        <th>Prefix</th>
+                                        <th>Example</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>hasRole("ADMIN")</code></td>
+                                        <td>ROLE_ added</td>
+                                        <td>Checks ROLE_ADMIN</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>hasAuthority("ROLE_ADMIN")</code></td>
+                                        <td>Exact match</td>
+                                        <td>Checks ROLE_ADMIN</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>hasAuthority("DELETE_USER")</code></td>
+                                        <td>Exact match</td>
+                                        <td>Checks DELETE_USER</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="jwt" class="section-title"><span class="section-icon">🎫</span>JWT Authentication</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>JWT Implementation</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">JWT
+                                    Utility</span></div>
+                            <pre><code>@Component
+public class JwtUtils {
+    @Value("${jwt.secret}")
+    private String secret;
+    
+    @Value("${jwt.expiration}")
+    private long expiration;
+    
+    public String generateToken(UserDetails userDetails) {
+        Map&lt;String, Object&gt; claims = new HashMap&lt;&gt;();
+        claims.put("roles", userDetails.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .toList());
+        
+        return Jwts.builder()
+            .setClaims(claims)
+            .setSubject(userDetails.getUsername())
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(System.currentTimeMillis() + expiration))
+            .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+            .compact();
+    }
+    
+    public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+    
+    public boolean validateToken(String token, UserDetails userDetails) {
+        final String username = extractUsername(token);
+        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+    }
+    
+    private Key getSigningKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(secret);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+}</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">JWT
+                                    Filter</span></div>
+                            <pre><code>@Component
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    
+    @Autowired
+    private JwtUtils jwtUtils;
+    
+    @Autowired
+    private UserDetailsService userDetailsService;
+    
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) 
+            throws ServletException, IOException {
+        
+        String header = request.getHeader("Authorization");
+        
+        if (header == null || !header.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        
+        String token = header.substring(7);
+        String username = jwtUtils.extractUsername(token);
+        
+        if (username != null && SecurityContextHolder.getContext()
+                .getAuthentication() == null) {
+            
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            
+            if (jwtUtils.validateToken(token, userDetails)) {
+                UsernamePasswordAuthenticationToken authToken = 
+                    new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities());
+                authToken.setDetails(
+                    new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+        }
+        
+        filterChain.doFilter(request, response);
+    }
+}
+
+// Add filter to chain
+@Bean
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    return http
+        // ... other config
+        .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+        .build();
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="method-security" class="section-title"><span class="section-icon">🔒</span>Method Security</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Method-Level Security</span></div>
+                            <pre><code>// Enable method security
+@Configuration
+@EnableMethodSecurity  // Spring Security 6.x
+public class MethodSecurityConfig { }
+
+// Usage
+@Service
+public class UserService {
+    
+    // Role-based
+    @PreAuthorize("hasRole('ADMIN')")
+    public void deleteUser(Long id) { }
+    
+    // Authority-based
+    @PreAuthorize("hasAuthority('DELETE_USER')")
+    public void deleteUser(Long id) { }
+    
+    // Check parameter
+    @PreAuthorize("#userId == authentication.principal.id or hasRole('ADMIN')")
+    public User getUser(Long userId) { }
+    
+    // Post-filter results
+    @PostFilter("filterObject.owner == authentication.name")
+    public List&lt;Document&gt; getDocuments() { }
+    
+    // Post-authorize on return value
+    @PostAuthorize("returnObject.owner == authentication.name")
+    public Document getDocument(Long id) { }
+    
+    // Complex expressions
+    @PreAuthorize("@securityService.canAccessUser(#userId, authentication)")
+    public User getUser(Long userId) { }
+}
+
+// Custom security service for complex logic
+@Service("securityService")
+public class SecurityService {
+    public boolean canAccessUser(Long userId, Authentication auth) {
+        // Complex authorization logic
+        return true;
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="csrf" class="section-title"><span class="section-icon">🛡️</span>CSRF & CORS</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">CSRF &
+                                    CORS Configuration</span></div>
+                            <pre><code>@Bean
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    return http
+        // CSRF - disable for stateless REST APIs
+        .csrf(csrf -> csrf.disable())
+        
+        // Or configure CSRF with cookie
+        .csrf(csrf -> csrf
+            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+            .ignoringRequestMatchers("/api/public/**")
+        )
+        
+        // CORS
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .build();
+}
+
+@Bean
+public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration config = new CorsConfiguration();
+    config.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+    config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+    config.setAllowedHeaders(Arrays.asList("*"));
+    config.setAllowCredentials(true);
+    config.setMaxAge(3600L);
+    
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/api/**", config);
+    return source;
+}
+
+// Or per-controller
+@RestController
+@CrossOrigin(origins = "http://localhost:3000")
+public class UserController { }</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> When to Disable CSRF</h4>
+                            <ul>
+                                <li>REST APIs with JWT (stateless)</li>
+                                <li>Non-browser clients (mobile apps)</li>
+                                <li>Keep CSRF for traditional web apps with sessions</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>How does Spring Security work?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Uses <strong>filter chain</strong> intercepting requests. Key components:
+                                SecurityFilterChain, AuthenticationManager, UserDetailsService, SecurityContextHolder.
+                                Filters process authentication/authorization before reaching controller.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>Authentication vs Authorization?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Authentication:</strong> Verify identity (who are you?).
+                                <strong>Authorization:</strong> Verify permissions (what can you do?). Authentication
+                                happens first, then authorization.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>How to implement JWT auth?</p>
+                        </div>
+                        <div class="answer">
+                            <p>1) Create JwtUtils for token generation/validation. 2) Create JwtFilter extending
+                                OncePerRequestFilter. 3) Add filter before UsernamePasswordAuthFilter. 4) Disable
+                                sessions (STATELESS).</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>What is CSRF and when to disable?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>CSRF:</strong> Cross-Site Request Forgery attack. Disable for stateless REST APIs
+                                (JWT tokens provide protection). Keep enabled for session-based web apps.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>@PreAuthorize vs @Secured?</p>
+                        </div>
+                        <div class="answer">
+                            <p><code>@PreAuthorize</code> is more powerful: supports SpEL, method arguments, return
+                                values. <code>@Secured</code> is simpler, only role names. Prefer @PreAuthorize for
+                                flexibility.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="data-jpa.html" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>Data JPA</span></a>
+                <a href="transaction.html" class="nav-btn next"><span>Transaction</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

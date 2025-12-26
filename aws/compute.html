@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compute Services - AWS Cloud Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .topic-icon.aws {
+            background: var(--aws-gradient);
+        }
+
+        .topic-category {
+            color: #FF9900;
+        }
+
+        .q-number {
+            background: var(--aws-gradient);
+        }
+
+        .question {
+            background: rgba(255, 153, 0, 0.1);
+        }
+
+        .page-navigation .nav-btn:hover {
+            background: rgba(255, 153, 0, 0.1);
+            border-color: #FF9900;
+            color: #FF9900;
+        }
+
+        .back-to-top {
+            background: var(--aws-gradient);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#aws" class="nav-back"><i class="fas fa-arrow-left"></i> AWS Cloud</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon aws"><i class="fas fa-server"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">AWS Cloud</span>
+            <h1>Compute Services</h1>
+            <p class="topic-desc">EC2, Lambda, ECS, EKS, Auto Scaling, Elastic Beanstalk - Dịch vụ tính toán AWS</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#ec2-basics">EC2 Fundamentals</a></li>
+                <li><a href="#ec2-types">EC2 Instance Types</a></li>
+                <li><a href="#ec2-pricing">EC2 Pricing Models</a></li>
+                <li><a href="#ec2-advanced">EC2 Advanced</a></li>
+                <li><a href="#ami">AMI & User Data</a></li>
+                <li><a href="#asg">Auto Scaling</a></li>
+                <li><a href="#lambda">AWS Lambda</a></li>
+                <li><a href="#lambda-advanced">Lambda Advanced</a></li>
+                <li><a href="#containers">ECS & EKS</a></li>
+                <li><a href="#fargate">Fargate & App Runner</a></li>
+                <li><a href="#beanstalk">Elastic Beanstalk</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <!-- EC2 FUNDAMENTALS -->
+            <section id="ec2-basics" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🖥️</span>EC2 Fundamentals</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>EC2 Core Concepts</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">EC2
+                                    Launch Components</span></div>
+                            <pre><code>EC2 Instance Launch:
+┌─────────────────────────────────────────────────────────────┐
+│  1. AMI (Amazon Machine Image)                              │
+│     └── OS + pre-installed software                         │
+│                                                             │
+│  2. Instance Type (family + size)                           │
+│     └── t3.micro, m5.large, c6i.xlarge...                  │
+│                                                             │
+│  3. Network Configuration                                   │
+│     ├── VPC & Subnet                                        │
+│     ├── Security Groups                                     │
+│     └── Public/Elastic IP (optional)                        │
+│                                                             │
+│  4. Storage                                                 │
+│     ├── Root EBS Volume                                     │
+│     └── Additional EBS/Instance Store                       │
+│                                                             │
+│  5. Key Pair (SSH access)                                   │
+│                                                             │
+│  6. IAM Role (permissions)                                  │
+│                                                             │
+│  7. User Data (bootstrap script)                            │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Instance Lifecycle States</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>State</th>
+                                        <th>Description</th>
+                                        <th>Billing</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>pending</strong></td>
+                                        <td>Launching</td>
+                                        <td>No</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>running</strong></td>
+                                        <td>Active</td>
+                                        <td>Yes</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>stopping</strong></td>
+                                        <td>Preparing to stop</td>
+                                        <td>Varies</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>stopped</strong></td>
+                                        <td>Stopped (EBS-backed only)</td>
+                                        <td>No (EBS charged)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>shutting-down</strong></td>
+                                        <td>Preparing to terminate</td>
+                                        <td>No</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>terminated</strong></td>
+                                        <td>Deleted</td>
+                                        <td>No</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- EC2 INSTANCE TYPES -->
+            <section id="ec2-types" class="content-section">
+                <h2 class="section-title"><span class="section-icon">📊</span>EC2 Instance Types</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Instance Family Categories</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Families</th>
+                                        <th>Use Cases</th>
+                                        <th>Key Features</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>General Purpose</strong></td>
+                                        <td>t3, t3a, m5, m6i, m7g</td>
+                                        <td>Web servers, dev environments</td>
+                                        <td>Balanced CPU/Memory/Network</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Compute Optimized</strong></td>
+                                        <td>c5, c6i, c7g</td>
+                                        <td>Batch processing, gaming, ML inference</td>
+                                        <td>High CPU-to-memory ratio</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Memory Optimized</strong></td>
+                                        <td>r5, r6i, x2idn</td>
+                                        <td>In-memory databases, caching</td>
+                                        <td>High memory-to-CPU ratio</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Storage Optimized</strong></td>
+                                        <td>i3, i4i, d2, d3</td>
+                                        <td>Data warehousing, HDFS</td>
+                                        <td>High sequential read/write</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Accelerated Computing</strong></td>
+                                        <td>p4, p5, g4, g5, inf2</td>
+                                        <td>ML training, GPU rendering</td>
+                                        <td>GPU/FPGA/Inferentia</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span
+                                    class="code-title">Instance Naming Convention</span></div>
+                            <pre><code>Instance Type: m5.2xlarge
+
+m     5     .    2xlarge
+│     │          │
+│     │          └── Size (nano, micro, small, medium, large, xlarge, 2xlarge...)
+│     │
+│     └── Generation (higher = newer, better performance/price)
+│
+└── Family (m=general, c=compute, r=memory, t=burstable...)
+
+Additional Attributes:
+- "a" suffix → AMD processors (cheaper)
+- "g" suffix → AWS Graviton (ARM, best price/performance)
+- "n" suffix → Network optimized
+- "d" suffix → NVMe instance storage
+- "z" suffix → High frequency</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> T-series Burstable</h4>
+                            <p>T3/T3a instances have CPU credits. Below baseline = accumulate credits. Above baseline =
+                                use credits. When credits exhausted → throttled (unless Unlimited mode).</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- EC2 PRICING -->
+            <section id="ec2-pricing" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💰</span>EC2 Pricing Models</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Pricing Options</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Model</th>
+                                        <th>Discount</th>
+                                        <th>Commitment</th>
+                                        <th>Best For</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>On-Demand</strong></td>
+                                        <td>0%</td>
+                                        <td>None</td>
+                                        <td>Short-term, unpredictable</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Savings Plans</strong></td>
+                                        <td>Up to 72%</td>
+                                        <td>1-3 years, $/hour</td>
+                                        <td>Flexible, consistent usage</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Reserved Instances</strong></td>
+                                        <td>Up to 72%</td>
+                                        <td>1-3 years, specific config</td>
+                                        <td>Steady-state workloads</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Spot Instances</strong></td>
+                                        <td>Up to 90%</td>
+                                        <td>None, but can be interrupted</td>
+                                        <td>Fault-tolerant, flexible</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Dedicated Hosts</strong></td>
+                                        <td>Varies</td>
+                                        <td>On-demand or reserved</td>
+                                        <td>Compliance, BYOL</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Dedicated Instances</strong></td>
+                                        <td>Varies</td>
+                                        <td>Per-instance billing</td>
+                                        <td>Instance-level isolation</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>📋 Reserved Instance Types</h4>
+                                <ul>
+                                    <li><strong>Standard RI:</strong> Up to 72% discount, less flexibility</li>
+                                    <li><strong>Convertible RI:</strong> Up to 66% discount, can change instance type
+                                    </li>
+                                    <li><strong>Scheduled RI:</strong> Reserved for specific time windows</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>⚡ Savings Plans Types</h4>
+                                <ul>
+                                    <li><strong>Compute SP:</strong> Most flexible, any instance, region, OS</li>
+                                    <li><strong>EC2 Instance SP:</strong> Specific instance family & region</li>
+                                    <li><strong>SageMaker SP:</strong> For SageMaker usage</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Spot
+                                    Instance Concepts</span></div>
+                            <pre><code>Spot Instance Lifecycle:
+┌─────────────────────────────────────────────────────────────┐
+│  1. Define max price (optional, default = On-Demand)        │
+│  2. Request Spot Instance                                   │
+│  3. If Spot price < max price → Instance launches          │
+│  4. Instance runs until:                                    │
+│     - You terminate                                         │
+│     - Spot price > max price (2-min warning)               │
+│     - Capacity no longer available                          │
+└─────────────────────────────────────────────────────────────┘
+
+Spot Interruption Handling:
+- 2-minute warning via instance metadata or CloudWatch
+- Options: Terminate, Stop, or Hibernate
+
+Spot Strategies:
+- Spot Fleet: Multiple instance types/AZs for capacity
+- Spot Block: 1-6 hours reserved (deprecated in some regions)
+- Capacity-optimized: Choose pools with most capacity</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- EC2 ADVANCED -->
+            <section id="ec2-advanced" class="content-section">
+                <h2 class="section-title"><span class="section-icon">⚙️</span>EC2 Advanced Features</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Placement Groups</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Strategy</th>
+                                        <th>Description</th>
+                                        <th>Use Case</th>
+                                        <th>Limitations</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Cluster</strong></td>
+                                        <td>Same rack, low latency</td>
+                                        <td>HPC, big data, low-latency apps</td>
+                                        <td>Single AZ, rack failure risk</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Spread</strong></td>
+                                        <td>Different hardware</td>
+                                        <td>Critical apps, HA</td>
+                                        <td>Max 7 instances per AZ</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Partition</strong></td>
+                                        <td>Separate partitions (racks)</td>
+                                        <td>HDFS, Cassandra, Kafka</td>
+                                        <td>Up to 7 partitions per AZ</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>ENI, ENA & EFA</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>ENI</strong></td>
+                                        <td>Elastic Network Interface</td>
+                                        <td>Basic networking, multiple IPs</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ENA</strong></td>
+                                        <td>Elastic Network Adapter (Enhanced)</td>
+                                        <td>Up to 100 Gbps</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>EFA</strong></td>
+                                        <td>Elastic Fabric Adapter</td>
+                                        <td>HPC, MPI, ML (bypass kernel)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Hibernate</h4>
+                            <ul>
+                                <li>RAM contents saved to root EBS volume</li>
+                                <li>Faster boot (no OS boot, no app init)</li>
+                                <li>Root volume must be encrypted EBS</li>
+                                <li>Max 60 days hibernation</li>
+                                <li>RAM size must be < 150 GB</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AMI -->
+            <section id="ami" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💿</span>AMI & User Data</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Amazon Machine Images</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">AMI
+                                    Lifecycle</span></div>
+                            <pre><code>Create Custom AMI:
+┌─────────────────────────────────────────────────────────────┐
+│  1. Launch EC2 with base AMI                                │
+│  2. Configure: install software, settings                   │
+│  3. Stop instance (for data integrity)                      │
+│  4. Create AMI (creates EBS snapshots)                      │
+│  5. Launch new instances from custom AMI                    │
+└─────────────────────────────────────────────────────────────┘
+
+AMI Types:
+├── Amazon Linux 2023 (AWS optimized)
+├── Ubuntu, Red Hat, SUSE, Windows
+├── Community AMIs
+├── Marketplace AMIs (may have additional cost)
+└── My AMIs (custom)
+
+Cross-Region: Copy AMI to other regions (copies snapshots)</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Bash</span><span class="code-title">User
+                                    Data Script</span></div>
+                            <pre><code>#!/bin/bash
+# User Data runs as root on first boot only
+
+# Update packages
+yum update -y
+
+# Install Apache
+yum install -y httpd
+systemctl start httpd
+systemctl enable httpd
+
+# Install application
+aws s3 cp s3://my-bucket/app.war /var/lib/tomcat/webapps/
+
+# Access instance metadata
+TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" \
+    -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" \
+    http://169.254.169.254/latest/meta-data/instance-id)</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> Instance Metadata Service (IMDS)</h4>
+                            <p><strong>IMDSv2:</strong> Token-based (more secure). URL:
+                                http://169.254.169.254/latest/meta-data/</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AUTO SCALING -->
+            <section id="asg" class="content-section">
+                <h2 class="section-title"><span class="section-icon">📈</span>Auto Scaling</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Auto Scaling Groups</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">ASG
+                                    Components</span></div>
+                            <pre><code>Auto Scaling Group:
+┌─────────────────────────────────────────────────────────────┐
+│  Launch Template / Launch Configuration                     │
+│  ├── AMI ID                                                 │
+│  ├── Instance type(s)                                       │
+│  ├── Key pair, Security groups                              │
+│  ├── IAM role                                               │
+│  └── User data                                              │
+├─────────────────────────────────────────────────────────────┤
+│  Capacity Settings                                          │
+│  ├── Minimum: 2 (always running)                            │
+│  ├── Desired: 4 (target capacity)                           │
+│  └── Maximum: 10 (upper limit)                              │
+├─────────────────────────────────────────────────────────────┤
+│  Health Checks                                              │
+│  ├── EC2 (default): Instance status                         │
+│  └── ELB: Load balancer health check                        │
+├─────────────────────────────────────────────────────────────┤
+│  Scaling Policies                                           │
+│  └── Target Tracking / Step / Simple / Scheduled            │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Scaling Policy Types</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                        <th>Example</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Target Tracking</strong></td>
+                                        <td>Maintain metric at target value</td>
+                                        <td>CPU at 50%</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Step Scaling</strong></td>
+                                        <td>Multiple adjustments based on alarm</td>
+                                        <td>CPU 60% → +2, 80% → +4</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Simple Scaling</strong></td>
+                                        <td>Single adjustment, wait for cooldown</td>
+                                        <td>Alarm → +1 instance</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Scheduled</strong></td>
+                                        <td>Time-based scaling</td>
+                                        <td>Scale to 10 at 9 AM</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Predictive</strong></td>
+                                        <td>ML-based forecasting</td>
+                                        <td>Auto-predict traffic patterns</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Advanced Features</h4>
+                            <ul>
+                                <li><strong>Cooldown:</strong> Prevents rapid scale in/out (default 300s)</li>
+                                <li><strong>Warm Pools:</strong> Pre-initialized stopped instances</li>
+                                <li><strong>Instance Refresh:</strong> Rolling update instances</li>
+                                <li><strong>Lifecycle Hooks:</strong> Custom actions during launch/terminate</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- LAMBDA -->
+            <section id="lambda" class="content-section">
+                <h2 class="section-title"><span class="section-icon">⚡</span>AWS Lambda</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Lambda Fundamentals</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Lambda Limits</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Resource</th>
+                                        <th>Limit</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Memory</td>
+                                        <td>128 MB - 10 GB (1 MB increments)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Timeout</td>
+                                        <td>1 second - 15 minutes</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Deployment package</td>
+                                        <td>50 MB (zipped), 250 MB (unzipped)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Container image</td>
+                                        <td>10 GB</td>
+                                    </tr>
+                                    <tr>
+                                        <td>/tmp storage</td>
+                                        <td>512 MB - 10 GB</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Environment variables</td>
+                                        <td>4 KB total</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Concurrent executions</td>
+                                        <td>1,000 default (can increase)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Lambda
+                                    Handler</span></div>
+                            <pre><code>public class OrderHandler implements RequestHandler<APIGatewayProxyRequestEvent, 
+                                                       APIGatewayProxyResponseEvent> {
+    
+    // Static initialization - runs once per cold start
+    private static final DynamoDbClient dynamoDb = DynamoDbClient.create();
+    
+    @Override
+    public APIGatewayProxyResponseEvent handleRequest(
+            APIGatewayProxyRequestEvent event, Context context) {
+        
+        LambdaLogger logger = context.getLogger();
+        logger.log("Remaining time: " + context.getRemainingTimeInMillis());
+        
+        // Process request
+        String body = event.getBody();
+        Order order = parseOrder(body);
+        
+        // Save to DynamoDB
+        saveOrder(order);
+        
+        return new APIGatewayProxyResponseEvent()
+            .withStatusCode(200)
+            .withBody("{\"orderId\": \"" + order.getId() + "\"}");
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- LAMBDA ADVANCED -->
+            <section id="lambda-advanced" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔧</span>Lambda Advanced</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Concurrency & Cold Start</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Lambda
+                                    Execution Model</span></div>
+                            <pre><code>Cold Start vs Warm Start:
+┌─────────────────────────────────────────────────────────────┐
+│  COLD START (First invocation / scaling up)                 │
+│  ├── Download code                                          │
+│  ├── Create execution environment                           │
+│  ├── Initialize runtime                                     │
+│  ├── Run static initialization (outside handler)           │ ← Initialization
+│  └── Run handler function                                   │ ← Invocation
+│                                                             │
+│  WARM START (Reusing existing environment)                  │
+│  └── Run handler function only                              │ ← Invocation
+└─────────────────────────────────────────────────────────────┘
+
+Concurrency Types:
+├── Reserved: Guaranteed pool for function (no scaling beyond)
+├── Provisioned: Pre-initialized environments (no cold start)
+└── Unreserved: Shared account pool (default)</code></pre>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>🧊 Reduce Cold Start</h4>
+                                <ul>
+                                    <li>Provisioned Concurrency ($$$)</li>
+                                    <li>Smaller deployment package</li>
+                                    <li>Initialize SDK outside handler</li>
+                                    <li>Use SnapStart (Java only)</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>📦 Lambda Layers</h4>
+                                <ul>
+                                    <li>Share code across functions</li>
+                                    <li>Libraries, custom runtimes</li>
+                                    <li>Up to 5 layers per function</li>
+                                    <li>250 MB total unzipped</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Event Sources & Destinations</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Invocation Models</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Model</th>
+                                        <th>Retry</th>
+                                        <th>Sources</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Synchronous</strong></td>
+                                        <td>No (client retries)</td>
+                                        <td>API Gateway, ALB, Cognito</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Asynchronous</strong></td>
+                                        <td>2 retries</td>
+                                        <td>S3, SNS, EventBridge</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Event Source Mapping</strong></td>
+                                        <td>Until success/discard</td>
+                                        <td>SQS, Kinesis, DynamoDB Streams</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> Destinations</h4>
+                            <p>For async invocations, configure destinations for success/failure: SQS, SNS, Lambda,
+                                EventBridge.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CONTAINERS -->
+            <section id="containers" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🐳</span>ECS & EKS</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Container Services Comparison</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>ECS</th>
+                                        <th>EKS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Orchestrator</strong></td>
+                                        <td>AWS proprietary</td>
+                                        <td>Kubernetes</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Learning Curve</strong></td>
+                                        <td>Lower</td>
+                                        <td>Higher</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Portability</strong></td>
+                                        <td>AWS only</td>
+                                        <td>Any K8s environment</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Pricing</strong></td>
+                                        <td>Free (pay for resources)</td>
+                                        <td>$0.10/hour per cluster</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>AWS Integration</strong></td>
+                                        <td>Deep, native</td>
+                                        <td>Good (via add-ons)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Best For</strong></td>
+                                        <td>AWS-centric, simpler setup</td>
+                                        <td>Multi-cloud, K8s ecosystem</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">ECS
+                                    Components</span></div>
+                            <pre><code>ECS Architecture:
+┌─────────────────────────────────────────────────────────────┐
+│  Cluster                                                    │
+│  ├── Service (maintains desired count)                     │
+│  │   ├── Task Definition (blueprint)                       │
+│  │   │   ├── Container definitions                         │
+│  │   │   ├── CPU/Memory requirements                       │
+│  │   │   ├── IAM Task Role                                 │
+│  │   │   └── Networking mode                               │
+│  │   └── Tasks (running containers)                        │
+│  │       ├── Task 1 (container instance 1)                 │
+│  │       └── Task 2 (container instance 2)                 │
+│  └── Capacity Provider                                      │
+│      ├── EC2 (manage your instances)                       │
+│      └── Fargate (serverless)                              │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FARGATE -->
+            <section id="fargate" class="content-section">
+                <h2 class="section-title"><span class="section-icon">☁️</span>Fargate & App Runner</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Serverless Containers</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Fargate</th>
+                                        <th>App Runner</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Use Case</strong></td>
+                                        <td>General containers</td>
+                                        <td>Web apps/APIs</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Complexity</strong></td>
+                                        <td>Medium (define tasks)</td>
+                                        <td>Low (just deploy)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Source</strong></td>
+                                        <td>ECR image</td>
+                                        <td>ECR or GitHub</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Networking</strong></td>
+                                        <td>Full VPC control</td>
+                                        <td>Managed (no VPC by default)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Scaling</strong></td>
+                                        <td>Manual or Service Auto Scaling</td>
+                                        <td>Automatic</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>HTTPS</strong></td>
+                                        <td>Configure ALB</td>
+                                        <td>Built-in</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ELASTIC BEANSTALK -->
+            <section id="beanstalk" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🌱</span>Elastic Beanstalk</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Managed Platform</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Deployment Policies</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Policy</th>
+                                        <th>Downtime</th>
+                                        <th>Speed</th>
+                                        <th>Cost</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>All at once</strong></td>
+                                        <td>Yes</td>
+                                        <td>Fastest</td>
+                                        <td>No extra</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Rolling</strong></td>
+                                        <td>Reduced capacity</td>
+                                        <td>Medium</td>
+                                        <td>No extra</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Rolling with batch</strong></td>
+                                        <td>Full capacity</td>
+                                        <td>Medium</td>
+                                        <td>Extra instances</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Immutable</strong></td>
+                                        <td>No</td>
+                                        <td>Slow</td>
+                                        <td>2x capacity</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Blue/Green</strong></td>
+                                        <td>No</td>
+                                        <td>Slow</td>
+                                        <td>2x capacity</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> EB Features</h4>
+                            <ul>
+                                <li>Supports Java, .NET, PHP, Node.js, Python, Ruby, Go, Docker</li>
+                                <li>Manages EC2, ASG, ELB, RDS automatically</li>
+                                <li>Full control via .ebextensions configs</li>
+                                <li>Free service (pay only for resources)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INTERVIEW QUESTIONS -->
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>On-Demand vs Reserved vs Spot Instances?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>On-Demand:</strong> Full price, no commitment, unpredictable workloads</li>
+                                <li><strong>Reserved:</strong> Up to 72% off, 1-3 year commit, steady-state</li>
+                                <li><strong>Spot:</strong> Up to 90% off, có thể bị interrupt, fault-tolerant workloads
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>Placement Groups - Cluster vs Spread vs Partition?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Cluster:</strong> Same rack, low latency, HPC workloads</li>
+                                <li><strong>Spread:</strong> Different hardware, max 7/AZ, critical HA apps</li>
+                                <li><strong>Partition:</strong> Separate racks (partitions), HDFS/Kafka/Cassandra</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>Lambda Cold Start là gì? Cách giảm?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Cold Start:</strong> Thời gian khởi tạo environment + runtime + static code khi
+                                không có warm container.</p>
+                            <p><strong>Giảm:</strong> Provisioned Concurrency, SnapStart (Java), smaller package, init
+                                SDK outside handler, optimize dependencies.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>ECS vs EKS - khi nào dùng?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>ECS:</strong> AWS-centric, simpler, deep AWS integration, no K8s expertise
+                                </li>
+                                <li><strong>EKS:</strong> Multi-cloud strategy, K8s ecosystem, existing K8s workloads
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>Auto Scaling scaling policies?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Target Tracking:</strong> Duy trì metric tại target (CPU 50%)</li>
+                                <li><strong>Step:</strong> Multiple adjustments based on alarm severity</li>
+                                <li><strong>Scheduled:</strong> Time-based, known patterns</li>
+                                <li><strong>Predictive:</strong> ML-based forecasting</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>Lambda Layers là gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p>ZIP archive chứa libraries, custom runtime, dependencies. Share across multiple
+                                functions. Max 5 layers, 250MB total unzipped. Giảm deployment size, dễ manage
+                                dependencies.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>Elastic Beanstalk deployment strategies?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>All at once:</strong> Fastest, có downtime</li>
+                                <li><strong>Rolling:</strong> Batches, reduced capacity</li>
+                                <li><strong>Rolling with batch:</strong> Extra instances, full capacity</li>
+                                <li><strong>Immutable:</strong> New ASG, swap, safest rollback</li>
+                                <li><strong>Blue/Green:</strong> Separate environment, DNS switch</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>EC2 Hibernate vs Stop?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Stop:</strong> Instance stops, EBS preserved, RAM lost, normal boot on start.</p>
+                            <p><strong>Hibernate:</strong> RAM saved to encrypted root EBS, faster resume (no OS boot),
+                                max 60 days.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="../index.html#aws" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>AWS
+                        Cloud</span></a>
+                <a href="networking.html" class="nav-btn next"><span>Networking</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

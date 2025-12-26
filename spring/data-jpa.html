@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Data JPA - Spring Boot Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#spring" class="nav-back"><i class="fas fa-arrow-left"></i> Spring Boot</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon spring"><i class="fas fa-database"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">Spring Boot</span>
+            <h1>Spring Data JPA</h1>
+            <p class="topic-desc">Repositories, Query Methods, Entity Relationships, N+1 Problem</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#repositories">Repositories</a></li>
+                <li><a href="#query-methods">Query Methods</a></li>
+                <li><a href="#jpql">JPQL & Native Queries</a></li>
+                <li><a href="#entities">Entity Relationships</a></li>
+                <li><a href="#fetch">Fetch Types & N+1</a></li>
+                <li><a href="#pagination">Pagination & Sorting</a></li>
+                <li><a href="#auditing">Auditing</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <section class="content-section">
+                <h2 id="repositories" class="section-title"><span class="section-icon">📦</span>Repositories</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Repository Hierarchy</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Hierarchy</span></div>
+                            <pre><code>Repository (marker interface)
+     ↓
+CrudRepository (CRUD operations)
+     ↓
+PagingAndSortingRepository (+ pagination, sorting)
+     ↓
+JpaRepository (+ JPA-specific: flush, batch)</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Repository Definition</span></div>
+                            <pre><code>// Entity
+@Entity
+@Table(name = "users")
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false, unique = true)
+    private String email;
+    
+    @Column(nullable = false)
+    private String name;
+    
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
+    
+    private LocalDateTime createdAt;
+    
+    // Getters, setters
+}
+
+// Repository
+public interface UserRepository extends JpaRepository&lt;User, Long&gt; {
+    // All CRUD operations provided:
+    // save(entity), saveAll(entities)
+    // findById(id), findAll(), findAllById(ids)
+    // count(), existsById(id)
+    // delete(entity), deleteById(id), deleteAll()
+    // flush(), saveAndFlush(entity)
+}</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Repository Interface Methods</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Interface</th>
+                                        <th>Key Methods</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>CrudRepository</code></td>
+                                        <td>save, findById, findAll, delete, count</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>PagingAndSortingRepository</code></td>
+                                        <td>findAll(Pageable), findAll(Sort)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>JpaRepository</code></td>
+                                        <td>flush, saveAndFlush, deleteInBatch</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="query-methods" class="section-title"><span class="section-icon">🔍</span>Query Methods</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Derived Query Methods</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Query
+                                    Method Naming</span></div>
+                            <pre><code>public interface UserRepository extends JpaRepository&lt;User, Long&gt; {
+    
+    // Find by field
+    Optional&lt;User&gt; findByEmail(String email);
+    List&lt;User&gt; findByStatus(UserStatus status);
+    
+    // Multiple conditions (AND)
+    List&lt;User&gt; findByNameAndStatus(String name, UserStatus status);
+    
+    // OR condition
+    List&lt;User&gt; findByNameOrEmail(String name, String email);
+    
+    // Comparisons
+    List&lt;User&gt; findByAgeGreaterThan(int age);
+    List&lt;User&gt; findByAgeBetween(int min, int max);
+    List&lt;User&gt; findByCreatedAtAfter(LocalDateTime date);
+    
+    // String matching
+    List&lt;User&gt; findByNameContaining(String keyword);  // LIKE %keyword%
+    List&lt;User&gt; findByNameStartingWith(String prefix); // LIKE prefix%
+    List&lt;User&gt; findByEmailEndingWith(String suffix);  // LIKE %suffix
+    List&lt;User&gt; findByNameIgnoreCase(String name);
+    
+    // Null checks
+    List&lt;User&gt; findByDeletedAtIsNull();
+    List&lt;User&gt; findByDeletedAtIsNotNull();
+    
+    // IN clause
+    List&lt;User&gt; findByStatusIn(List&lt;UserStatus&gt; statuses);
+    
+    // Sorting
+    List&lt;User&gt; findByStatusOrderByCreatedAtDesc(UserStatus status);
+    
+    // Limiting results
+    Optional&lt;User&gt; findFirstByOrderByCreatedAtDesc();
+    List&lt;User&gt; findTop5ByStatus(UserStatus status);
+    
+    // Count & Exists
+    long countByStatus(UserStatus status);
+    boolean existsByEmail(String email);
+    
+    // Delete
+    void deleteByStatus(UserStatus status);
+}</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Query Method Keywords</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Keyword</th>
+                                        <th>SQL Equivalent</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>And</td>
+                                        <td>AND</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Or</td>
+                                        <td>OR</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Is, Equals</td>
+                                        <td>=</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Between</td>
+                                        <td>BETWEEN</td>
+                                    </tr>
+                                    <tr>
+                                        <td>LessThan, GreaterThan</td>
+                                        <td>
+                                            <,>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Like, Containing, StartingWith</td>
+                                        <td>LIKE</td>
+                                    </tr>
+                                    <tr>
+                                        <td>In, NotIn</td>
+                                        <td>IN (...)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>IsNull, IsNotNull</td>
+                                        <td>IS NULL</td>
+                                    </tr>
+                                    <tr>
+                                        <td>OrderBy...Desc/Asc</td>
+                                        <td>ORDER BY</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="jpql" class="section-title"><span class="section-icon">📝</span>JPQL & Native Queries</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">@Query
+                                    Annotation</span></div>
+                            <pre><code>public interface UserRepository extends JpaRepository&lt;User, Long&gt; {
+    
+    // JPQL (entity names, not table names)
+    @Query("SELECT u FROM User u WHERE u.status = :status")
+    List&lt;User&gt; findActiveUsers(@Param("status") UserStatus status);
+    
+    // JPQL with JOIN
+    @Query("SELECT u FROM User u JOIN u.orders o WHERE o.amount > :amount")
+    List&lt;User&gt; findUsersWithLargeOrders(@Param("amount") BigDecimal amount);
+    
+    // JPQL projection (DTO)
+    @Query("SELECT new com.example.dto.UserSummary(u.id, u.name, u.email) " +
+           "FROM User u WHERE u.status = :status")
+    List&lt;UserSummary&gt; findUserSummaries(@Param("status") UserStatus status);
+    
+    // Native SQL (when JPQL not enough)
+    @Query(value = "SELECT * FROM users u WHERE u.status = ?1", 
+           nativeQuery = true)
+    List&lt;User&gt; findByStatusNative(String status);
+    
+    // Native with pagination
+    @Query(value = "SELECT * FROM users WHERE status = :status",
+           countQuery = "SELECT count(*) FROM users WHERE status = :status",
+           nativeQuery = true)
+    Page&lt;User&gt; findByStatusNativePaged(@Param("status") String status, 
+                                        Pageable pageable);
+    
+    // Modifying queries
+    @Modifying
+    @Query("UPDATE User u SET u.status = :status WHERE u.id IN :ids")
+    int updateStatusForUsers(@Param("status") UserStatus status, 
+                             @Param("ids") List&lt;Long&gt; ids);
+    
+    @Modifying
+    @Query("DELETE FROM User u WHERE u.status = :status")
+    int deleteByStatus(@Param("status") UserStatus status);
+}</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> @Modifying Notes</h4>
+                            <ul>
+                                <li>Required for UPDATE and DELETE queries</li>
+                                <li>Must be in @Transactional method</li>
+                                <li>Add <code>@Modifying(clearAutomatically = true)</code> to clear persistence context
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="entities" class="section-title"><span class="section-icon">🔗</span>Entity Relationships</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>JPA Relationships</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Relationship Mappings</span></div>
+                            <pre><code>// One-to-Many (User has many Orders)
+@Entity
+public class User {
+    @Id @GeneratedValue
+    private Long id;
+    
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List&lt;Order&gt; orders = new ArrayList&lt;&gt;();
+    
+    // Helper methods for bidirectional
+    public void addOrder(Order order) {
+        orders.add(order);
+        order.setUser(this);
+    }
+}
+
+@Entity
+public class Order {
+    @Id @GeneratedValue
+    private Long id;
+    
+    @ManyToOne(fetch = FetchType.LAZY)  // Always LAZY for ManyToOne!
+    @JoinColumn(name = "user_id")
+    private User user;
+}
+
+// Many-to-Many (User has many Roles)
+@Entity
+public class User {
+    @ManyToMany
+    @JoinTable(
+        name = "user_roles",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set&lt;Role&gt; roles = new HashSet&lt;&gt;();
+}
+
+@Entity
+public class Role {
+    @ManyToMany(mappedBy = "roles")
+    private Set&lt;User&gt; users = new HashSet&lt;&gt;();
+}
+
+// One-to-One
+@Entity
+public class User {
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_id")
+    private UserProfile profile;
+}</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Cascade Types</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>PERSIST</code></td>
+                                        <td>Save child when parent saved</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>MERGE</code></td>
+                                        <td>Update child when parent updated</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>REMOVE</code></td>
+                                        <td>Delete child when parent deleted</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>REFRESH</code></td>
+                                        <td>Refresh child when parent refreshed</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>ALL</code></td>
+                                        <td>All of the above</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="fetch" class="section-title"><span class="section-icon">⚠️</span>Fetch Types & N+1 Problem</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>N+1 Query Problem</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Fetch Types</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Relationship</th>
+                                        <th>Default</th>
+                                        <th>Recommended</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>@OneToMany</td>
+                                        <td>LAZY</td>
+                                        <td>LAZY</td>
+                                    </tr>
+                                    <tr>
+                                        <td>@ManyToMany</td>
+                                        <td>LAZY</td>
+                                        <td>LAZY</td>
+                                    </tr>
+                                    <tr>
+                                        <td>@ManyToOne</td>
+                                        <td>EAGER</td>
+                                        <td><strong>LAZY</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>@OneToOne</td>
+                                        <td>EAGER</td>
+                                        <td>LAZY</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">N+1
+                                    Problem Example</span></div>
+                            <pre><code>// N+1 Problem: 1 query for users + N queries for orders
+List&lt;User&gt; users = userRepository.findAll();  // 1 query
+for (User user : users) {
+    user.getOrders().size();  // N additional queries!
+}
+
+// Solution 1: Fetch Join in JPQL
+@Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.orders")
+List&lt;User&gt; findAllWithOrders();
+
+// Solution 2: @EntityGraph
+@EntityGraph(attributePaths = {"orders"})
+List&lt;User&gt; findByStatus(UserStatus status);
+
+// Solution 3: @EntityGraph definition
+@Entity
+@NamedEntityGraph(
+    name = "User.withOrders",
+    attributeNodes = @NamedAttributeNode("orders")
+)
+public class User { }
+
+// In repository
+@EntityGraph("User.withOrders")
+List&lt;User&gt; findAll();
+
+// Solution 4: @BatchSize (Hibernate)
+@OneToMany(mappedBy = "user")
+@BatchSize(size = 20)  // Loads orders in batches of 20
+private List&lt;Order&gt; orders;</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Always Use LAZY for @ManyToOne!</h4>
+                            <pre><code>// Default EAGER causes N+1 in reverse
+@ManyToOne  // Default: EAGER - loads User with every Order!
+private User user;
+
+// Fix
+@ManyToOne(fetch = FetchType.LAZY)
+private User user;</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="pagination" class="section-title"><span class="section-icon">📄</span>Pagination & Sorting</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Pagination</span></div>
+                            <pre><code>// Repository
+public interface UserRepository extends JpaRepository&lt;User, Long&gt; {
+    Page&lt;User&gt; findByStatus(UserStatus status, Pageable pageable);
+    Slice&lt;User&gt; findByName(String name, Pageable pageable);
+}
+
+// Service
+public Page&lt;User&gt; getUsers(int page, int size) {
+    Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+    return userRepository.findAll(pageable);
+}
+
+// Controller
+@GetMapping
+public Page&lt;UserDto&gt; getUsers(
+    @RequestParam(defaultValue = "0") int page,
+    @RequestParam(defaultValue = "20") int size,
+    @RequestParam(defaultValue = "createdAt,desc") String[] sort
+) {
+    Sort sorting = Sort.by(parseSort(sort));
+    Pageable pageable = PageRequest.of(page, size, sorting);
+    return userRepository.findAll(pageable).map(userMapper::toDto);
+}
+
+// Page vs Slice
+// Page: includes total count (extra count query)
+// Slice: no total count (more efficient for infinite scroll)</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="auditing" class="section-title"><span class="section-icon">📋</span>Auditing</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">JPA
+                                    Auditing</span></div>
+                            <pre><code>// Enable auditing
+@Configuration
+@EnableJpaAuditing
+public class JpaConfig { }
+
+// Base entity
+@MappedSuperclass
+@EntityListeners(AuditingEntityListener.class)
+public abstract class BaseEntity {
+    
+    @CreatedDate
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+    
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
+    
+    @CreatedBy
+    @Column(updatable = false)
+    private String createdBy;
+    
+    @LastModifiedBy
+    private String updatedBy;
+}
+
+// Extend in entities
+@Entity
+public class User extends BaseEntity {
+    // ...
+}
+
+// Configure auditor
+@Component
+public class AuditorAwareImpl implements AuditorAware&lt;String&gt; {
+    @Override
+    public Optional&lt;String&gt; getCurrentAuditor() {
+        return Optional.ofNullable(SecurityContextHolder.getContext())
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName);
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>What is N+1 problem and how to solve?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Fetching N child records causes N additional queries. Solutions: <strong>JOIN
+                                    FETCH</strong> in JPQL, <strong>@EntityGraph</strong>, <strong>@BatchSize</strong>.
+                                Always use LAZY fetch for relationships.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>JpaRepository vs CrudRepository?</p>
+                        </div>
+                        <div class="answer">
+                            <p><code>JpaRepository</code> extends PagingAndSortingRepository extends CrudRepository.
+                                JpaRepository adds: pagination, sorting, flush(), saveAndFlush(), deleteInBatch().</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>EAGER vs LAZY fetch?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>EAGER:</strong> Load immediately with parent. <strong>LAZY:</strong> Load on
+                                access. Always use LAZY for collections (@OneToMany). Change @ManyToOne default from
+                                EAGER to LAZY!</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>How to write custom query?</p>
+                        </div>
+                        <div class="answer">
+                            <p>1) Derived query methods (findByName). 2) @Query with JPQL. 3) @Query with
+                                nativeQuery=true for SQL. 4) Specification API for dynamic queries.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>What is @Modifying?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Required for UPDATE/DELETE queries. Must be in @Transactional method. Use
+                                <code>clearAutomatically=true</code> to clear persistence context after modification.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="web-mvc.html" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>Web MVC</span></a>
+                <a href="security.html" class="nav-btn next"><span>Spring Security</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

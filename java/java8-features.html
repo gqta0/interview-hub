@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java 8+ Features - Java Core Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#java" class="nav-back"><i class="fas fa-arrow-left"></i> Java Core</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon java"><i class="fas fa-magic"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">Java Core</span>
+            <h1>Java 8+ Features</h1>
+            <p class="topic-desc">Lambda, Stream API, Optional, và các tính năng Java 11/17/21</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#lambda">Lambda Expressions</a></li>
+                <li><a href="#functional">Functional Interfaces</a></li>
+                <li><a href="#stream">Stream API</a></li>
+                <li><a href="#optional">Optional</a></li>
+                <li><a href="#java11">Java 11 Features</a></li>
+                <li><a href="#java17">Java 17 Features</a></li>
+                <li><a href="#java21">Java 21 Features</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <section class="content-section">
+                <h2 id="lambda" class="section-title"><span class="section-icon">λ</span>Lambda Expressions</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Lambda Syntax</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Lambda
+                                    Examples</span></div>
+                            <pre><code>// Syntax: (parameters) -> expression or { statements }
+
+// No parameters
+Runnable r = () -> System.out.println("Hello");
+
+// One parameter (parentheses optional)
+Consumer&lt;String&gt; c = s -> System.out.println(s);
+Consumer&lt;String&gt; c2 = (String s) -> System.out.println(s);
+
+// Multiple parameters
+BiFunction&lt;Integer, Integer, Integer&gt; add = (a, b) -> a + b;
+
+// Block body
+Comparator&lt;String&gt; comp = (s1, s2) -> {
+    System.out.println("Comparing");
+    return s1.compareTo(s2);
+};
+
+// Method references (shorthand for lambda)
+Consumer&lt;String&gt; print = System.out::println;      // Instance method
+Function&lt;String, Integer&gt; len = String::length;    // Instance method (unbound)
+Supplier&lt;List&gt; listFactory = ArrayList::new;       // Constructor
+BiFunction&lt;String, String, Integer&gt; compare = String::compareTo;</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Lambda Limitations</h4>
+                            <ul>
+                                <li>Can only access <strong>effectively final</strong> local variables</li>
+                                <li>Cannot modify local variables from enclosing scope</li>
+                                <li>Can access and modify instance/static variables</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="functional" class="section-title"><span class="section-icon">🔧</span>Functional Interfaces</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Built-in Functional Interfaces</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Interface</th>
+                                        <th>Method</th>
+                                        <th>Input</th>
+                                        <th>Output</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>Predicate&lt;T&gt;</code></td>
+                                        <td>test(T)</td>
+                                        <td>T</td>
+                                        <td>boolean</td>
+                                        <td>Filtering</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>Function&lt;T,R&gt;</code></td>
+                                        <td>apply(T)</td>
+                                        <td>T</td>
+                                        <td>R</td>
+                                        <td>Mapping</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>Consumer&lt;T&gt;</code></td>
+                                        <td>accept(T)</td>
+                                        <td>T</td>
+                                        <td>void</td>
+                                        <td>forEach</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>Supplier&lt;T&gt;</code></td>
+                                        <td>get()</td>
+                                        <td>-</td>
+                                        <td>T</td>
+                                        <td>Factory</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>UnaryOperator&lt;T&gt;</code></td>
+                                        <td>apply(T)</td>
+                                        <td>T</td>
+                                        <td>T</td>
+                                        <td>Transform</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>BiFunction&lt;T,U,R&gt;</code></td>
+                                        <td>apply(T,U)</td>
+                                        <td>T, U</td>
+                                        <td>R</td>
+                                        <td>Combine</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Examples</span></div>
+                            <pre><code>// Predicate - test condition
+Predicate&lt;String&gt; isEmpty = String::isEmpty;
+Predicate&lt;String&gt; notEmpty = isEmpty.negate();
+Predicate&lt;String&gt; complex = isEmpty.or(s -> s.length() > 10);
+
+// Function - transform
+Function&lt;String, Integer&gt; length = String::length;
+Function&lt;String, String&gt; upperThenSubstr = 
+    ((Function&lt;String, String&gt;) String::toUpperCase)
+    .andThen(s -> s.substring(0, 3));
+
+// Consumer - perform action
+Consumer&lt;String&gt; print = System.out::println;
+Consumer&lt;String&gt; log = s -> logger.info(s);
+Consumer&lt;String&gt; printAndLog = print.andThen(log);
+
+// Supplier - provide value
+Supplier&lt;LocalDateTime&gt; now = LocalDateTime::now;
+Supplier&lt;List&lt;String&gt;&gt; listFactory = ArrayList::new;
+
+// Custom Functional Interface
+@FunctionalInterface
+interface TriFunction&lt;A, B, C, R&gt; {
+    R apply(A a, B b, C c);
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="stream" class="section-title"><span class="section-icon">🌊</span>Stream API</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Stream Operations</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>Intermediate (Lazy)</h4>
+                                <ul>
+                                    <li><code>filter(Predicate)</code></li>
+                                    <li><code>map(Function)</code></li>
+                                    <li><code>flatMap(Function)</code></li>
+                                    <li><code>distinct()</code></li>
+                                    <li><code>sorted()</code></li>
+                                    <li><code>peek(Consumer)</code></li>
+                                    <li><code>limit(n)</code>, <code>skip(n)</code></li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>Terminal (Eager)</h4>
+                                <ul>
+                                    <li><code>forEach(Consumer)</code></li>
+                                    <li><code>collect(Collector)</code></li>
+                                    <li><code>reduce(BinaryOperator)</code></li>
+                                    <li><code>count()</code></li>
+                                    <li><code>anyMatch/allMatch/noneMatch</code></li>
+                                    <li><code>findFirst()/findAny()</code></li>
+                                    <li><code>min()/max()</code></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Stream
+                                    Examples</span></div>
+                            <pre><code>List&lt;Person&gt; people = ...;
+
+// Filter, map, collect
+List&lt;String&gt; names = people.stream()
+    .filter(p -> p.getAge() > 18)
+    .map(Person::getName)
+    .sorted()
+    .collect(Collectors.toList());
+
+// Grouping
+Map&lt;String, List&lt;Person&gt;&gt; byCity = people.stream()
+    .collect(Collectors.groupingBy(Person::getCity));
+
+// Reduce
+int totalAge = people.stream()
+    .mapToInt(Person::getAge)
+    .sum();
+
+Optional&lt;Person&gt; oldest = people.stream()
+    .max(Comparator.comparing(Person::getAge));
+
+// FlatMap - flatten nested collections
+List&lt;List&lt;String&gt;&gt; nested = Arrays.asList(
+    Arrays.asList("a", "b"),
+    Arrays.asList("c", "d")
+);
+List&lt;String&gt; flat = nested.stream()
+    .flatMap(Collection::stream)
+    .collect(Collectors.toList());  // [a, b, c, d]
+
+// Parallel stream
+long count = people.parallelStream()
+    .filter(p -> p.getAge() > 30)
+    .count();</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Collectors</span></div>
+                            <pre><code>// Common Collectors
+.collect(Collectors.toList())
+.collect(Collectors.toSet())
+.collect(Collectors.toMap(Person::getId, Person::getName))
+.collect(Collectors.joining(", "))  // String
+.collect(Collectors.groupingBy(Person::getCity))
+.collect(Collectors.partitioningBy(p -> p.getAge() > 18))
+.collect(Collectors.counting())
+.collect(Collectors.summarizingInt(Person::getAge))  // count, sum, min, max, avg</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="optional" class="section-title"><span class="section-icon">❓</span>Optional</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Handling Null Safely</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Optional Usage</span></div>
+                            <pre><code>// Creating Optional
+Optional&lt;String&gt; empty = Optional.empty();
+Optional&lt;String&gt; present = Optional.of("value");      // Throws if null
+Optional&lt;String&gt; nullable = Optional.ofNullable(str); // Safe with null
+
+// Checking & Getting
+if (opt.isPresent()) {
+    String val = opt.get();  // Avoid - defeats purpose!
+}
+
+// Better ways
+String result = opt.orElse("default");
+String result2 = opt.orElseGet(() -> expensiveDefault());
+String result3 = opt.orElseThrow(() -> new RuntimeException());
+
+// Transforming
+Optional&lt;Integer&gt; length = opt.map(String::length);
+Optional&lt;String&gt; upper = opt.filter(s -> s.length() > 3)
+                            .map(String::toUpperCase);
+
+// FlatMap for Optional-returning function
+Optional&lt;String&gt; city = person
+    .flatMap(Person::getAddress)    // Returns Optional&lt;Address&gt;
+    .flatMap(Address::getCity);     // Returns Optional&lt;String&gt;
+
+// ifPresent / ifPresentOrElse (Java 9)
+opt.ifPresent(System.out::println);
+opt.ifPresentOrElse(
+    System.out::println,
+    () -> System.out.println("Empty")
+);
+
+// stream() - Java 9
+List&lt;String&gt; list = opt.stream().collect(Collectors.toList());</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Optional Best Practices</h4>
+                            <ul>
+                                <li>❌ Don't use for fields - use only for return types</li>
+                                <li>❌ Don't use <code>get()</code> without <code>isPresent()</code></li>
+                                <li>❌ Don't use as method parameters</li>
+                                <li>✅ Use <code>orElse()</code>, <code>map()</code>, <code>flatMap()</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="java11" class="section-title"><span class="section-icon">☕</span>Java 11 Features</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java 11</span><span class="code-title">New
+                                    Features</span></div>
+                            <pre><code>// var keyword (Java 10, enhanced in 11)
+var list = new ArrayList&lt;String&gt;();
+var stream = list.stream();
+
+// String methods
+" hello ".isBlank();      // true for whitespace only
+" hello ".strip();        // Unicode-aware trim
+"hello\nworld".lines();   // Stream&lt;String&gt;
+"ha".repeat(3);           // "hahaha"
+
+// Collection factory methods (Java 9+)
+List&lt;String&gt; immutable = List.of("a", "b", "c");
+Set&lt;Integer&gt; set = Set.of(1, 2, 3);
+Map&lt;String, Integer&gt; map = Map.of("a", 1, "b", 2);
+
+// HTTP Client (standardized)
+HttpClient client = HttpClient.newHttpClient();
+HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("https://api.example.com"))
+    .GET()
+    .build();
+HttpResponse&lt;String&gt; response = client.send(request, 
+    HttpResponse.BodyHandlers.ofString());
+
+// Files
+String content = Files.readString(Path.of("file.txt"));
+Files.writeString(Path.of("file.txt"), "content");
+
+// Optional enhancements
+opt.isEmpty();  // opposite of isPresent()</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="java17" class="section-title"><span class="section-icon">🚀</span>Java 17 Features (LTS)</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java 17</span><span class="code-title">New
+                                    Features</span></div>
+                            <pre><code>// Records - immutable data classes
+public record Person(String name, int age) {
+    // Canonical constructor, getters, equals, hashCode, toString auto-generated
+    
+    // Compact constructor for validation
+    public Person {
+        if (age < 0) throw new IllegalArgumentException();
+    }
+}
+Person p = new Person("John", 30);
+String name = p.name();  // Getter (no 'get' prefix)
+
+// Sealed Classes - restrict subclasses
+public sealed class Shape permits Circle, Rectangle, Triangle {
+    // Only Circle, Rectangle, Triangle can extend Shape
+}
+public final class Circle extends Shape { }
+public non-sealed class Rectangle extends Shape { }  // Can be extended
+
+// Pattern Matching for instanceof
+if (obj instanceof String s) {
+    System.out.println(s.length());  // s is already cast
+}
+
+// Switch expressions (Java 14+)
+String result = switch (day) {
+    case MONDAY, FRIDAY -> "Work hard";
+    case TUESDAY -> "Study";
+    case WEDNESDAY, THURSDAY -> "Focus";
+    default -> {
+        String text = "It's " + day;
+        yield text;  // yield for block
+    }
+};
+
+// Text blocks (Java 15+)
+String json = """
+    {
+        "name": "John",
+        "age": 30
+    }
+    """;</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="java21" class="section-title"><span class="section-icon">⭐</span>Java 21 Features (LTS)</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java 21</span><span class="code-title">New
+                                    Features</span></div>
+                            <pre><code>// Virtual Threads (Project Loom)
+// Lightweight threads - millions possible!
+Thread.startVirtualThread(() -> {
+    System.out.println("Running in virtual thread");
+});
+
+try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+    IntStream.range(0, 10_000).forEach(i -> {
+        executor.submit(() -> {
+            Thread.sleep(Duration.ofSeconds(1));
+            return i;
+        });
+    });
+}
+
+// Sequenced Collections
+SequencedCollection&lt;String&gt; list = new ArrayList&lt;&gt;();
+list.addFirst("a");
+list.addLast("z");
+String first = list.getFirst();
+String last = list.getLast();
+SequencedCollection&lt;String&gt; reversed = list.reversed();
+
+// Pattern Matching for switch
+String formatted = switch (obj) {
+    case Integer i -> String.format("int %d", i);
+    case Long l -> String.format("long %d", l);
+    case Double d -> String.format("double %f", d);
+    case String s -> String.format("String %s", s);
+    case null -> "null";
+    default -> obj.toString();
+};
+
+// Record Patterns
+record Point(int x, int y) {}
+if (obj instanceof Point(int x, int y)) {
+    System.out.println(x + ", " + y);
+}
+
+// String templates (Preview)
+String name = "John";
+String message = STR."Hello \{name}!";</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-lightbulb"></i> Virtual Threads Benefits</h4>
+                            <ul>
+                                <li>Lightweight: ~1KB vs ~1MB for platform threads</li>
+                                <li>Simplifies async code - write blocking code that scales</li>
+                                <li>No need for reactive programming for high concurrency</li>
+                                <li>Great for I/O-bound workloads</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>What is a Functional Interface?</p>
+                        </div>
+                        <div class="answer">
+                            <p>An interface with <strong>exactly one abstract method</strong>. Can have default/static
+                                methods. Marked with <code>@FunctionalInterface</code>. Used as target for lambda
+                                expressions.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>Difference between map() and flatMap()?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>map():</strong> 1-to-1 transformation. <strong>flatMap():</strong> 1-to-many,
+                                flattens nested structures. Use flatMap when mapping function returns Stream/Optional.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>When to use parallel stream?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Large datasets, independent operations, CPU-intensive tasks. <strong>Avoid for:</strong>
+                                Small data, I/O operations, ordered operations, shared mutable state.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>What are Records in Java?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Immutable data carriers (Java 16+). Auto-generates: constructor, getters (no 'get'
+                                prefix), equals(), hashCode(), toString(). Final, cannot extend, but can implement
+                                interfaces.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>What are Virtual Threads?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Lightweight threads (Java 21). ~1KB memory. Millions possible. Write simple blocking code
+                                that scales. Best for I/O-bound, not CPU-bound tasks.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="jvm-internals.html" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>JVM
+                        Internals</span></a>
+                <a href="exception-io.html" class="nav-btn next"><span>Exception & I/O</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

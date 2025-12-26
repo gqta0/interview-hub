@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Core Concepts - Spring Boot Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#spring" class="nav-back"><i class="fas fa-arrow-left"></i> Spring Boot</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon spring"><i class="fas fa-leaf"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">Spring Boot</span>
+            <h1>Spring Core Concepts</h1>
+            <p class="topic-desc">IoC Container, Dependency Injection, Bean Lifecycle, Application Context</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#ioc">IoC Container</a></li>
+                <li><a href="#di">Dependency Injection</a></li>
+                <li><a href="#bean-scope">Bean Scopes</a></li>
+                <li><a href="#lifecycle">Bean Lifecycle</a></li>
+                <li><a href="#context">Application Context</a></li>
+                <li><a href="#configuration">Configuration</a></li>
+                <li><a href="#profiles">Profiles</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <section class="content-section">
+                <h2 id="ioc" class="section-title"><span class="section-icon">🔄</span>IoC Container</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Inversion of Control</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <p><strong>IoC (Inversion of Control)</strong>: Framework kiểm soát việc tạo và quản lý objects
+                            thay vì developer.</p>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>❌ Without IoC</h4>
+                                <pre><code>class UserService {
+    // Tự tạo dependency
+    private UserRepository repo 
+        = new UserRepository();
+}</code></pre>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>✅ With IoC</h4>
+                                <pre><code>class UserService {
+    // Framework inject
+    @Autowired
+    private UserRepository repo;
+}</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-check-circle"></i> Benefits of IoC</h4>
+                            <ul>
+                                <li><strong>Loose coupling:</strong> Classes không phụ thuộc concrete implementations
+                                </li>
+                                <li><strong>Testability:</strong> Dễ dàng mock dependencies</li>
+                                <li><strong>Maintainability:</strong> Thay đổi implementation không ảnh hưởng client
+                                    code</li>
+                                <li><strong>Configuration:</strong> Centralized configuration</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="di" class="section-title"><span class="section-icon">💉</span>Dependency Injection</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>DI Types</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">3 Types
+                                    of DI</span></div>
+                            <pre><code>// 1. Constructor Injection - RECOMMENDED ✅
+@Service
+public class UserService {
+    private final UserRepository userRepository;
+    private final EmailService emailService;
+    
+    // Spring auto-injects (no @Autowired needed for single constructor)
+    public UserService(UserRepository userRepository, 
+                       EmailService emailService) {
+        this.userRepository = userRepository;
+        this.emailService = emailService;
+    }
+}
+
+// 2. Setter Injection
+@Service
+public class UserService {
+    private UserRepository userRepository;
+    
+    @Autowired
+    public void setUserRepository(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+}
+
+// 3. Field Injection - NOT RECOMMENDED ❌
+@Service
+public class UserService {
+    @Autowired
+    private UserRepository userRepository;  // Hard to test!
+}</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>DI Type Comparison</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Pros</th>
+                                        <th>Cons</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Constructor</strong></td>
+                                        <td>Immutable, testable, required deps clear</td>
+                                        <td>Many params = code smell</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Setter</strong></td>
+                                        <td>Optional deps, readable</td>
+                                        <td>Mutable, can be null</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Field</strong></td>
+                                        <td>Concise code</td>
+                                        <td>Not testable, hides deps</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">@Qualifier & @Primary</span></div>
+                            <pre><code>// Multiple implementations - use @Qualifier
+public interface PaymentService { }
+
+@Service("creditCard")
+public class CreditCardService implements PaymentService { }
+
+@Service("paypal")
+public class PayPalService implements PaymentService { }
+
+@Service
+public class OrderService {
+    public OrderService(@Qualifier("creditCard") PaymentService payment) {
+        this.payment = payment;
+    }
+}
+
+// Or use @Primary as default
+@Primary
+@Service
+public class CreditCardService implements PaymentService { }</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="bean-scope" class="section-title"><span class="section-icon">🎯</span>Bean Scopes</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Available Scopes</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Scope</th>
+                                        <th>Description</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>singleton</code></td>
+                                        <td>One instance per IoC container (default)</td>
+                                        <td>Stateless services</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>prototype</code></td>
+                                        <td>New instance each time requested</td>
+                                        <td>Stateful beans</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>request</code></td>
+                                        <td>One per HTTP request</td>
+                                        <td>Request-specific data</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>session</code></td>
+                                        <td>One per HTTP session</td>
+                                        <td>User session data</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>application</code></td>
+                                        <td>One per ServletContext</td>
+                                        <td>Application-wide</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Setting
+                                    Bean Scope</span></div>
+                            <pre><code>// Annotation-based
+@Component
+@Scope("prototype")
+public class PrototypeBean { }
+
+@Component
+@Scope(value = WebApplicationContext.SCOPE_REQUEST, 
+       proxyMode = ScopedProxyMode.TARGET_CLASS)
+public class RequestScopedBean { }
+
+// Java Config
+@Configuration
+public class AppConfig {
+    @Bean
+    @Scope("prototype")
+    public MyBean myBean() {
+        return new MyBean();
+    }
+}</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Scope Injection Problem</h4>
+                            <p>Injecting prototype into singleton = prototype behaves as singleton!</p>
+                            <pre><code>// Solution 1: Use ObjectFactory/Provider
+@Autowired
+private ObjectFactory&lt;PrototypeBean&gt; prototypeBeanFactory;
+
+public void doSomething() {
+    PrototypeBean bean = prototypeBeanFactory.getObject(); // New each time
+}
+
+// Solution 2: Use @Lookup
+@Lookup
+public PrototypeBean getPrototypeBean() {
+    return null; // Spring overrides this
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="lifecycle" class="section-title"><span class="section-icon">🔄</span>Bean Lifecycle</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Lifecycle Callbacks</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Lifecycle</span></div>
+                            <pre><code>1. Instantiation (Constructor)
+        ↓
+2. Populate Properties (DI)
+        ↓
+3. BeanNameAware.setBeanName()
+        ↓
+4. BeanFactoryAware.setBeanFactory()
+        ↓
+5. ApplicationContextAware.setApplicationContext()
+        ↓
+6. BeanPostProcessor.postProcessBeforeInitialization()
+        ↓
+7. @PostConstruct method
+        ↓
+8. InitializingBean.afterPropertiesSet()
+        ↓
+9. Custom init-method
+        ↓
+10. BeanPostProcessor.postProcessAfterInitialization()
+        ↓
+        READY TO USE
+        ↓
+11. @PreDestroy method
+        ↓
+12. DisposableBean.destroy()
+        ↓
+13. Custom destroy-method</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Lifecycle Hooks</span></div>
+                            <pre><code>@Component
+public class MyBean {
+    
+    @PostConstruct
+    public void init() {
+        // Called after DI is done
+        System.out.println("Bean initialized");
+    }
+    
+    @PreDestroy
+    public void cleanup() {
+        // Called before bean is destroyed
+        System.out.println("Bean cleanup");
+    }
+}
+
+// Or implement interfaces
+@Component
+public class MyBean implements InitializingBean, DisposableBean {
+    
+    @Override
+    public void afterPropertiesSet() {
+        // Same as @PostConstruct
+    }
+    
+    @Override
+    public void destroy() {
+        // Same as @PreDestroy
+    }
+}
+
+// Or use @Bean attributes
+@Bean(initMethod = "init", destroyMethod = "cleanup")
+public MyBean myBean() {
+    return new MyBean();
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="context" class="section-title"><span class="section-icon">📦</span>Application Context</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>BeanFactory vs ApplicationContext</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>BeanFactory</th>
+                                        <th>ApplicationContext</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Bean instantiation</td>
+                                        <td>Lazy (on request)</td>
+                                        <td>Eager (at startup)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Internationalization</td>
+                                        <td>❌</td>
+                                        <td>✅</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Event publishing</td>
+                                        <td>❌</td>
+                                        <td>✅</td>
+                                    </tr>
+                                    <tr>
+                                        <td>AOP support</td>
+                                        <td>Manual</td>
+                                        <td>Automatic</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Environment abstraction</td>
+                                        <td>❌</td>
+                                        <td>✅</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Use case</td>
+                                        <td>Resource-constrained</td>
+                                        <td>Most applications</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">ApplicationContext Types</span></div>
+                            <pre><code>// Spring Boot auto-configures, but you can create manually:
+
+// Annotation-based (most common in Spring Boot)
+ApplicationContext ctx = new AnnotationConfigApplicationContext(AppConfig.class);
+
+// XML-based (legacy)
+ApplicationContext ctx = new ClassPathXmlApplicationContext("beans.xml");
+
+// Web application
+ApplicationContext ctx = new AnnotationConfigWebApplicationContext();
+
+// Get beans
+UserService service = ctx.getBean(UserService.class);
+UserService named = ctx.getBean("userService", UserService.class);</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="configuration" class="section-title"><span class="section-icon">⚙️</span>Configuration</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>@Configuration & @Bean</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Java-based Configuration</span></div>
+                            <pre><code>@Configuration
+public class AppConfig {
+    
+    @Bean
+    public DataSource dataSource() {
+        HikariDataSource ds = new HikariDataSource();
+        ds.setJdbcUrl("jdbc:mysql://localhost/db");
+        ds.setUsername("user");
+        ds.setPassword("pass");
+        return ds;
+    }
+    
+    @Bean
+    public JdbcTemplate jdbcTemplate(DataSource dataSource) {
+        return new JdbcTemplate(dataSource);  // DI into @Bean method
+    }
+    
+    // Conditional bean
+    @Bean
+    @ConditionalOnProperty(name = "cache.enabled", havingValue = "true")
+    public CacheManager cacheManager() {
+        return new ConcurrentMapCacheManager();
+    }
+}
+
+// Component scanning
+@Configuration
+@ComponentScan(basePackages = "com.example")
+public class AppConfig { }
+
+// Import other configs
+@Configuration
+@Import({DatabaseConfig.class, SecurityConfig.class})
+public class AppConfig { }</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">External Configuration</span></div>
+                            <pre><code>// application.properties or application.yml
+app.name=MyApp
+app.version=1.0.0
+
+// Inject with @Value
+@Component
+public class AppInfo {
+    @Value("${app.name}")
+    private String appName;
+    
+    @Value("${app.version:1.0}")  // With default
+    private String version;
+    
+    @Value("${PORT:8080}")  // Environment variable
+    private int port;
+}
+
+// Type-safe configuration with @ConfigurationProperties
+@ConfigurationProperties(prefix = "app")
+@Component
+public class AppProperties {
+    private String name;
+    private String version;
+    private List&lt;String&gt; servers;
+    
+    // Getters and setters
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2 id="profiles" class="section-title"><span class="section-icon">🎭</span>Profiles</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Using
+                                    Profiles</span></div>
+                            <pre><code>// Profile-specific beans
+@Configuration
+@Profile("dev")
+public class DevConfig {
+    @Bean
+    public DataSource dataSource() {
+        return new EmbeddedDatabaseBuilder()
+            .setType(EmbeddedDatabaseType.H2)
+            .build();
+    }
+}
+
+@Configuration
+@Profile("prod")
+public class ProdConfig {
+    @Bean
+    public DataSource dataSource() {
+        // Production datasource
+    }
+}
+
+// Profile on component
+@Service
+@Profile("!prod")  // Active when NOT prod
+public class MockPaymentService implements PaymentService { }
+
+// Activate profile
+// application.properties
+spring.profiles.active=dev
+
+// Command line
+java -jar app.jar --spring.profiles.active=prod
+
+// Environment variable
+export SPRING_PROFILES_ACTIVE=prod
+
+// Profile-specific properties files
+application-dev.properties
+application-prod.properties</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>What is IoC and DI?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>IoC:</strong> Framework controls object creation/lifecycle. <strong>DI:</strong>
+                                Implementation of IoC - dependencies injected from outside. Benefits: loose coupling,
+                                testability, maintainability.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>Why prefer Constructor Injection?</p>
+                        </div>
+                        <div class="answer">
+                            <p>1) Immutable dependencies (final). 2) Required deps are explicit. 3) Easy to test (just
+                                pass mocks). 4) Prevents circular dependencies at compile time.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>What are Bean Scopes?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>singleton:</strong> One per container (default). <strong>prototype:</strong> New
+                                each request. <strong>request/session:</strong> Per HTTP request/session. Be careful
+                                injecting prototype into singleton!</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>@Component vs @Bean?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>@Component:</strong> Auto-detected via scanning, on class level.
+                                <strong>@Bean:</strong> Manual definition in @Configuration, method level. Use @Bean for
+                                3rd party classes you can't annotate.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>BeanFactory vs ApplicationContext?</p>
+                        </div>
+                        <div class="answer">
+                            <p>ApplicationContext extends BeanFactory. Adds: eager bean loading, i18n, event publishing,
+                                AOP integration. Use ApplicationContext for most apps; BeanFactory only for
+                                resource-constrained environments.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="../index.html#spring" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>Spring
+                        Boot</span></a>
+                <a href="boot-essentials.html" class="nav-btn next"><span>Boot Essentials</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messaging & Integration - AWS Cloud Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .topic-icon.aws {
+            background: var(--aws-gradient);
+        }
+
+        .topic-category {
+            color: #FF9900;
+        }
+
+        .q-number {
+            background: var(--aws-gradient);
+        }
+
+        .question {
+            background: rgba(255, 153, 0, 0.1);
+        }
+
+        .page-navigation .nav-btn:hover {
+            background: rgba(255, 153, 0, 0.1);
+            border-color: #FF9900;
+            color: #FF9900;
+        }
+
+        .back-to-top {
+            background: var(--aws-gradient);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#aws" class="nav-back"><i class="fas fa-arrow-left"></i> AWS Cloud</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon aws"><i class="fas fa-envelope"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">AWS Cloud</span>
+            <h1>Messaging & Integration</h1>
+            <p class="topic-desc">SQS, SNS, EventBridge, Step Functions, API Gateway - Dịch vụ tích hợp AWS</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#sqs-basics">SQS Fundamentals</a></li>
+                <li><a href="#sqs-advanced">SQS Advanced</a></li>
+                <li><a href="#sns">SNS Topics</a></li>
+                <li><a href="#fanout">SNS + SQS Fan-Out</a></li>
+                <li><a href="#eventbridge">EventBridge</a></li>
+                <li><a href="#kinesis">Kinesis</a></li>
+                <li><a href="#stepfunctions">Step Functions</a></li>
+                <li><a href="#apigateway">API Gateway</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <!-- SQS FUNDAMENTALS -->
+            <section id="sqs-basics" class="content-section">
+                <h2 class="section-title"><span class="section-icon">📬</span>SQS Fundamentals</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>SQS Queue Types</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Standard</th>
+                                        <th>FIFO</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Throughput</strong></td>
+                                        <td>Unlimited</td>
+                                        <td>3,000 msg/s (batching)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Order</strong></td>
+                                        <td>Best-effort</td>
+                                        <td>Guaranteed</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Delivery</strong></td>
+                                        <td>At-least-once</td>
+                                        <td>Exactly-once</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Deduplication</strong></td>
+                                        <td>No</td>
+                                        <td>5-minute window</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Name</strong></td>
+                                        <td>Any</td>
+                                        <td>Must end in .fifo</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">SQS
+                                    Message Lifecycle</span></div>
+                            <pre><code>SQS Message Flow:
+┌─────────────────────────────────────────────────────────────┐
+│  Producer                                                   │
+│  └── SendMessage (body, attributes, delay)                  │
+│                                                             │
+│  Queue (message waiting)                                    │
+│  ├── Retention: 1 min - 14 days (default 4 days)           │
+│  ├── Max size: 256 KB                                       │
+│  └── Delay queue: 0 - 15 minutes                           │
+│                                                             │
+│  Consumer                                                   │
+│  ├── ReceiveMessage (poll queue)                           │
+│  ├── Visibility Timeout starts (default 30s)               │
+│  ├── Process message                                        │
+│  └── DeleteMessage (or message reappears)                  │
+└─────────────────────────────────────────────────────────────┘
+
+If consumer fails to delete before visibility timeout:
+→ Message becomes visible again → processed by another consumer</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SQS ADVANCED -->
+            <section id="sqs-advanced" class="content-section">
+                <h2 class="section-title"><span class="section-icon">⚙️</span>SQS Advanced</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Advanced Features</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>📥 Long Polling</h4>
+                                <ul>
+                                    <li>Wait up to 20 seconds</li>
+                                    <li>Reduces API calls</li>
+                                    <li>Returns immediately if messages</li>
+                                    <li>Set WaitTimeSeconds</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>💀 Dead Letter Queue</h4>
+                                <ul>
+                                    <li>For failed messages</li>
+                                    <li>MaxReceiveCount threshold</li>
+                                    <li>Debug/analyze failures</li>
+                                    <li>Redrive to source queue</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">FIFO
+                                    Concepts</span></div>
+                            <pre><code>FIFO Queue Concepts:
+
+Message Group:
+┌─────────────────────────────────────────────────────────────┐
+│  MessageGroupId: "OrderGroup-A"   │ MessageGroupId: "B"    │
+│  ┌─────────┐ ┌─────────┐         │ ┌─────────┐            │
+│  │ Order 1 │→│ Order 2 │→ ...    │ │ Order X │→ ...       │
+│  └─────────┘ └─────────┘         │ └─────────┘            │
+│  Ordered within group             │ Independent order      │
+└─────────────────────────────────────────────────────────────┘
+
+Deduplication:
+- Content-based: SHA-256 of body
+- MessageDeduplicationId: explicit ID
+- 5-minute deduplication window</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Lambda Integration</h4>
+                            <ul>
+                                <li>SQS triggers Lambda via Event Source Mapping</li>
+                                <li>Lambda polls queue (long polling)</li>
+                                <li>Batch size: 1-10,000 messages</li>
+                                <li>On success: auto-delete. On failure: visibility timeout or DLQ</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SNS -->
+            <section id="sns" class="content-section">
+                <h2 class="section-title"><span class="section-icon">📢</span>SNS Topics</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>SNS Core Concepts</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Pub/Sub
+                                    Model</span></div>
+                            <pre><code>SNS Pub/Sub:
+                    ┌─────────────┐
+                    │  Producer   │
+                    └──────┬──────┘
+                           │ Publish
+                    ┌──────▼──────┐
+                    │  SNS Topic  │
+                    └──────┬──────┘
+           ┌───────────────┼───────────────┐
+           │               │               │
+    ┌──────▼──────┐ ┌──────▼──────┐ ┌──────▼──────┐
+    │  SQS Queue  │ │   Lambda    │ │   Email     │
+    └─────────────┘ └─────────────┘ └─────────────┘
+
+Subscriber Types:
+├── SQS, Lambda, Kinesis Firehose
+├── HTTP/HTTPS endpoints
+├── Email, Email-JSON
+├── SMS (mobile text)
+└── Mobile push (FCM, APNS)</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>SNS vs SQS</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>SNS</th>
+                                        <th>SQS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Model</strong></td>
+                                        <td>Pub/Sub (push)</td>
+                                        <td>Queue (pull)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Consumers</strong></td>
+                                        <td>Multiple subscribers</td>
+                                        <td>Single consumer group</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Persistence</strong></td>
+                                        <td>No (fire-and-forget)</td>
+                                        <td>Yes (retained)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Use Case</strong></td>
+                                        <td>Fan-out, notifications</td>
+                                        <td>Decouple, buffer</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> Message Filtering</h4>
+                            <p>Filter policies on subscriptions to only receive matching messages. JSON-based filter on
+                                message attributes.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FAN-OUT -->
+            <section id="fanout" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔀</span>SNS + SQS Fan-Out</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Fan-Out Pattern</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Fan-Out
+                                    Architecture</span></div>
+                            <pre><code>SNS + SQS Fan-Out:
+┌─────────────────────────────────────────────────────────────┐
+│                     ┌───────────┐                           │
+│                     │  S3 Event │                           │
+│                     └─────┬─────┘                           │
+│                           │                                 │
+│                     ┌─────▼─────┐                           │
+│                     │    SNS    │                           │
+│                     │   Topic   │                           │
+│                     └─────┬─────┘                           │
+│           ┌───────────────┼───────────────┐                 │
+│           │               │               │                 │
+│     ┌─────▼─────┐   ┌─────▼─────┐   ┌─────▼─────┐          │
+│     │  SQS-A    │   │  SQS-B    │   │  SQS-C    │          │
+│     │ (Image)   │   │ (Notify)  │   │ (Archive) │          │
+│     └─────┬─────┘   └─────┬─────┘   └─────┬─────┘          │
+│           │               │               │                 │
+│     ┌─────▼─────┐   ┌─────▼─────┐   ┌─────▼─────┐          │
+│     │  Lambda   │   │  Lambda   │   │  Lambda   │          │
+│     │(Thumbnail)│   │  (Email)  │   │  (S3 Glac)│          │
+│     └───────────┘   └───────────┘   └───────────┘          │
+└─────────────────────────────────────────────────────────────┘
+
+Benefits:
+- Single S3 event → multiple independent processors
+- SQS provides persistence + retry
+- Each consumer processes at own pace</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- EVENTBRIDGE -->
+            <section id="eventbridge" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🚌</span>EventBridge</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Serverless Event Bus</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>EventBridge vs SNS</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>EventBridge</th>
+                                        <th>SNS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Event Sources</strong></td>
+                                        <td>AWS + SaaS + Custom</td>
+                                        <td>AWS + Custom</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Filtering</strong></td>
+                                        <td>Rich pattern matching</td>
+                                        <td>Attribute-based</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Schema</strong></td>
+                                        <td>Schema Registry</td>
+                                        <td>No</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Archive/Replay</strong></td>
+                                        <td>Yes</td>
+                                        <td>No</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Targets</strong></td>
+                                        <td>20+ AWS services</td>
+                                        <td>Limited</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">JSON</span><span class="code-title">Event
+                                    Pattern</span></div>
+                            <pre><code>{
+    "source": ["aws.ec2"],
+    "detail-type": ["EC2 Instance State-change Notification"],
+    "detail": {
+        "state": ["stopped", "terminated"]
+    }
+}</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> EventBridge Features</h4>
+                            <ul>
+                                <li><strong>Event Buses:</strong> Default, custom, partner (SaaS)</li>
+                                <li><strong>Archives:</strong> Store events for replay</li>
+                                <li><strong>Scheduler:</strong> Cron/rate-based scheduling</li>
+                                <li><strong>Pipes:</strong> Point-to-point with filtering/enrichment</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- KINESIS -->
+            <section id="kinesis" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🌊</span>Kinesis</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Real-Time Streaming</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Service</th>
+                                        <th>Purpose</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Data Streams</strong></td>
+                                        <td>Real-time data ingestion</td>
+                                        <td>Logs, IoT, clickstream</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Data Firehose</strong></td>
+                                        <td>Near real-time delivery</td>
+                                        <td>Load to S3, Redshift, ES</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Data Analytics</strong></td>
+                                        <td>SQL on streams</td>
+                                        <td>Real-time analytics</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Video Streams</strong></td>
+                                        <td>Video ingestion</td>
+                                        <td>IoT cameras, ML analysis</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>📊 Data Streams</h4>
+                                <ul>
+                                    <li>Shards: 1 MB/s in, 2 MB/s out</li>
+                                    <li>Retention: 24h - 365 days</li>
+                                    <li>Ordered within shard</li>
+                                    <li>Replay capability</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>🚀 Firehose</h4>
+                                <ul>
+                                    <li>Fully managed (no shards)</li>
+                                    <li>Near real-time (60s buffer)</li>
+                                    <li>Auto-scaling</li>
+                                    <li>Transform with Lambda</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP FUNCTIONS -->
+            <section id="stepfunctions" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔄</span>Step Functions</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Serverless Orchestration</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Standard vs Express</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Standard</th>
+                                        <th>Express</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Duration</strong></td>
+                                        <td>Up to 1 year</td>
+                                        <td>Up to 5 minutes</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Execution Rate</strong></td>
+                                        <td>2,000/second</td>
+                                        <td>100,000/second</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Pricing</strong></td>
+                                        <td>Per state transition</td>
+                                        <td>Per execution + duration</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>History</strong></td>
+                                        <td>Full execution history</td>
+                                        <td>CloudWatch Logs</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Use Case</strong></td>
+                                        <td>Long-running workflows</td>
+                                        <td>High-volume, short</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">State
+                                    Types</span></div>
+                            <pre><code>Step Functions States:
+┌─────────────────────────────────────────────────────────────┐
+│  Task       → Invoke Lambda, ECS, API, SDK                  │
+│  Choice     → Conditional branching                         │
+│  Parallel   → Execute branches concurrently                 │
+│  Map        → Iterate over array (parallel or sequential)   │
+│  Wait       → Delay for time or until timestamp             │
+│  Pass       → Pass input to output (transform)              │
+│  Succeed    → Terminate successfully                        │
+│  Fail       → Terminate with error                          │
+└─────────────────────────────────────────────────────────────┘
+
+Error Handling:
+- Retry: configurable with exponential backoff
+- Catch: fallback state on specific errors</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- API GATEWAY -->
+            <section id="apigateway" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🚪</span>API Gateway</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>API Types</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Protocol</th>
+                                        <th>Features</th>
+                                        <th>Cost</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>REST API</strong></td>
+                                        <td>REST</td>
+                                        <td>Full features, caching, WAF</td>
+                                        <td>Higher</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>HTTP API</strong></td>
+                                        <td>REST</td>
+                                        <td>Simple, faster, 70% cheaper</td>
+                                        <td>Lower</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>WebSocket</strong></td>
+                                        <td>WebSocket</td>
+                                        <td>Real-time, bidirectional</td>
+                                        <td>Per message</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>🔐 Authentication</h4>
+                                <ul>
+                                    <li>IAM (SigV4)</li>
+                                    <li>Cognito User Pools</li>
+                                    <li>Lambda Authorizer</li>
+                                    <li>API Keys (usage plans)</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>⚡ Integrations</h4>
+                                <ul>
+                                    <li>Lambda (proxy/non-proxy)</li>
+                                    <li>HTTP endpoints</li>
+                                    <li>AWS Services direct</li>
+                                    <li>Mock</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Throttling & Caching</h4>
+                            <ul>
+                                <li>Default: 10,000 req/s, 5,000 burst</li>
+                                <li>Usage plans for API keys</li>
+                                <li>Caching: 0.5 - 237 GB, TTL 0-3600s</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INTERVIEW QUESTIONS -->
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>SQS Standard vs FIFO?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Standard:</strong> Unlimited throughput, at-least-once, best-effort order
+                                </li>
+                                <li><strong>FIFO:</strong> 3,000/s with batching, exactly-once, guaranteed order</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>SNS vs SQS?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>SNS:</strong> Fan-out, push to multiple subscribers, no persistence</li>
+                                <li><strong>SQS:</strong> Queue, pull model, message persistence, single consumer group
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>SQS Visibility Timeout?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Thời gian message invisible sau khi consumer nhận. Default 30s, max 12h. Consumer phải xử
+                                lý + delete trước timeout, không thì message xuất hiện lại cho consumer khác.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>EventBridge vs SNS?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>EventBridge:</strong> Rich filtering, schema registry, archive/replay, SaaS
+                                    events</li>
+                                <li><strong>SNS:</strong> Simple pub/sub, high throughput, wider subscriber types (SMS,
+                                    email)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>Kinesis Data Streams vs Firehose?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Streams:</strong> Real-time, custom consumers, replay, manage shards</li>
+                                <li><strong>Firehose:</strong> Near real-time (60s), auto-scale, delivers to
+                                    S3/Redshift/ES</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>Step Functions Standard vs Express?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Standard:</strong> Long-running (1 year), full history, per transition
+                                    pricing</li>
+                                <li><strong>Express:</strong> Short (5 min), high volume, per execution + duration</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>API Gateway REST vs HTTP API?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>REST:</strong> Full features, caching, request/response transformation, WAF
+                                </li>
+                                <li><strong>HTTP:</strong> 70% cheaper, simpler, faster, JWT native, no caching</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>Fan-out pattern?</p>
+                        </div>
+                        <div class="answer">
+                            <p>SNS → multiple SQS queues. Single message published to SNS topic, delivered to all
+                                subscribed SQS queues. Each queue processed independently. Use case: S3 event → image
+                                resize + notification + archive.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="security.html" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>Security</span></a>
+                <a href="monitoring.html" class="nav-btn next"><span>Monitoring</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

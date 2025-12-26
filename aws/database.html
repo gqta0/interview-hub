@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Services - AWS Cloud Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .topic-icon.aws {
+            background: var(--aws-gradient);
+        }
+
+        .topic-category {
+            color: #FF9900;
+        }
+
+        .q-number {
+            background: var(--aws-gradient);
+        }
+
+        .question {
+            background: rgba(255, 153, 0, 0.1);
+        }
+
+        .page-navigation .nav-btn:hover {
+            background: rgba(255, 153, 0, 0.1);
+            border-color: #FF9900;
+            color: #FF9900;
+        }
+
+        .back-to-top {
+            background: var(--aws-gradient);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#aws" class="nav-back"><i class="fas fa-arrow-left"></i> AWS Cloud</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon aws"><i class="fas fa-database"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">AWS Cloud</span>
+            <h1>Database Services</h1>
+            <p class="topic-desc">RDS, Aurora, DynamoDB, ElastiCache - Giải pháp database đám mây</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#rds-basics">RDS Fundamentals</a></li>
+                <li><a href="#rds-ha">RDS High Availability</a></li>
+                <li><a href="#rds-security">RDS Security</a></li>
+                <li><a href="#aurora">Amazon Aurora</a></li>
+                <li><a href="#aurora-features">Aurora Advanced</a></li>
+                <li><a href="#dynamodb">DynamoDB Basics</a></li>
+                <li><a href="#dynamodb-advanced">DynamoDB Advanced</a></li>
+                <li><a href="#elasticache">ElastiCache</a></li>
+                <li><a href="#other">Other Databases</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <!-- RDS FUNDAMENTALS -->
+            <section id="rds-basics" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🗄️</span>RDS Fundamentals</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>RDS Core Concepts</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Supported Engines</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Engine</th>
+                                        <th>Type</th>
+                                        <th>Max Storage</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>MySQL</strong></td>
+                                        <td>Open source</td>
+                                        <td>64 TiB</td>
+                                        <td>Most popular</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>PostgreSQL</strong></td>
+                                        <td>Open source</td>
+                                        <td>64 TiB</td>
+                                        <td>Feature-rich</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>MariaDB</strong></td>
+                                        <td>Open source</td>
+                                        <td>64 TiB</td>
+                                        <td>MySQL fork</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Oracle</strong></td>
+                                        <td>Commercial</td>
+                                        <td>64 TiB</td>
+                                        <td>BYOL or License Included</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>SQL Server</strong></td>
+                                        <td>Commercial</td>
+                                        <td>16 TiB</td>
+                                        <td>Express to Enterprise</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Aurora</strong></td>
+                                        <td>AWS-native</td>
+                                        <td>128 TiB</td>
+                                        <td>MySQL/PostgreSQL compatible</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">RDS
+                                    Features</span></div>
+                            <pre><code>RDS Managed Features:
+┌─────────────────────────────────────────────────────────────┐
+│  AWS Manages:                                               │
+│  ├── Provisioning, patching (maintenance window)            │
+│  ├── Backups (automated + manual snapshots)                 │
+│  ├── Monitoring (CloudWatch, Enhanced Monitoring)           │
+│  ├── Multi-AZ failover                                      │
+│  └── Storage auto-scaling                                   │
+├─────────────────────────────────────────────────────────────┤
+│  You Manage:                                                │
+│  ├── Schema design, queries                                 │
+│  ├── Indexes, optimization                                  │
+│  ├── Security (users, permissions)                          │
+│  └── Application logic                                      │
+└─────────────────────────────────────────────────────────────┘
+
+Storage Auto Scaling:
+- Set maximum storage limit
+- Auto-increases when:
+  - Free storage < 10%
+  - Low storage lasts 5+ minutes
+  - 6 hours since last modification</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RDS HIGH AVAILABILITY -->
+            <section id="rds-ha" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔄</span>RDS High Availability</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Multi-AZ vs Read Replicas</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Multi-AZ</th>
+                                        <th>Read Replicas</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Purpose</strong></td>
+                                        <td>High Availability</td>
+                                        <td>Scalability (read)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Replication</strong></td>
+                                        <td>Synchronous</td>
+                                        <td>Asynchronous</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Automatic Failover</strong></td>
+                                        <td>Yes (1-2 min)</td>
+                                        <td>Manual promotion</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Read Traffic</strong></td>
+                                        <td>Primary only</td>
+                                        <td>Yes (scaled reads)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Cross-Region</strong></td>
+                                        <td>No</td>
+                                        <td>Yes</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Data Transfer Cost</strong></td>
+                                        <td>Free (same region)</td>
+                                        <td>Cross-region: charged</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Max Replicas</strong></td>
+                                        <td>1 standby</td>
+                                        <td>15 (Aurora), 5 (others)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span
+                                    class="code-title">Multi-AZ Architecture</span></div>
+                            <pre><code>Multi-AZ Deployment:
+┌────────────────────────────────────────────────────────────┐
+│                      Same Region                           │
+│  ┌─────────────────┐         ┌─────────────────┐          │
+│  │  AZ-A (Primary) │         │  AZ-B (Standby) │          │
+│  │  ┌───────────┐  │  Sync   │  ┌───────────┐  │          │
+│  │  │    RDS    │──┼────────▶│  │    RDS    │  │          │
+│  │  │  Primary  │  │  Repli  │  │  (Hidden)  │  │          │
+│  │  └───────────┘  │  cation │  └───────────┘  │          │
+│  └─────────────────┘         └─────────────────┘          │
+│                                                            │
+│  DNS Endpoint: mydb.abc123.us-east-1.rds.amazonaws.com    │
+│  (Auto-switches to standby on failover)                    │
+└────────────────────────────────────────────────────────────┘
+
+Failover Triggers:
+- Primary AZ outage
+- Primary instance failure
+- Instance type change
+- Software patching
+- Manual failover (reboot with failover)</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> Read Replica to Multi-AZ</h4>
+                            <p>Read Replicas can be promoted to standalone DB. They can also be configured as Multi-AZ
+                                for their own HA.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Backups & Restore</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>📸 Automated Backups</h4>
+                                <ul>
+                                    <li>Daily full backup during window</li>
+                                    <li>Transaction logs every 5 mins</li>
+                                    <li>Retention: 0-35 days</li>
+                                    <li>Point-in-time restore</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>📷 Manual Snapshots</h4>
+                                <ul>
+                                    <li>User-initiated anytime</li>
+                                    <li>No retention limit</li>
+                                    <li>Copy across regions</li>
+                                    <li>Share with other accounts</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Restore Creates New Instance</h4>
+                            <p>Restoring from backup/snapshot always creates a NEW RDS instance. You must update your
+                                application connection string.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RDS SECURITY -->
+            <section id="rds-security" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔐</span>RDS Security</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Security Features</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">RDS
+                                    Security Layers</span></div>
+                            <pre><code>RDS Security Stack:
+┌─────────────────────────────────────────────────────────────┐
+│  Network Security                                           │
+│  ├── VPC (private subnets recommended)                      │
+│  ├── Security Groups (port 3306/5432/etc)                   │
+│  └── NACLs (subnet level)                                   │
+├─────────────────────────────────────────────────────────────┤
+│  Authentication                                              │
+│  ├── Database username/password                             │
+│  ├── IAM Database Authentication (token-based)              │
+│  └── Kerberos (Active Directory)                            │
+├─────────────────────────────────────────────────────────────┤
+│  Encryption                                                  │
+│  ├── At rest: KMS (AES-256)                                 │
+│  ├── In transit: SSL/TLS                                    │
+│  └── Transparent Data Encryption (Oracle/SQL Server)        │
+└─────────────────────────────────────────────────────────────┘
+
+IAM DB Auth (MySQL, PostgreSQL):
+- Generate auth token (15-min validity)
+- No password stored in application
+- Centralized access management via IAM</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Encryption Notes</h4>
+                            <ul>
+                                <li>Encryption must be enabled at creation time</li>
+                                <li>To encrypt unencrypted DB: snapshot → copy with encryption → restore</li>
+                                <li>Read replicas inherit encryption from source</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AURORA -->
+            <section id="aurora" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🌟</span>Amazon Aurora</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Aurora Architecture</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Aurora
+                                    Storage</span></div>
+                            <pre><code>Aurora Storage Architecture:
+┌─────────────────────────────────────────────────────────────┐
+│                    Aurora Cluster                           │
+│                                                             │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐                  │
+│  │  Writer  │  │  Reader  │  │  Reader  │  ← Up to 15      │
+│  │ Instance │  │ Instance │  │ Instance │    replicas      │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘                  │
+│       │             │             │                         │
+│       └─────────────┼─────────────┘                         │
+│                     │                                       │
+│  ┌──────────────────▼──────────────────┐                   │
+│  │     Shared Cluster Storage          │                   │
+│  │   (Auto-scales 10GB - 128TB)        │                   │
+│  │                                     │                   │
+│  │   6 copies across 3 AZs            │                   │
+│  │   (2 copies per AZ)                │                   │
+│  │                                     │                   │
+│  │   Self-healing, continuous backup   │                   │
+│  └─────────────────────────────────────┘                   │
+└─────────────────────────────────────────────────────────────┘
+
+Data Durability:
+- Writes: Need 4/6 copies
+- Reads: Need 3/6 copies
+- Handles loss of 2 copies for writes, 3 for reads</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Aurora vs RDS MySQL</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Aurora</th>
+                                        <th>RDS MySQL</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Performance</strong></td>
+                                        <td>5x MySQL</td>
+                                        <td>Standard</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Storage</strong></td>
+                                        <td>Auto-scales to 128 TB</td>
+                                        <td>Max 64 TB</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Replicas</strong></td>
+                                        <td>15 (ms lag)</td>
+                                        <td>5</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Failover</strong></td>
+                                        <td>~30 seconds</td>
+                                        <td>1-2 minutes</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Cost</strong></td>
+                                        <td>~20% more</td>
+                                        <td>Baseline</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AURORA ADVANCED -->
+            <section id="aurora-features" class="content-section">
+                <h2 class="section-title"><span class="section-icon">⚙️</span>Aurora Advanced Features</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Aurora Serverless & Global</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Aurora Deployment Options</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Provisioned</strong></td>
+                                        <td>Fixed instance size</td>
+                                        <td>Predictable workloads</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Serverless v2</strong></td>
+                                        <td>Auto-scales (0.5 - 256 ACUs)</td>
+                                        <td>Variable/unpredictable</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Global Database</strong></td>
+                                        <td>Cross-region replication</td>
+                                        <td>DR, low-latency global</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Multi-Master</strong></td>
+                                        <td>Multiple write instances</td>
+                                        <td>Continuous availability</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>🌍 Global Database</h4>
+                                <ul>
+                                    <li>1 primary region (read/write)</li>
+                                    <li>Up to 5 secondary regions</li>
+                                    <li>&lt;1 second replication lag</li>
+                                    <li>RTO &lt;1 minute for failover</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>⚡ Serverless v2</h4>
+                                <ul>
+                                    <li>Instant scaling</li>
+                                    <li>Pay per ACU-second</li>
+                                    <li>Mix with provisioned</li>
+                                    <li>0.5 ACU = 1 GB RAM</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DYNAMODB -->
+            <section id="dynamodb" class="content-section">
+                <h2 class="section-title"><span class="section-icon">⚡</span>DynamoDB Basics</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>DynamoDB Core Concepts</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span
+                                    class="code-title">DynamoDB Structure</span></div>
+                            <pre><code>DynamoDB Data Model:
+┌─────────────────────────────────────────────────────────────┐
+│  Table: Orders                                               │
+│  ├── Primary Key                                            │
+│  │   ├── Partition Key (PK): customer_id                    │
+│  │   └── Sort Key (SK): order_date#order_id                 │
+│  │                                                          │
+│  └── Items (rows)                                           │
+│      ├── { PK: "C001", SK: "2024-01-15#O123", total: 99 }  │
+│      ├── { PK: "C001", SK: "2024-01-20#O124", total: 150 } │
+│      └── { PK: "C002", SK: "2024-01-16#O125", total: 75 }  │
+└─────────────────────────────────────────────────────────────┘
+
+Access Patterns:
+- Query: Must specify PK (efficient, reads partition)
+- Scan: Reads entire table (expensive, avoid)
+
+Max Item Size: 400 KB</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Capacity Modes</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Mode</th>
+                                        <th>Pricing</th>
+                                        <th>Best For</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>On-Demand</strong></td>
+                                        <td>Per request (RRU/WRU)</td>
+                                        <td>Unpredictable, spiky traffic</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Provisioned</strong></td>
+                                        <td>Per hour (RCU/WCU)</td>
+                                        <td>Predictable, cost optimization</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> Capacity Units</h4>
+                            <ul>
+                                <li><strong>1 RCU:</strong> 1 strongly consistent read/sec (4 KB) or 2 eventually
+                                    consistent</li>
+                                <li><strong>1 WCU:</strong> 1 write/sec (1 KB)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DYNAMODB ADVANCED -->
+            <section id="dynamodb-advanced" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔧</span>DynamoDB Advanced</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Indexes & Streams</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>GSI vs LSI</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>GSI</th>
+                                        <th>LSI</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Partition Key</strong></td>
+                                        <td>Different from base</td>
+                                        <td>Same as base</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Sort Key</strong></td>
+                                        <td>Optional</td>
+                                        <td>Different from base</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Creation</strong></td>
+                                        <td>Anytime</td>
+                                        <td>At table creation only</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Limit</strong></td>
+                                        <td>20 per table</td>
+                                        <td>5 per table</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Capacity</strong></td>
+                                        <td>Separate RCU/WCU</td>
+                                        <td>Shared with table</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Consistency</strong></td>
+                                        <td>Eventually only</td>
+                                        <td>Strong or eventually</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>📡 DynamoDB Streams</h4>
+                                <ul>
+                                    <li>24-hour change log</li>
+                                    <li>Trigger Lambda</li>
+                                    <li>Cross-region replication</li>
+                                    <li>Analytics pipelines</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>🌍 Global Tables</h4>
+                                <ul>
+                                    <li>Multi-region, multi-active</li>
+                                    <li>Requires Streams enabled</li>
+                                    <li>Sub-second replication</li>
+                                    <li>Active-active writes</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> DAX (DynamoDB Accelerator)</h4>
+                            <ul>
+                                <li>In-memory cache for DynamoDB</li>
+                                <li>Microseconds latency (vs milliseconds)</li>
+                                <li>Drop-in replacement (compatible API)</li>
+                                <li>5 minutes default TTL</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ELASTICACHE -->
+            <section id="elasticache" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💾</span>ElastiCache</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Redis vs Memcached</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Redis</th>
+                                        <th>Memcached</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Data Structures</strong></td>
+                                        <td>Rich (strings, lists, sets, hashes)</td>
+                                        <td>Simple strings</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Persistence</strong></td>
+                                        <td>Yes (snapshot + AOF)</td>
+                                        <td>No</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Replication</strong></td>
+                                        <td>Yes (Multi-AZ)</td>
+                                        <td>No</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Pub/Sub</strong></td>
+                                        <td>Yes</td>
+                                        <td>No</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Transactions</strong></td>
+                                        <td>Yes</td>
+                                        <td>No</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Use Case</strong></td>
+                                        <td>Complex caching, sessions, leaderboards</td>
+                                        <td>Simple caching</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Caching
+                                    Strategies</span></div>
+                            <pre><code>Cache-Aside (Lazy Loading):
+1. App checks cache
+2. Cache miss → Query DB → Write to cache
+3. Next request hits cache
+Pro: Only cache what's needed
+Con: Cache miss penalty, stale data
+
+Write-Through:
+1. App writes to cache AND DB
+2. Cache always up-to-date
+Pro: Fresh data
+Con: Write penalty, unused data cached
+
+TTL (Time-to-Live):
+- Balance freshness vs performance
+- Typical: 15 min - 24 hours
+- Critical data: shorter TTL</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- OTHER DATABASES -->
+            <section id="other" class="content-section">
+                <h2 class="section-title"><span class="section-icon">📊</span>Other Database Services</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Purpose-Built Databases</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Service</th>
+                                        <th>Type</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>DocumentDB</strong></td>
+                                        <td>Document (MongoDB compatible)</td>
+                                        <td>Content management, catalogs</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Neptune</strong></td>
+                                        <td>Graph</td>
+                                        <td>Social networks, fraud detection</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Timestream</strong></td>
+                                        <td>Time-series</td>
+                                        <td>IoT, DevOps metrics</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Keyspaces</strong></td>
+                                        <td>Wide-column (Cassandra)</td>
+                                        <td>High-scale apps</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>QLDB</strong></td>
+                                        <td>Ledger</td>
+                                        <td>Immutable transaction log</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>MemoryDB</strong></td>
+                                        <td>Redis-compatible durable</td>
+                                        <td>Ultra-fast with durability</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INTERVIEW QUESTIONS -->
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>Multi-AZ vs Read Replicas?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Multi-AZ:</strong> HA, sync replication, auto failover, standby không read
+                                    được</li>
+                                <li><strong>Read Replica:</strong> Scalability, async replication, manual promote, read
+                                    traffic</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>Aurora vs RDS?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Aurora:</strong> 5x performance, 128TB auto-scale storage, 15 replicas, 30s
+                                failover, 6-way replication, ~20% more cost.</p>
+                            <p><strong>RDS:</strong> Standard performance, 64TB max, 5 replicas, 1-2 min failover,
+                                simpler.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>DynamoDB Partition Key design?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Chọn PK có high cardinality để distribute data đều. Tránh "hot partition". Ví dụ: user_id
+                                tốt, date không tốt (all writes to same partition). Có thể add random suffix cho
+                                write-heavy.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>GSI vs LSI trong DynamoDB?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>GSI:</strong> Khác PK, create anytime, separate capacity, eventually
+                                    consistent</li>
+                                <li><strong>LSI:</strong> Same PK khác SK, create at table creation, shared capacity,
+                                    strong consistent option</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>Redis vs Memcached?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Redis:</strong> Rich data types, persistence, replication, pub/sub,
+                                    transactions</li>
+                                <li><strong>Memcached:</strong> Simple strings, no persistence, multi-threaded, simpler
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>On-Demand vs Provisioned trong DynamoDB?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>On-Demand:</strong> Pay per request, no capacity planning, tốt cho traffic không
+                                đoán được.</p>
+                            <p><strong>Provisioned:</strong> Set RCU/WCU, auto-scaling available, cheaper cho
+                                predictable workloads.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>Aurora Serverless v2 là gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Aurora scales instantly based on load (0.5-256 ACUs). Pay per ACU-second. Tốt cho
+                                variable workloads, dev/test, multi-tenant apps. Can mix với provisioned instances.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>ElastiCache caching strategies?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Lazy Loading:</strong> Cache on read miss, có thể stale</li>
+                                <li><strong>Write-Through:</strong> Write cả cache và DB, always fresh, write penalty
+                                </li>
+                                <li><strong>TTL:</strong> Set expiration để balance freshness vs performance</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="storage.html" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>Storage</span></a>
+                <a href="security.html" class="nav-btn next"><span>Security</span><i class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>
