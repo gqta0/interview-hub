@@ -19,7 +19,7 @@
     <nav class="top-nav">
         <div class="nav-container">
             <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
-            <a href="../index.html#mysql" class="nav-back"><i class="fas fa-arrow-left"></i> MySQL</a>
+            <a href="sql-fundamentals.html" class="nav-back"><i class="fas fa-arrow-left"></i> SQL Fundamentals</a>
         </div>
     </nav>
 
@@ -28,7 +28,7 @@
         <div class="topic-info">
             <span class="topic-category">MySQL</span>
             <h1>Indexing & Performance</h1>
-            <p class="topic-desc">B-Tree, Index Types, EXPLAIN, Query Optimization</p>
+            <p class="topic-desc">B-Tree, Index Types, Composite Index, EXPLAIN, Query Optimization</p>
         </div>
     </header>
 
@@ -38,66 +38,169 @@
             <ul>
                 <li><a href="#how-index">How Indexes Work</a></li>
                 <li><a href="#types">Index Types</a></li>
-                <li><a href="#composite">Composite Indexes</a></li>
-                <li><a href="#explain">EXPLAIN & Analysis</a></li>
+                <li><a href="#composite">Composite Index</a></li>
+                <li><a href="#covering">Covering Index</a></li>
+                <li><a href="#explain">EXPLAIN Analysis</a></li>
                 <li><a href="#optimization">Query Optimization</a></li>
                 <li><a href="#antipatterns">Anti-Patterns</a></li>
+                <li><a href="#maintenance">Index Maintenance</a></li>
                 <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
             </ul>
         </aside>
 
         <article class="main-content">
+            <!-- HOW INDEXES WORK -->
             <section class="content-section">
                 <h2 id="how-index" class="section-title"><span class="section-icon">🌳</span>How Indexes Work</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>B-Tree Index</h3><span class="badge essential">Essential</span>
+                        <h3>B-Tree Structure</h3><span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Structure</span></div>
-                            <pre><code>B-Tree Index (Balanced Tree)
-                    ┌─────────────────┐
-                    │  [50, 100, 150] │  Root
-                    └────────┬────────┘
-           ┌─────────────────┼─────────────────┐
-           ▼                 ▼                 ▼
-    ┌───────────┐     ┌───────────┐     ┌───────────┐
-    │[10,25,40] │     │[60,75,90] │     │[110,130]  │  Branch
-    └─────┬─────┘     └─────┬─────┘     └─────┬─────┘
-          ▼                 ▼                 ▼
-    ┌──────────┐      ┌──────────┐      ┌──────────┐
-    │ Leaf     │  →   │ Leaf     │  →   │ Leaf     │  Leaf (linked)
-    │ Data Ptr │      │ Data Ptr │      │ Data Ptr │
-    └──────────┘      └──────────┘      └──────────┘
+                            <div class="code-header"><span class="code-lang">Visual</span><span
+                                    class="code-title">B-Tree Index Structure</span></div>
+                            <pre><code>                        ┌────────────────────────┐
+                        │    Root Node           │
+                        │   [50 | 100 | 150]     │
+                        └────────┬───────────────┘
+           ┌─────────────────────┼─────────────────────┐
+           ▼                     ▼                     ▼
+    ┌─────────────┐      ┌─────────────┐      ┌─────────────┐
+    │ [10,25,40]  │      │ [60,75,90]  │      │[120,140,180]│  Branch Nodes
+    └──────┬──────┘      └──────┬──────┘      └──────┬──────┘
+           │                   │                    │
+     ┌─────┼─────┐       ┌─────┼─────┐        ┌────┼─────┐
+     ▼     ▼     ▼       ▼     ▼     ▼        ▼    ▼     ▼
+   ┌───┐ ┌───┐ ┌───┐   ┌───┐ ┌───┐ ┌───┐    ┌───┐ ┌───┐ ┌───┐
+   │10 │►│25 │►│40 │   │60 │►│75 │►│90 │    │120│►│140│►│180│  Leaf Nodes
+   │ptr│ │ptr│ │ptr│   │ptr│ │ptr│ │ptr│    │ptr│ │ptr│ │ptr│  (Linked List)
+   └───┘ └───┘ └───┘   └───┘ └───┘ └───┘    └───┘ └───┘ └───┘
 
-Without Index: Full table scan O(n)
-With B-Tree:   O(log n) lookups</code></pre>
+Key characteristics:
+• Self-balancing: All leaves at same depth
+• Each node can have multiple children (branching factor ~100-1000)
+• Leaf nodes linked for range scans
+• Lookup: O(log n) - typically 3-4 disk reads for millions of rows</code></pre>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>✅ Khi nên dùng Index</h4>
+                                <ul>
+                                    <li>Columns trong WHERE clause</li>
+                                    <li>JOIN columns (foreign keys)</li>
+                                    <li>ORDER BY columns</li>
+                                    <li>High cardinality columns</li>
+                                    <li>Frequent SELECT queries</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>❌ Khi KHÔNG nên dùng</h4>
+                                <ul>
+                                    <li>Tables rất nhỏ</li>
+                                    <li>Columns ít được query</li>
+                                    <li>Low cardinality (boolean, status)</li>
+                                    <li>Heavy INSERT/UPDATE tables</li>
+                                    <li>Wide columns (TEXT, BLOB)</li>
+                                </ul>
+                            </div>
                         </div>
 
                         <div class="key-points">
-                            <h4><i class="fas fa-check-circle"></i> Index Benefits</h4>
+                            <h4><i class="fas fa-key"></i> Index Trade-offs</h4>
                             <ul>
-                                <li><strong>Faster WHERE:</strong> Binary search instead of full scan</li>
-                                <li><strong>Faster ORDER BY:</strong> Data already sorted</li>
-                                <li><strong>Faster JOIN:</strong> Quick lookup of matching rows</li>
-                                <li><strong>Covering index:</strong> All data in index, no table access needed</li>
+                                <li><strong>Read Performance:</strong> ✅ Faster SELECT queries</li>
+                                <li><strong>Write Performance:</strong> ❌ Slower INSERT/UPDATE/DELETE (index
+                                    maintenance)</li>
+                                <li><strong>Storage:</strong> ❌ Extra disk space (có thể 10-30% table size)</li>
+                                <li><strong>Maintenance:</strong> ❌ Index fragmentation over time</li>
                             </ul>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="warning-box">
-                            <h4><i class="fas fa-exclamation-triangle"></i> Index Costs</h4>
-                            <ul>
-                                <li>Slower INSERT/UPDATE/DELETE (must update index)</li>
-                                <li>Storage space</li>
-                                <li>Too many indexes = maintenance overhead</li>
-                            </ul>
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Clustered vs Non-Clustered</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Visual</span><span
+                                    class="code-title">Clustered vs Secondary Index</span></div>
+                            <pre><code>CLUSTERED INDEX (PRIMARY KEY in InnoDB):
+┌─────────────────────────────────────────────────────────────┐
+│ Index: B-Tree                                               │
+│ Leaf nodes contain: ACTUAL ROW DATA                         │
+│                                                             │
+│ [PK=1] → {id:1, name:'Alice', email:'alice@...', ...}      │
+│ [PK=2] → {id:2, name:'Bob', email:'bob@...', ...}          │
+│ [PK=3] → {id:3, name:'Charlie', email:'charlie@...', ...}  │
+└─────────────────────────────────────────────────────────────┘
+• Table data physically ordered by PK
+• Only ONE clustered index per table
+• Sequential PK = good for inserts (append)
+• Random PK (UUID) = bad for inserts (page splits)
+
+
+SECONDARY INDEX (Non-Clustered):
+┌─────────────────────────────────────────────────────────────┐
+│ Index on (email)                                            │
+│ Leaf nodes contain: email → PRIMARY KEY pointer             │
+│                                                             │
+│ ['alice@...'] → PK=1 ─────┐                                │
+│ ['bob@...']   → PK=2 ─────┼───► Lookup in Clustered Index  │
+│ ['charlie@...'] → PK=3 ───┘     to get full row            │
+└─────────────────────────────────────────────────────────────┘
+• Lookup: Index → PK → Row (double lookup)
+• Covering index avoids second lookup</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Clustered vs Secondary Index</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Aspect</th>
+                                        <th>Clustered (PK)</th>
+                                        <th>Secondary</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Per table</td>
+                                        <td>Exactly 1</td>
+                                        <td>Multiple allowed</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Leaf nodes</td>
+                                        <td>Actual row data</td>
+                                        <td>PK pointer</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Row access</td>
+                                        <td>Direct</td>
+                                        <td>Via PK lookup</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Storage</td>
+                                        <td>Table = Index</td>
+                                        <td>Separate structure</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Range scans</td>
+                                        <td>Very fast</td>
+                                        <td>Depends on PK order</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- INDEX TYPES -->
             <section class="content-section">
                 <h2 id="types" class="section-title"><span class="section-icon">📑</span>Index Types</h2>
 
@@ -118,28 +221,33 @@ With B-Tree:   O(log n) lookups</code></pre>
                                 <tbody>
                                     <tr>
                                         <td><strong>PRIMARY KEY</strong></td>
-                                        <td>Unique, not null, clustered</td>
-                                        <td>Record identifier</td>
+                                        <td>Unique, NOT NULL, clustered</td>
+                                        <td>Row identifier</td>
                                     </tr>
                                     <tr>
-                                        <td><strong>UNIQUE</strong></td>
-                                        <td>Unique values allowed</td>
-                                        <td>Email, username</td>
+                                        <td><strong>UNIQUE INDEX</strong></td>
+                                        <td>No duplicates (allows NULL)</td>
+                                        <td>Email, SSN, username</td>
                                     </tr>
                                     <tr>
-                                        <td><strong>INDEX / KEY</strong></td>
-                                        <td>Regular B-Tree index</td>
-                                        <td>Frequent WHERE/JOIN columns</td>
+                                        <td><strong>INDEX (B-Tree)</strong></td>
+                                        <td>Standard index</td>
+                                        <td>WHERE, JOIN, ORDER</td>
                                     </tr>
                                     <tr>
                                         <td><strong>FULLTEXT</strong></td>
                                         <td>Text search</td>
-                                        <td>Search in text content</td>
+                                        <td>Search in articles, descriptions</td>
                                     </tr>
                                     <tr>
                                         <td><strong>SPATIAL</strong></td>
-                                        <td>Geometric data</td>
-                                        <td>GIS applications</td>
+                                        <td>Geometric data (R-Tree)</td>
+                                        <td>GIS, location queries</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>HASH (Memory)</strong></td>
+                                        <td>Exact match only</td>
+                                        <td>Memory engine, exact lookups</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -148,105 +256,148 @@ With B-Tree:   O(log n) lookups</code></pre>
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Creating
                                     Indexes</span></div>
-                            <pre><code>-- Create index on existing table
-CREATE INDEX idx_users_email ON users(email);
-CREATE UNIQUE INDEX idx_users_email ON users(email);
-
--- Create with table
+                            <pre><code class="language-sql">-- Primary Key (clustered, auto-created)
 CREATE TABLE users (
-    id BIGINT PRIMARY KEY,
-    email VARCHAR(255) UNIQUE,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
     name VARCHAR(100),
-    status VARCHAR(20),
-    created_at DATETIME,
-    
-    INDEX idx_status (status),
-    INDEX idx_created (created_at)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Composite index
-CREATE INDEX idx_status_created ON users(status, created_at);
+-- Unique Index
+CREATE UNIQUE INDEX idx_users_email ON users(email);
 
--- Prefix index for long text
-CREATE INDEX idx_name ON users(name(20));  -- First 20 chars only
+-- Standard B-Tree Index
+CREATE INDEX idx_users_name ON users(name);
 
--- FULLTEXT for text search
-CREATE FULLTEXT INDEX idx_content ON articles(title, content);
-SELECT * FROM articles WHERE MATCH(title, content) AGAINST('keyword');
+-- Composite Index (multiple columns)
+CREATE INDEX idx_users_status_created ON users(status, created_at);
 
--- View indexes
+-- Prefix Index (for long strings - first N characters)
+CREATE INDEX idx_users_email_prefix ON users(email(20));
+
+-- Fulltext Index
+CREATE FULLTEXT INDEX idx_ft_content ON articles(title, content);
+
+-- Descending Index (MySQL 8.0+)
+CREATE INDEX idx_created_desc ON orders(created_at DESC);
+
+-- Invisible Index (for testing - not used by optimizer)
+CREATE INDEX idx_test ON users(phone) INVISIBLE;
+
+-- Drop Index
+DROP INDEX idx_users_name ON users;
+ALTER TABLE users DROP INDEX idx_users_email;
+
+-- View existing indexes
 SHOW INDEX FROM users;
-
--- Drop index
-DROP INDEX idx_users_email ON users;
-ALTER TABLE users DROP INDEX idx_users_email;</code></pre>
+SHOW CREATE TABLE users;</code></pre>
                         </div>
 
-                        <div class="info-box">
-                            <h4><i class="fas fa-info-circle"></i> Clustered vs Secondary Index</h4>
-                            <ul>
-                                <li><strong>Clustered (PRIMARY KEY):</strong> Rows stored in PK order. Only one per
-                                    table. InnoDB uses PK as clustered.</li>
-                                <li><strong>Secondary:</strong> Separate structure, stores PK value as pointer. Need
-                                    extra lookup to get row data.</li>
-                            </ul>
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Fulltext
+                                    Search</span></div>
+                            <pre><code class="language-sql">-- Create fulltext index
+CREATE FULLTEXT INDEX idx_ft_articles ON articles(title, content);
+
+-- Natural Language Mode (default)
+SELECT * FROM articles
+WHERE MATCH(title, content) AGAINST('database optimization');
+
+-- Boolean Mode (operators: +, -, *, >, <, ())
+SELECT * FROM articles
+WHERE MATCH(title, content) AGAINST('+MySQL -PostgreSQL' IN BOOLEAN MODE);
+
+-- With expansion (find related words)
+SELECT * FROM articles
+WHERE MATCH(title, content) AGAINST('database' WITH QUERY EXPANSION);
+
+-- Get relevance score
+SELECT 
+    title,
+    MATCH(title, content) AGAINST('database') AS relevance
+FROM articles
+WHERE MATCH(title, content) AGAINST('database')
+ORDER BY relevance DESC;</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- COMPOSITE INDEX -->
             <section class="content-section">
-                <h2 id="composite" class="section-title"><span class="section-icon">🔢</span>Composite Indexes</h2>
+                <h2 id="composite" class="section-title"><span class="section-icon">🔗</span>Composite Index</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>Multi-Column Indexes</h3><span class="badge essential">Essential</span>
+                        <h3>Leftmost Prefix Rule</h3><span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Concept</span></div>
-                            <pre><code>Index on (status, created_at, user_id)
+                            <div class="code-header"><span class="code-lang">SQL</span><span
+                                    class="code-title">Composite Index Example</span></div>
+                            <pre><code class="language-sql">-- Composite index on (a, b, c)
+CREATE INDEX idx_abc ON orders(status, user_id, created_at);
 
-Leftmost prefix rule - Index used for:
-✅ WHERE status = 'ACTIVE'
-✅ WHERE status = 'ACTIVE' AND created_at > '2024-01-01'
-✅ WHERE status = 'ACTIVE' AND created_at > '2024-01-01' AND user_id = 1
+-- LEFTMOST PREFIX RULE: Index used for queries on leftmost columns
 
-❌ WHERE created_at > '2024-01-01'  -- Skipped status!
-❌ WHERE user_id = 1                -- Skipped status and created_at!</code></pre>
+-- ✅ Uses index (full)
+SELECT * FROM orders WHERE status = 'ACTIVE' AND user_id = 1 AND created_at > '2024-01-01';
+
+-- ✅ Uses index (a, b)
+SELECT * FROM orders WHERE status = 'ACTIVE' AND user_id = 1;
+
+-- ✅ Uses index (a only)
+SELECT * FROM orders WHERE status = 'ACTIVE';
+
+-- ❌ KHÔNG dùng index (skip column a)
+SELECT * FROM orders WHERE user_id = 1;
+
+-- ❌ KHÔNG dùng index (chỉ column c)
+SELECT * FROM orders WHERE created_at > '2024-01-01';
+
+-- ✅ Uses index (a, b) - c skipped but a,b still used
+SELECT * FROM orders WHERE status = 'ACTIVE' AND user_id = 1 AND amount > 100;
+
+-- ⚠️ Partial use (a only) - because b uses range
+SELECT * FROM orders WHERE status = 'ACTIVE' AND user_id > 1 AND created_at > '2024-01-01';
+-- Range condition on user_id "breaks" index for created_at</code></pre>
                         </div>
 
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">SQL</span><span
-                                    class="code-title">Composite Index Design</span></div>
-                            <pre><code>-- Query pattern:
--- SELECT * FROM orders WHERE user_id = ? AND status = ? ORDER BY created_at DESC
+                            <div class="code-header"><span class="code-lang">Visual</span><span class="code-title">Index
+                                    Column Order</span></div>
+                            <pre><code>Index on (status, user_id, created_at):
 
--- Good composite index:
-CREATE INDEX idx_user_status_created ON orders(user_id, status, created_at);
+                status = 'ACTIVE'
+               /                  \
+        user_id = 1            user_id = 2
+       /    |    \            /    |    \
+    Jan1  Jan2  Jan3       Feb1  Feb2  Feb3
+    
+Queries:
+• WHERE status = 'ACTIVE'                          → Uses index (a)
+• WHERE status = 'ACTIVE' AND user_id = 1          → Uses index (a, b)
+• WHERE status = 'ACTIVE' AND user_id = 1 AND date → Uses index (a, b, c)
+• WHERE user_id = 1                                → ❌ No leftmost prefix
 
--- Order matters! Consider:
--- 1. Equality conditions first (user_id, status)
--- 2. Range/ORDER BY column last (created_at)
-
--- SELECT * FROM orders WHERE user_id = 123 AND status = 'PENDING' ORDER BY created_at
--- Uses full index: (user_id=123, status='PENDING', ORDER BY created_at)
-
-
--- Bad: Range before ORDER BY
-CREATE INDEX idx_bad ON orders(user_id, created_at, status);
--- WHERE user_id = 123 AND created_at > '2024-01-01' AND status = 'PENDING'
--- Can only use user_id and created_at, status needs filesort</code></pre>
+Best practices for column order:
+1. Equality conditions first (=, IN)
+2. Range conditions last (>, <, BETWEEN, LIKE 'abc%')
+3. High cardinality columns early (more selective)
+4. Consider ORDER BY columns</code></pre>
                         </div>
 
-                        <div class="key-points">
-                            <h4><i class="fas fa-lightbulb"></i> Index Design Rules</h4>
+                        <div class="info-box">
+                            <h4><i class="fas fa-lightbulb"></i> Composite Index Tips</h4>
                             <ul>
-                                <li><strong>Equality first:</strong> Columns with = conditions leftmost</li>
-                                <li><strong>Range/ORDER BY last:</strong> Put range/sort columns at end</li>
-                                <li><strong>High cardinality:</strong> Selective columns (many unique values) benefit
-                                    more</li>
-                                <li><strong>Cover if possible:</strong> Include SELECT columns to avoid table lookup
+                                <li><strong>Column order matters:</strong> Put equality columns first, range columns
+                                    last</li>
+                                <li><strong>Selectivity:</strong> High cardinality columns early (more filter power)
+                                </li>
+                                <li><strong>Common queries:</strong> Design index order based on most frequent queries
+                                </li>
+                                <li><strong>Don't over-index:</strong> 3-4 columns usually max, more = maintenance cost
                                 </li>
                             </ul>
                         </div>
@@ -254,242 +405,605 @@ CREATE INDEX idx_bad ON orders(user_id, created_at, status);
                 </div>
             </section>
 
+            <!-- COVERING INDEX -->
             <section class="content-section">
-                <h2 id="explain" class="section-title"><span class="section-icon">🔍</span>EXPLAIN & Analysis</h2>
+                <h2 id="covering" class="section-title"><span class="section-icon">📦</span>Covering Index</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>Query Execution Plan</h3><span class="badge essential">Essential</span>
+                        <h3>Using index for all columns</h3><span class="badge important">Important</span>
                     </div>
                     <div class="concept-content">
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">EXPLAIN
-                                    Output</span></div>
-                            <pre><code>EXPLAIN SELECT * FROM users WHERE email = 'john@example.com';
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Covering
+                                    Index Example</span></div>
+                            <pre><code class="language-sql">-- Table structure
+CREATE TABLE orders (
+    id BIGINT PRIMARY KEY,
+    user_id BIGINT,
+    status VARCHAR(20),
+    amount DECIMAL(10,2),
+    created_at TIMESTAMP,
+    -- ... many more columns
+);
 
-+----+-------------+-------+------+---------------+------+---------+------+------+-------------+
-| id | select_type | table | type | possible_keys | key  | key_len | ref  | rows | Extra       |
-+----+-------------+-------+------+---------------+------+---------+------+------+-------------+
-| 1  | SIMPLE      | users | ref  | idx_email     |idx...|  767    | const| 1    | Using index |
-+----+-------------+-------+------+---------------+------+---------+------+------+-------------+
+-- Standard index
+CREATE INDEX idx_user_status ON orders(user_id, status);
 
-EXPLAIN FORMAT=JSON SELECT ...;  -- Detailed JSON output
-EXPLAIN ANALYZE SELECT ...;      -- Actually run and show timing (MySQL 8.0.18+)</code></pre>
+-- Query WITHOUT covering (needs row lookup)
+SELECT id, user_id, status, amount  -- amount not in index!
+FROM orders 
+WHERE user_id = 123 AND status = 'ACTIVE';
+-- Process: Index → Find PK → Go to table → Get amount
+
+-- Covering index (includes all SELECT columns)
+CREATE INDEX idx_covering ON orders(user_id, status, amount);
+
+-- Query WITH covering (index only!)
+SELECT user_id, status, amount
+FROM orders 
+WHERE user_id = 123 AND status = 'ACTIVE';
+-- Process: Index only - no table lookup needed!
+
+-- Check EXPLAIN for "Using index" (covering)
+EXPLAIN SELECT user_id, status, amount FROM orders WHERE user_id = 123;
+-- Extra column: "Using index" = covering index used</code></pre>
                         </div>
 
                         <div class="comparison-table">
-                            <h4>EXPLAIN type Column (best to worst)</h4>
+                            <h4>Regular vs Covering Index</h4>
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>Type</th>
-                                        <th>Description</th>
-                                        <th>Performance</th>
+                                        <th>Aspect</th>
+                                        <th>Regular Index</th>
+                                        <th>Covering Index</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td><code>system</code></td>
-                                        <td>Table has 1 row</td>
-                                        <td>🟢 Best</td>
+                                        <td>Disk I/O</td>
+                                        <td>Index + Table lookup</td>
+                                        <td>Index only</td>
                                     </tr>
                                     <tr>
-                                        <td><code>const</code></td>
-                                        <td>PK or unique index, 1 row</td>
-                                        <td>🟢 Excellent</td>
+                                        <td>Speed</td>
+                                        <td>Good</td>
+                                        <td>Excellent</td>
                                     </tr>
                                     <tr>
-                                        <td><code>eq_ref</code></td>
-                                        <td>1 row per join (unique index)</td>
-                                        <td>🟢 Very Good</td>
+                                        <td>Index size</td>
+                                        <td>Smaller</td>
+                                        <td>Larger (more columns)</td>
                                     </tr>
                                     <tr>
-                                        <td><code>ref</code></td>
-                                        <td>Non-unique index lookup</td>
-                                        <td>🟡 Good</td>
+                                        <td>Write overhead</td>
+                                        <td>Lower</td>
+                                        <td>Higher</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Covering Index Trade-offs</h4>
+                            <ul>
+                                <li><strong>Pro:</strong> Eliminates table lookup - major performance gain</li>
+                                <li><strong>Con:</strong> Larger index size = more memory, disk, maintenance</li>
+                                <li><strong>Best for:</strong> Frequent queries with specific column needs</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- EXPLAIN -->
+            <section class="content-section">
+                <h2 id="explain" class="section-title"><span class="section-icon">🔍</span>EXPLAIN Analysis</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Reading EXPLAIN Output</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">EXPLAIN
+                                    Examples</span></div>
+                            <pre><code class="language-sql">-- Basic EXPLAIN
+EXPLAIN SELECT * FROM users WHERE email = 'test@example.com';
+
+-- EXPLAIN ANALYZE (actual execution - MySQL 8.0.18+)
+EXPLAIN ANALYZE SELECT * FROM users WHERE status = 'ACTIVE';
+
+-- EXPLAIN FORMAT=JSON (detailed)
+EXPLAIN FORMAT=JSON SELECT * FROM users WHERE id = 1;
+
+-- EXPLAIN FORMAT=TREE (execution tree)
+EXPLAIN FORMAT=TREE SELECT * FROM users WHERE status = 'ACTIVE';</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>EXPLAIN Output Columns</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Column</th>
+                                        <th>Description</th>
+                                        <th>What to look for</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>type</strong></td>
+                                        <td>Join type</td>
+                                        <td>Best to worst: const → eq_ref → ref → range → index → ALL</td>
                                     </tr>
                                     <tr>
-                                        <td><code>range</code></td>
-                                        <td>Index range scan</td>
-                                        <td>🟡 OK</td>
+                                        <td><strong>possible_keys</strong></td>
+                                        <td>Candidate indexes</td>
+                                        <td>Available indexes for query</td>
                                     </tr>
                                     <tr>
-                                        <td><code>index</code></td>
-                                        <td>Full index scan</td>
-                                        <td>🟠 Slow</td>
+                                        <td><strong>key</strong></td>
+                                        <td>Chosen index</td>
+                                        <td>NULL = no index used</td>
                                     </tr>
                                     <tr>
-                                        <td><code>ALL</code></td>
-                                        <td>Full table scan</td>
-                                        <td>🔴 Worst</td>
+                                        <td><strong>key_len</strong></td>
+                                        <td>Index bytes used</td>
+                                        <td>How much of composite index</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>rows</strong></td>
+                                        <td>Estimated rows</td>
+                                        <td>Lower is better</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>filtered</strong></td>
+                                        <td>% rows filtered</td>
+                                        <td>Higher is better (more filtered out)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Extra</strong></td>
+                                        <td>Additional info</td>
+                                        <td>Watch for: Using filesort, Using temporary</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
 
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Extra
-                                    Column Keywords</span></div>
-                            <pre><code>Extra column meanings:
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Type
+                                    Column Values (best → worst)</span></div>
+                            <pre><code>TYPE values ranked by efficiency:
 
-✅ Using index         -- Covered by index (no table access)
-✅ Using where         -- WHERE filtering applied
-🟡 Using temporary     -- Temp table needed (may be slow)
-🟡 Using filesort      -- Extra sort pass needed
-🔴 Using filesort      -- Sort not using index
-🔴 Full scan on NULL key -- Subquery issue</code></pre>
+1. system     → Table has 1 row (system table)
+2. const      → PK/Unique lookup, 1 row max
+3. eq_ref     → PK/Unique JOIN, 1 row per table
+4. ref        → Non-unique index lookup
+5. fulltext   → Fulltext index
+6. ref_or_null → ref + NULL check
+7. index_merge → Multiple indexes merged
+8. range      → Range scan (BETWEEN, >, <)
+9. index      → Full index scan (reading all index)
+10. ALL       → Full table scan ❌ BAD!
+
+EXTRA values to watch:
+✅ Good:
+   • Using index            → Covering index (no table lookup)
+   • Using index condition  → Index condition pushdown
+
+⚠️ Needs attention:
+   • Using where           → Filtering after fetch (normal, but check)
+   
+❌ Bad (try to eliminate):
+   • Using filesort        → Extra sorting pass (no index for ORDER)
+   • Using temporary       → Temp table needed (GROUP BY/DISTINCT)
+   • Using join buffer     → JOIN without index</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>EXPLAIN ANALYZE</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">EXPLAIN
+                                    ANALYZE Output</span></div>
+                            <pre><code class="language-sql">EXPLAIN ANALYZE SELECT u.name, COUNT(o.id)
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+WHERE u.status = 'ACTIVE'
+GROUP BY u.id;
+
+/* Output example:
+-> Group aggregate: count(o.id)  (cost=150.25..150.25 rows=100)
+    -> Nested loop left join  (cost=50.25 rows=500)
+        -> Index lookup on u using idx_status (status='ACTIVE')
+           (cost=10.25 rows=100) (actual time=0.138..0.842 rows=100 loops=1)
+        -> Index lookup on o using idx_user_id (user_id=u.id)
+           (cost=0.40 rows=5) (actual time=0.025..0.087 rows=5 loops=100)
+
+Key metrics:
+• cost: Optimizer's estimated cost
+• rows: Estimated row count
+• actual time: first_row_time..last_row_time (milliseconds)
+• loops: How many times this step executed
+*/</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- QUERY OPTIMIZATION -->
             <section class="content-section">
                 <h2 id="optimization" class="section-title"><span class="section-icon">⚡</span>Query Optimization</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>Performance Tips</h3><span class="badge essential">Essential</span>
+                        <h3>Common Optimizations</h3><span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">SQL</span><span
-                                    class="code-title">Optimization Examples</span></div>
-                            <pre><code>-- ❌ Bad: Function on indexed column
-SELECT * FROM users WHERE YEAR(created_at) = 2024;
-
--- ✅ Good: Range query
-SELECT * FROM users WHERE created_at >= '2024-01-01' 
-                      AND created_at < '2025-01-01';
-
-
--- ❌ Bad: Leading wildcard
-SELECT * FROM users WHERE name LIKE '%john%';
-
--- ✅ OK: Trailing wildcard can use index
-SELECT * FROM users WHERE name LIKE 'john%';
-
-
--- ❌ Bad: Type mismatch
-SELECT * FROM users WHERE phone = 84123456789;  -- phone is VARCHAR
-
--- ✅ Good: Correct type
-SELECT * FROM users WHERE phone = '84123456789';
-
-
--- ❌ Bad: OR can prevent index usage
-SELECT * FROM users WHERE email = 'a@b.com' OR name = 'John';
-
--- ✅ Good: UNION for different indexes
-SELECT * FROM users WHERE email = 'a@b.com'
-UNION
-SELECT * FROM users WHERE name = 'John';
-
-
--- ❌ Bad: SELECT *
+                                    class="code-title">Optimization Techniques</span></div>
+                            <pre><code class="language-sql">-- 1. AVOID SELECT * (fetch only needed columns)
+-- ❌ Bad
 SELECT * FROM users WHERE status = 'ACTIVE';
 
--- ✅ Good: Select needed columns (can use covering index)
+-- ✅ Good
 SELECT id, name, email FROM users WHERE status = 'ACTIVE';
 
 
--- Pagination optimization
--- ❌ Bad: Large OFFSET
+-- 2. USE COVERING INDEX
+CREATE INDEX idx_covering ON users(status, id, name, email);
+
+
+-- 3. PAGINATION: Avoid large OFFSET
+-- ❌ Slow (scans 100000 rows then discards)
 SELECT * FROM users ORDER BY id LIMIT 10 OFFSET 100000;
 
--- ✅ Good: Seek method (remember last id)
-SELECT * FROM users WHERE id > 100000 ORDER BY id LIMIT 10;</code></pre>
+-- ✅ Keyset pagination (much faster)
+SELECT * FROM users WHERE id > 100000 ORDER BY id LIMIT 10;
+
+-- ✅ With last seen ID
+SELECT * FROM users WHERE id > :last_id ORDER BY id LIMIT 10;
+
+
+-- 4. COUNT OPTIMIZATION
+-- ❌ Slow for large tables
+SELECT COUNT(*) FROM orders;
+
+-- ✅ Use covering index
+SELECT COUNT(id) FROM orders;
+
+-- ✅ Approximate count (if exact not needed)
+SELECT TABLE_ROWS FROM INFORMATION_SCHEMA.TABLES 
+WHERE TABLE_NAME = 'orders';
+
+
+-- 5. JOIN ORDER
+-- Optimizer usually handles this, but hint if needed
+SELECT /*+ JOIN_ORDER(small_table, large_table) */ *
+FROM small_table s
+JOIN large_table l ON s.id = l.small_id;
+
+
+-- 6. EXISTS vs IN
+-- ❌ IN with large subquery
+SELECT * FROM users WHERE id IN (SELECT user_id FROM orders);
+
+-- ✅ EXISTS (short-circuits)
+SELECT * FROM users u 
+WHERE EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id);
+
+
+-- 7. UNION ALL instead of UNION (when no duplicates)
+-- ❌ UNION (sorts to remove dups)
+SELECT name FROM customers UNION SELECT name FROM suppliers;
+
+-- ✅ UNION ALL (no sort)
+SELECT 'customer' AS type, name FROM customers
+UNION ALL
+SELECT 'supplier', name FROM suppliers;
+
+
+-- 8. BATCH OPERATIONS
+-- ❌ Row by row
+UPDATE orders SET status = 'ARCHIVED' WHERE created_at < '2020-01-01';
+
+-- ✅ Batch with LIMIT
+WHILE (affected > 0) {
+    UPDATE orders SET status = 'ARCHIVED' 
+    WHERE created_at < '2020-01-01' AND status != 'ARCHIVED'
+    LIMIT 10000;
+}</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- ANTI-PATTERNS -->
             <section class="content-section">
-                <h2 id="antipatterns" class="section-title"><span class="section-icon">🚫</span>Indexing Anti-Patterns
-                </h2>
+                <h2 id="antipatterns" class="section-title"><span class="section-icon">🚫</span>Anti-Patterns</h2>
 
                 <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Index-Killing Patterns</h3><span class="badge essential">Essential</span>
+                    </div>
                     <div class="concept-content">
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Examples</span><span
-                                    class="code-title">What NOT to do</span></div>
-                            <pre><code>-- ❌ Too many indexes
--- Each index = storage + slower writes
--- Only index columns used in WHERE, JOIN, ORDER BY
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Patterns
+                                    That Prevent Index Use</span></div>
+                            <pre><code class="language-sql">-- 1. FUNCTION ON INDEXED COLUMN
+-- ❌ Function prevents index use
+SELECT * FROM users WHERE YEAR(created_at) = 2024;
+SELECT * FROM orders WHERE DATE(created_at) = '2024-01-01';
 
--- ❌ Index on low cardinality columns
-CREATE INDEX idx_gender ON users(gender);  -- Only M/F values
--- Better as part of composite index or skip
+-- ✅ Range on column directly
+SELECT * FROM users WHERE created_at >= '2024-01-01' AND created_at < '2025-01-01';
+SELECT * FROM orders WHERE created_at >= '2024-01-01' AND created_at < '2024-01-02';
 
--- ❌ Redundant indexes  
-CREATE INDEX idx_a ON users(a);
-CREATE INDEX idx_ab ON users(a, b);  -- idx_a is redundant!
 
--- ❌ Index every column in WHERE
--- WHERE a = 1 AND b = 2 AND c = 3
--- One good composite index (a, b, c) beats 3 single indexes
+-- 2. IMPLICIT TYPE CONVERSION
+-- ❌ phone is VARCHAR, comparing to INT
+SELECT * FROM users WHERE phone = 84123456789;
 
--- ❌ Forgetting to analyze after bulk changes
-ANALYZE TABLE users;  -- Update statistics for optimizer
+-- ✅ Correct type
+SELECT * FROM users WHERE phone = '84123456789';
 
--- ❌ Not using covering indexes when possible
--- If query only needs id, name from large table:
-CREATE INDEX idx_name_covering ON users(name, id);
-SELECT id, name FROM users WHERE name LIKE 'John%';
--- All data from index, no table access!</code></pre>
+
+-- 3. LEADING WILDCARD
+-- ❌ Leading wildcard = full scan
+SELECT * FROM products WHERE name LIKE '%phone%';
+
+-- ✅ Trailing wildcard OK
+SELECT * FROM products WHERE name LIKE 'iphone%';
+
+-- ✅ Fulltext for text search
+CREATE FULLTEXT INDEX idx_ft ON products(name);
+SELECT * FROM products WHERE MATCH(name) AGAINST('phone');
+
+
+-- 4. OR CONDITIONS (sometimes)
+-- ❌ OR on different columns may not use index well
+SELECT * FROM orders WHERE user_id = 1 OR status = 'PENDING';
+
+-- ✅ UNION approach
+SELECT * FROM orders WHERE user_id = 1
+UNION
+SELECT * FROM orders WHERE status = 'PENDING';
+
+
+-- 5. NOT EQUAL / NOT IN
+-- ❌ Negative conditions often skip index
+SELECT * FROM users WHERE status != 'INACTIVE';
+SELECT * FROM orders WHERE status NOT IN ('CANCELLED', 'REFUNDED');
+
+-- ✅ Positive condition if possible
+SELECT * FROM users WHERE status IN ('ACTIVE', 'PENDING');
+
+
+-- 6. NULL COMPARISONS
+-- ❌ May not use index efficiently
+SELECT * FROM users WHERE phone IS NOT NULL;
+
+-- Consider: Add default value instead of NULL
+
+
+-- 7. SORTING WITHOUT INDEX
+-- ❌ filesort needed
+SELECT * FROM orders ORDER BY created_at DESC, amount ASC;
+
+-- ✅ Index that matches ORDER BY
+CREATE INDEX idx_order_sort ON orders(created_at DESC, amount ASC);</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Key Rules</h4>
+                            <ul>
+                                <li><strong>No functions on indexed columns:</strong> Move to other side of equation
+                                </li>
+                                <li><strong>Match data types:</strong> Implicit conversion kills index</li>
+                                <li><strong>Leading wildcard:</strong> Use fulltext instead</li>
+                                <li><strong>Check EXPLAIN:</strong> Verify index is actually used</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- INDEX MAINTENANCE -->
+            <section class="content-section">
+                <h2 id="maintenance" class="section-title"><span class="section-icon">🔧</span>Index Maintenance</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Monitoring & Maintenance</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Index
+                                    Statistics & Maintenance</span></div>
+                            <pre><code class="language-sql">-- View index statistics
+SHOW INDEX FROM users;
+
+-- Index size
+SELECT 
+    table_name,
+    index_name,
+    ROUND(stat_value * @@innodb_page_size / 1024 / 1024, 2) AS size_mb
+FROM mysql.innodb_index_stats
+WHERE stat_name = 'size' AND database_name = 'mydb';
+
+-- Unused indexes (MySQL 8.0+)
+SELECT 
+    object_schema,
+    object_name,
+    index_name
+FROM performance_schema.table_io_waits_summary_by_index_usage
+WHERE index_name IS NOT NULL
+  AND count_star = 0
+  AND object_schema = 'mydb';
+
+-- Rebuild/Optimize index
+OPTIMIZE TABLE users;  -- Rebuilds table and indexes
+ALTER TABLE users ENGINE=InnoDB;  -- Force rebuild
+
+-- Analyze table (update statistics)
+ANALYZE TABLE users;
+
+-- Check index fragmentation
+SELECT 
+    table_name,
+    data_length,
+    index_length,
+    ROUND((data_free / (data_length + index_length)) * 100, 2) AS fragmentation_pct
+FROM information_schema.tables
+WHERE table_schema = 'mydb';
+
+-- Check cardinality (selectivity)
+SELECT 
+    INDEX_NAME,
+    COLUMN_NAME,
+    CARDINALITY,
+    (CARDINALITY / (SELECT TABLE_ROWS FROM INFORMATION_SCHEMA.TABLES 
+                    WHERE TABLE_NAME = 'users')) AS selectivity
+FROM INFORMATION_SCHEMA.STATISTICS
+WHERE TABLE_NAME = 'users';</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INTERVIEW QUESTIONS -->
             <section id="interview" class="content-section">
                 <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
 
                 <div class="interview-questions">
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q1</span>
-                            <p>How does B-Tree index work?</p>
+                            <p>B-Tree index hoạt động như thế nào?</p>
                         </div>
                         <div class="answer">
-                            <p>Balanced tree structure. Sorted keys in nodes, O(log n) lookup. Leaf nodes linked for
-                                range scans. InnoDB uses B+Tree where all data in leaves.</p>
+                            <p>B-Tree là balanced tree với các nodes chứa keys sorted. Root/branch nodes chứa pointers,
+                                leaf nodes chứa data/PK pointers và linked together. Lookup = O(log n), thường 3-4 disk
+                                reads cho millions rows. InnoDB dùng B+Tree (leaves linked for range scans).</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q2</span>
-                            <p>What is Clustered vs Secondary index?</p>
+                            <p>Clustered vs Non-Clustered Index?</p>
                         </div>
                         <div class="answer">
-                            <p><strong>Clustered:</strong> Data stored in index order (PK in InnoDB), one per table.
-                                <strong>Secondary:</strong> Separate structure, stores PK pointer, needs extra lookup
-                                for full row.</p>
+                            <ul>
+                                <li><strong>Clustered (PK):</strong> 1 per table, leaves = actual row data, table
+                                    physically ordered by PK</li>
+                                <li><strong>Non-Clustered:</strong> Multiple allowed, leaves = PK pointer, requires
+                                    additional lookup</li>
+                            </ul>
+                            <p>InnoDB PK = clustered. Secondary index lookup: Index → PK → Row.</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q3</span>
-                            <p>What is Covering Index?</p>
+                            <p>Leftmost Prefix Rule là gì?</p>
                         </div>
                         <div class="answer">
-                            <p>Index contains all columns needed by query. No table lookup required. Shows "Using index"
-                                in EXPLAIN. Design indexes to cover frequent queries.</p>
+                            <p>Composite index (a,b,c) chỉ dùng được khi query bắt đầu từ leftmost columns. Queries on
+                                (a), (a,b), (a,b,c) dùng index. Query chỉ có (b) hoặc (c) không dùng được index. Range
+                                condition "breaks" index cho columns sau.</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q4</span>
-                            <p>How to optimize slow query?</p>
+                            <p>Covering Index là gì?</p>
                         </div>
                         <div class="answer">
-                            <p>1) EXPLAIN to see execution plan. 2) Check type (avoid ALL). 3) Add missing indexes. 4)
-                                Avoid functions on indexed columns. 5) Consider covering index. 6) Check for type
-                                mismatches.</p>
+                            <p>Index chứa tất cả columns cần cho query → không cần table lookup. EXPLAIN shows "Using
+                                index" in Extra. Trade-off: larger index size, higher write overhead. Best for
+                                frequently run queries with specific column needs.</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q5</span>
-                            <p>What is Leftmost Prefix Rule?</p>
+                            <p>Khi nào index KHÔNG được sử dụng?</p>
                         </div>
                         <div class="answer">
-                            <p>Composite index (a,b,c) can be used for: (a), (a,b), (a,b,c). Cannot skip columns: (b,c)
-                                or (c) won't use index. Order matters!</p>
+                            <ul>
+                                <li>Function on column: <code>WHERE YEAR(date) = 2024</code></li>
+                                <li>Implicit type conversion</li>
+                                <li>Leading wildcard: <code>LIKE '%abc'</code></li>
+                                <li>NOT IN, != (sometimes)</li>
+                                <li>OR on different columns</li>
+                                <li>Small table (optimizer chọn full scan)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>EXPLAIN type column: ref vs range vs ALL?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>ref:</strong> Non-unique index lookup (good)</li>
+                                <li><strong>range:</strong> Range scan with index (>, <, BETWEEN) (OK)</li>
+                                <li><strong>ALL:</strong> Full table scan (bad - no index used)</li>
+                            </ul>
+                            <p>Best to worst: const → eq_ref → ref → range → index → ALL</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>Làm sao optimize pagination cho large offset?</p>
+                        </div>
+                        <div class="answer">
+                            <pre><code class="language-sql">-- ❌ Slow: LIMIT 10 OFFSET 100000 (scans 100010 rows)
+-- ✅ Keyset pagination:
+SELECT * FROM users WHERE id > :last_id ORDER BY id LIMIT 10;</code></pre>
+                            <p>Keyset pagination uses index seek instead of offset scan.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>Index design considerations?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Query patterns:</strong> Design based on WHERE, JOIN, ORDER BY</li>
+                                <li><strong>Cardinality:</strong> High selectivity columns first</li>
+                                <li><strong>Write overhead:</strong> More indexes = slower INSERTs</li>
+                                <li><strong>Storage:</strong> Index có thể = 10-30% table size</li>
+                                <li><strong>Composite:</strong> Equality before range, covering if possible</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q9</span>
+                            <p>Fulltext index khi nào dùng?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Dùng cho text search trong large text fields (articles, descriptions). Supports natural
+                                language search và boolean mode (+word -word). Better than LIKE '%word%' because: (1)
+                                Uses inverted index, (2) Relevance scoring, (3) Word stemming. Không thay thế
+                                Elasticsearch cho complex search.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q10</span>
+                            <p>UUID vs Auto-increment cho Primary Key?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Auto-increment:</strong> Sequential → good insert performance, smaller size
+                                    (8 bytes), predictable</li>
+                                <li><strong>UUID:</strong> Random → page splits, larger (36 bytes), distributed
+                                    generation OK</li>
+                            </ul>
+                            <p>Auto-increment tốt hơn cho performance. UUID cần cho distributed systems. MySQL 8.0+ có
+                                UUID_TO_BIN() để improve storage.</p>
                         </div>
                     </div>
                 </div>
@@ -505,6 +1019,8 @@ SELECT id, name FROM users WHERE name LIKE 'John%';
     </main>
 
     <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
     <script src="../js/main.js"></script>
 </body>
 

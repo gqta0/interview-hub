@@ -28,7 +28,7 @@
         <div class="topic-info">
             <span class="topic-category">MySQL</span>
             <h1>SQL Fundamentals</h1>
-            <p class="topic-desc">SELECT, JOIN, Subqueries, Aggregate Functions, Window Functions</p>
+            <p class="topic-desc">SELECT, JOIN, Subqueries, Aggregate Functions, Window Functions, CTEs</p>
         </div>
     </header>
 
@@ -37,142 +37,395 @@
             <h3><i class="fas fa-list"></i> Nội dung</h3>
             <ul>
                 <li><a href="#select">SELECT & Filtering</a></li>
+                <li><a href="#operators">Operators & Functions</a></li>
                 <li><a href="#joins">JOINs</a></li>
                 <li><a href="#aggregate">Aggregate Functions</a></li>
                 <li><a href="#subqueries">Subqueries</a></li>
                 <li><a href="#window">Window Functions</a></li>
                 <li><a href="#cte">CTEs</a></li>
+                <li><a href="#set-operations">Set Operations</a></li>
+                <li><a href="#dml">DML Operations</a></li>
                 <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
             </ul>
         </aside>
 
         <article class="main-content">
+            <!-- SELECT & FILTERING -->
             <section class="content-section">
                 <h2 id="select" class="section-title"><span class="section-icon">📋</span>SELECT & Filtering</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>Basic Queries</h3><span class="badge essential">Essential</span>
+                        <h3>Query Execution Order</h3><span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">SELECT
-                                    Order of Execution</span></div>
-                            <pre><code>-- Written order vs Execution order
-SELECT column           -- 5
-FROM table              -- 1
-WHERE condition         -- 2
-GROUP BY column         -- 3
-HAVING condition        -- 4
-ORDER BY column         -- 6
-LIMIT n                 -- 7</code></pre>
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Written
+                                    vs Execution Order</span></div>
+                            <pre><code class="language-sql">-- Written order (cách viết):
+SELECT column           -- 5. Chọn cột
+FROM table              -- 1. Từ bảng nào
+WHERE condition         -- 2. Lọc rows
+GROUP BY column         -- 3. Nhóm
+HAVING condition        -- 4. Lọc groups
+ORDER BY column         -- 6. Sắp xếp
+LIMIT n OFFSET m;       -- 7. Giới hạn
+
+-- Thứ tự thực thi thực sự:
+-- 1. FROM + JOINs     → Xác định nguồn dữ liệu
+-- 2. WHERE            → Lọc rows (trước khi group)
+-- 3. GROUP BY         → Nhóm các rows
+-- 4. HAVING           → Lọc groups (sau khi aggregate)
+-- 5. SELECT           → Chọn columns và compute
+-- 6. DISTINCT         → Loại bỏ duplicates
+-- 7. ORDER BY         → Sắp xếp kết quả
+-- 8. LIMIT/OFFSET     → Pagination</code></pre>
                         </div>
 
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Lưu ý quan trọng</h4>
+                            <ul>
+                                <li><strong>Alias trong SELECT:</strong> Không dùng được trong WHERE (vì SELECT chạy
+                                    sau)</li>
+                                <li><strong>Alias trong ORDER BY:</strong> Dùng được (ORDER BY chạy sau SELECT)</li>
+                                <li><strong>Aggregate trong WHERE:</strong> Không được! Phải dùng HAVING</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Filtering với WHERE</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">SQL</span><span
-                                    class="code-title">Filtering Examples</span></div>
-                            <pre><code>-- Basic filtering
-SELECT * FROM users WHERE status = 'ACTIVE';
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">WHERE
+                                    Clause Examples</span></div>
+                            <pre><code class="language-sql">-- Comparison operators
+SELECT * FROM products WHERE price > 100;
+SELECT * FROM products WHERE price >= 100 AND price <= 500;
+SELECT * FROM products WHERE price <> 100;  -- Not equal (hoặc !=)
 
--- Multiple conditions
-SELECT * FROM users 
-WHERE status = 'ACTIVE' AND created_at > '2024-01-01';
-
--- IN clause
-SELECT * FROM users WHERE role IN ('ADMIN', 'MANAGER');
-
--- BETWEEN
+-- BETWEEN (inclusive cả 2 đầu)
 SELECT * FROM orders WHERE amount BETWEEN 100 AND 500;
+-- Tương đương: amount >= 100 AND amount <= 500
 
--- LIKE patterns
-SELECT * FROM users WHERE email LIKE '%@gmail.com';
-SELECT * FROM users WHERE name LIKE 'John%';     -- Starts with
-SELECT * FROM users WHERE name LIKE '%son';      -- Ends with
-SELECT * FROM users WHERE name LIKE '%oh%';      -- Contains
+-- IN clause (list of values)
+SELECT * FROM users WHERE role IN ('ADMIN', 'MANAGER', 'SUPERVISOR');
+SELECT * FROM orders WHERE status NOT IN ('CANCELLED', 'REFUNDED');
 
--- NULL handling
+-- LIKE patterns (% = any chars, _ = single char)
+SELECT * FROM users WHERE email LIKE '%@gmail.com';       -- Ends with
+SELECT * FROM users WHERE name LIKE 'John%';              -- Starts with
+SELECT * FROM users WHERE name LIKE '%son%';              -- Contains
+SELECT * FROM users WHERE phone LIKE '09________';        -- 09 + 8 digits
+SELECT * FROM products WHERE code LIKE 'ABC\_123%' ESCAPE '\';  -- Escape _
+
+-- NULL handling (NULL không = NULL!)
 SELECT * FROM users WHERE deleted_at IS NULL;
 SELECT * FROM users WHERE phone IS NOT NULL;
+-- ❌ SAI: WHERE phone = NULL (luôn FALSE)
 
--- DISTINCT
+-- AND, OR, NOT với parentheses
+SELECT * FROM products 
+WHERE (category = 'Electronics' OR category = 'Computers')
+  AND price < 1000 
+  AND stock > 0;
+
+-- DISTINCT (loại duplicates)
 SELECT DISTINCT department FROM employees;
+SELECT DISTINCT department, city FROM employees;  -- Combination unique
 
--- ORDER BY
+-- ORDER BY (ASC mặc định, DESC giảm dần)
 SELECT * FROM users ORDER BY created_at DESC, name ASC;
+SELECT * FROM users ORDER BY 2, 1;  -- By column position (không recommend)
+SELECT * FROM users ORDER BY FIELD(status, 'ACTIVE', 'PENDING', 'INACTIVE');
 
--- LIMIT & OFFSET (pagination)
-SELECT * FROM users ORDER BY id LIMIT 10 OFFSET 20;  -- Page 3
-SELECT * FROM users ORDER BY id LIMIT 20, 10;        -- Same: skip 20, take 10</code></pre>
+-- LIMIT & OFFSET (Pagination)
+SELECT * FROM users ORDER BY id LIMIT 10;               -- First 10
+SELECT * FROM users ORDER BY id LIMIT 10 OFFSET 20;     -- Skip 20, take 10 (page 3)  
+SELECT * FROM users ORDER BY id LIMIT 20, 10;           -- MySQL shorthand: OFFSET, LIMIT</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- OPERATORS & FUNCTIONS -->
+            <section class="content-section">
+                <h2 id="operators" class="section-title"><span class="section-icon">⚙️</span>Operators & Functions</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Conditional Expressions</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">CASE,
+                                    COALESCE, NULLIF</span></div>
+                            <pre><code class="language-sql">-- CASE WHEN (if-else trong SQL)
+SELECT 
+    name,
+    salary,
+    CASE 
+        WHEN salary >= 100000 THEN 'Senior'
+        WHEN salary >= 50000 THEN 'Mid-level'
+        WHEN salary >= 20000 THEN 'Junior'
+        ELSE 'Intern'
+    END AS level
+FROM employees;
+
+-- CASE đơn giản (exact match)
+SELECT 
+    order_id,
+    CASE status
+        WHEN 'P' THEN 'Pending'
+        WHEN 'S' THEN 'Shipped'
+        WHEN 'D' THEN 'Delivered'
+        WHEN 'C' THEN 'Cancelled'
+        ELSE 'Unknown'
+    END AS status_label
+FROM orders;
+
+-- COALESCE (trả về giá trị non-NULL đầu tiên)
+SELECT 
+    name,
+    COALESCE(phone, email, 'No contact') AS contact,
+    COALESCE(discount, 0) AS actual_discount
+FROM customers;
+
+-- NULLIF (trả về NULL nếu 2 giá trị bằng nhau)
+-- Hữu ích để tránh division by zero
+SELECT 
+    revenue / NULLIF(cost, 0) AS margin_ratio  -- NULL thay vì error
+FROM products;
+
+-- IF (MySQL specific)
+SELECT 
+    name,
+    IF(stock > 0, 'In Stock', 'Out of Stock') AS availability,
+    IF(price > 100, price * 0.9, price) AS final_price  -- 10% off if > 100
+FROM products;
+
+-- IFNULL (MySQL - tương tự COALESCE nhưng chỉ 2 args)
+SELECT IFNULL(phone, 'N/A') FROM customers;</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>NULL Handling Functions</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Function</th>
+                                        <th>Description</th>
+                                        <th>Example</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>COALESCE(a,b,c)</code></td>
+                                        <td>First non-NULL value</td>
+                                        <td><code>COALESCE(NULL, 'a', 'b')</code> → 'a'</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>IFNULL(a,b)</code></td>
+                                        <td>If a is NULL, return b</td>
+                                        <td><code>IFNULL(NULL, 'default')</code> → 'default'</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>NULLIF(a,b)</code></td>
+                                        <td>If a=b, return NULL</td>
+                                        <td><code>NULLIF(0, 0)</code> → NULL</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>IF(cond,a,b)</code></td>
+                                        <td>If true return a, else b</td>
+                                        <td><code>IF(1>0, 'yes', 'no')</code> → 'yes'</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>String & Date Functions</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Common
+                                    Functions</span></div>
+                            <pre><code class="language-sql">-- STRING FUNCTIONS
+SELECT 
+    CONCAT(first_name, ' ', last_name) AS full_name,
+    CONCAT_WS(', ', city, state, country) AS address,  -- With separator
+    UPPER(name), LOWER(name),
+    LENGTH(name), CHAR_LENGTH(name),  -- Bytes vs characters
+    TRIM('  hello  '), LTRIM(name), RTRIM(name),
+    SUBSTRING(phone, 1, 3) AS area_code,  -- 3 chars from position 1
+    LEFT(email, 5), RIGHT(email, 10),
+    REPLACE(phone, '-', ''),
+    REVERSE(name),
+    LPAD(id, 5, '0') AS padded_id,  -- '00123'
+    LOCATE('@', email) AS at_position  -- Position of @
+FROM users;
+
+-- DATE FUNCTIONS
+SELECT 
+    NOW() AS current_datetime,
+    CURDATE() AS current_date,
+    CURTIME() AS current_time,
+    
+    -- Extract parts
+    YEAR(created_at), MONTH(created_at), DAY(created_at),
+    HOUR(created_at), MINUTE(created_at), SECOND(created_at),
+    WEEKDAY(created_at),  -- 0=Monday, 6=Sunday
+    DAYOFWEEK(created_at),  -- 1=Sunday, 7=Saturday
+    QUARTER(created_at),
+    
+    -- Date formatting
+    DATE_FORMAT(created_at, '%Y-%m-%d') AS formatted_date,
+    DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS vn_format,
+    
+    -- Date arithmetic
+    DATE_ADD(created_at, INTERVAL 30 DAY) AS plus_30_days,
+    DATE_SUB(created_at, INTERVAL 1 MONTH) AS minus_1_month,
+    DATEDIFF(NOW(), created_at) AS days_since_creation,
+    TIMESTAMPDIFF(HOUR, start_time, end_time) AS hours_diff,
+    
+    -- Useful functions
+    LAST_DAY(created_at) AS last_day_of_month,
+    DATE(created_at) AS date_only,  -- Strip time
+    TIME(created_at) AS time_only
+FROM orders;
+
+-- DATE_FORMAT codes:
+-- %Y = 2024, %y = 24, %m = 01-12, %d = 01-31
+-- %H = 00-23, %i = 00-59, %s = 00-59
+-- %W = Weekday name, %M = Month name</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- JOINS -->
             <section class="content-section">
                 <h2 id="joins" class="section-title"><span class="section-icon">🔗</span>JOINs</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>JOIN Types</h3><span class="badge essential">Essential</span>
+                        <h3>JOIN Types Visual</h3><span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Visual</span></div>
-                            <pre><code>INNER JOIN:     LEFT JOIN:      RIGHT JOIN:     FULL OUTER JOIN:
-   ┌───┐          ┌───┐            ┌───┐            ┌───┐
-  ╱     ╲        ╱█████╲          ╱     ╲█████     ╱█████╲
- │   ███ │      │ █████ │        │   ███ │████   │ █████████ │
-  ╲     ╱        ╲█████╱          ╲     ╱█████     ╲█████╱
-   └───┘          └───┘            └───┘            └───┘
- Only match     All left +       Right + match    All from both
-                match</code></pre>
-                        </div>
+                            <div class="code-header"><span class="code-lang">Visual</span><span class="code-title">JOIN
+                                    Types Diagram</span></div>
+                            <pre><code>INNER JOIN:          LEFT JOIN:           RIGHT JOIN:          FULL OUTER JOIN:
+   ┌───────┐            ┌───────┐            ┌───────┐            ┌───────┐
+  ╱   A     ╲          ╱███A████╲          ╱   A     ╲          ╱███A████╲
+ │     ███   │        │ ███████ │        │     ███████       │ ███████████ │
+  ╲   B     ╱          ╲   B   ╱          ╲████B████╱          ╲███B████╱
+   └───────┘            └───────┘            └───────┘            └───────┘
+ Only matching        All A + match       Match + All B       All from both
 
+LEFT EXCLUSIVE:      RIGHT EXCLUSIVE:     OUTER EXCLUSIVE:
+   ┌───────┐            ┌───────┐            ┌───────┐
+  ╱███A████╲          ╱   A     ╲          ╱███A████╲
+ │ ███     │        │       ███│         │ ███   ███ │
+  ╲       ╱          ╲████B████╱          ╲███B████╱
+   └───────┘            └───────┘            └───────┘
+ A only (no B)       B only (no A)       A or B (not both)</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>JOIN Examples</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">JOIN
-                                    Examples</span></div>
-                            <pre><code>-- INNER JOIN: Only matching rows
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">All JOIN
+                                    Types</span></div>
+                            <pre><code class="language-sql">-- Sample tables:
+-- users: id, name, email
+-- orders: id, user_id, amount, created_at
+-- products: id, name, price
+
+-- INNER JOIN: Chỉ lấy rows khớp cả 2 bảng
 SELECT u.name, o.id AS order_id, o.amount
 FROM users u
 INNER JOIN orders o ON u.id = o.user_id;
+-- Users không có orders sẽ KHÔNG xuất hiện
 
--- LEFT JOIN: All from left + matching from right
-SELECT u.name, o.id AS order_id
+-- LEFT JOIN: Tất cả từ bảng trái + khớp từ phải
+SELECT u.name, o.id AS order_id, o.amount
 FROM users u
 LEFT JOIN orders o ON u.id = o.user_id;
--- Users without orders will have NULL for order columns
+-- Users không có orders vẫn xuất hiện (order columns = NULL)
 
--- Find users WITHOUT orders
-SELECT u.name
+-- LEFT JOIN EXCLUSIVE: Chỉ lấy A không có B
+-- Tìm users KHÔNG có orders
+SELECT u.name, u.email
 FROM users u
 LEFT JOIN orders o ON u.id = o.user_id
 WHERE o.id IS NULL;
 
--- RIGHT JOIN: All from right + matching from left
+-- RIGHT JOIN: Ngược với LEFT
+SELECT u.name, o.id AS order_id
+FROM users u
+RIGHT JOIN orders o ON u.id = o.user_id;
+
+-- FULL OUTER JOIN (MySQL không hỗ trợ trực tiếp - dùng UNION)
+SELECT u.name, o.id AS order_id
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+UNION
 SELECT u.name, o.id AS order_id
 FROM users u
 RIGHT JOIN orders o ON u.id = o.user_id;
 
 -- Multiple JOINs
 SELECT 
-    u.name,
+    u.name AS customer,
     o.id AS order_id,
-    p.name AS product_name
+    p.name AS product,
+    oi.quantity,
+    p.price * oi.quantity AS subtotal
 FROM users u
 JOIN orders o ON u.id = o.user_id
 JOIN order_items oi ON o.id = oi.order_id
-JOIN products p ON oi.product_id = p.id;
+JOIN products p ON oi.product_id = p.id
+WHERE o.status = 'COMPLETED';
 
--- Self JOIN (hierarchical data)
+-- Self JOIN (bảng tự join với chính nó)
+-- Ví dụ: Tìm manager của mỗi employee
 SELECT 
     e.name AS employee,
     m.name AS manager
 FROM employees e
 LEFT JOIN employees m ON e.manager_id = m.id;
 
--- CROSS JOIN (cartesian product)
-SELECT * FROM colors CROSS JOIN sizes;
--- Every color with every size</code></pre>
+-- CROSS JOIN (Cartesian Product - mỗi row A với mọi row B)
+SELECT c.name AS color, s.name AS size
+FROM colors c
+CROSS JOIN sizes s;
+-- 3 colors x 4 sizes = 12 rows
+
+-- JOIN với điều kiện phức tạp
+SELECT *
+FROM products p
+JOIN discounts d ON p.category_id = d.category_id
+                 AND CURDATE() BETWEEN d.start_date AND d.end_date;
+
+-- USING syntax (khi column name giống nhau)
+SELECT *
+FROM orders o
+JOIN order_items oi USING (order_id);  -- Tương đương ON o.order_id = oi.order_id
+
+-- NATURAL JOIN (tự động match all same-name columns - KHÔNG recommend)
+SELECT * FROM orders NATURAL JOIN order_items;  -- Dangerous!</code></pre>
                         </div>
 
                         <div class="comparison-table">
@@ -182,37 +435,55 @@ SELECT * FROM colors CROSS JOIN sizes;
                                     <tr>
                                         <th>Type</th>
                                         <th>Returns</th>
-                                        <th>NULL handling</th>
+                                        <th>Use When</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>INNER JOIN</td>
+                                        <td><strong>INNER</strong></td>
                                         <td>Matching rows only</td>
-                                        <td>Excludes non-matching</td>
+                                        <td>Chỉ cần data có match</td>
                                     </tr>
                                     <tr>
-                                        <td>LEFT JOIN</td>
+                                        <td><strong>LEFT</strong></td>
                                         <td>All left + matching right</td>
-                                        <td>NULL for no match on right</td>
+                                        <td>Giữ tất cả từ bảng chính</td>
                                     </tr>
                                     <tr>
-                                        <td>RIGHT JOIN</td>
+                                        <td><strong>RIGHT</strong></td>
                                         <td>All right + matching left</td>
-                                        <td>NULL for no match on left</td>
+                                        <td>Ít dùng (viết lại thành LEFT)</td>
                                     </tr>
                                     <tr>
-                                        <td>CROSS JOIN</td>
-                                        <td>Cartesian product</td>
-                                        <td>All combinations</td>
+                                        <td><strong>CROSS</strong></td>
+                                        <td>Cartesian (all combinations)</td>
+                                        <td>Generate combinations</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>SELF</strong></td>
+                                        <td>Table with itself</td>
+                                        <td>Hierarchical data</td>
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> JOIN Performance Tips</h4>
+                            <ul>
+                                <li><strong>Có index trên JOIN columns:</strong> Đặc biệt foreign keys</li>
+                                <li><strong>Filter sớm:</strong> WHERE trước (hoặc trong ON clause) để giảm dataset</li>
+                                <li><strong>Tránh functions trên JOIN columns:</strong>
+                                    <code>ON YEAR(a.date) = YEAR(b.date)</code> không dùng index</li>
+                                <li><strong>Nhỏ JOIN lớn:</strong> Put smaller table first (optimizer usually handles
+                                    this)</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- AGGREGATE FUNCTIONS -->
             <section class="content-section">
                 <h2 id="aggregate" class="section-title"><span class="section-icon">📊</span>Aggregate Functions</h2>
 
@@ -224,22 +495,27 @@ SELECT * FROM colors CROSS JOIN sizes;
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">SQL</span><span
                                     class="code-title">Aggregate Functions</span></div>
-                            <pre><code>-- Basic aggregates
+                            <pre><code class="language-sql">-- Basic aggregates
 SELECT 
-    COUNT(*) AS total_orders,         -- Count all rows
-    COUNT(discount) AS with_discount, -- Count non-NULL
+    COUNT(*) AS total_orders,              -- Đếm tất cả rows (kể cả NULL)
+    COUNT(discount) AS with_discount,      -- Đếm non-NULL values
     COUNT(DISTINCT user_id) AS unique_customers,
     SUM(amount) AS total_amount,
     AVG(amount) AS avg_amount,
     MIN(amount) AS min_amount,
-    MAX(amount) AS max_amount
+    MAX(amount) AS max_amount,
+    STD(amount) AS standard_deviation,     -- MySQL
+    VARIANCE(amount) AS variance
 FROM orders;
 
--- GROUP BY
+-- GROUP BY single column
 SELECT 
     user_id,
     COUNT(*) AS order_count,
-    SUM(amount) AS total_spent
+    SUM(amount) AS total_spent,
+    AVG(amount) AS avg_order,
+    MIN(created_at) AS first_order,
+    MAX(created_at) AS last_order
 FROM orders
 GROUP BY user_id;
 
@@ -247,39 +523,108 @@ GROUP BY user_id;
 SELECT 
     YEAR(created_at) AS year,
     MONTH(created_at) AS month,
-    COUNT(*) AS orders
+    COUNT(*) AS orders,
+    SUM(amount) AS revenue
 FROM orders
-GROUP BY YEAR(created_at), MONTH(created_at);
+GROUP BY YEAR(created_at), MONTH(created_at)
+ORDER BY year DESC, month DESC;
 
--- HAVING (filter after GROUP BY)
+-- HAVING (filter AFTER aggregation)
 SELECT 
     user_id,
-    COUNT(*) AS order_count
+    COUNT(*) AS order_count,
+    SUM(amount) AS total_spent
 FROM orders
 GROUP BY user_id
-HAVING COUNT(*) > 5;  -- Only users with more than 5 orders
+HAVING COUNT(*) >= 5 AND SUM(amount) > 1000;
+-- ⚠️ Cannot use alias in HAVING in some SQL!
 
 -- WHERE vs HAVING
 SELECT 
-    user_id,
-    SUM(amount) AS total
-FROM orders
-WHERE status = 'COMPLETED'    -- Filter rows BEFORE grouping
-GROUP BY user_id
-HAVING SUM(amount) > 1000;    -- Filter groups AFTER aggregation
+    category_id,
+    AVG(price) AS avg_price
+FROM products
+WHERE status = 'ACTIVE'          -- 1. Filter rows BEFORE grouping
+GROUP BY category_id
+HAVING AVG(price) > 100;         -- 2. Filter groups AFTER aggregation
 
--- GROUP_CONCAT (MySQL specific)
+-- GROUP_CONCAT (MySQL specific - combine values into string)
 SELECT 
-    user_id,
-    GROUP_CONCAT(product_name ORDER BY product_name SEPARATOR ', ') AS products
-FROM orders
-JOIN products ON orders.product_id = products.id
-GROUP BY user_id;</code></pre>
+    category_id,
+    GROUP_CONCAT(name ORDER BY name SEPARATOR ', ') AS products,
+    GROUP_CONCAT(DISTINCT brand SEPARATOR ' | ') AS brands
+FROM products
+GROUP BY category_id;
+-- Result: "Laptop, Mouse, Keyboard"
+
+-- WITH ROLLUP (subtotals and grand total)
+SELECT 
+    COALESCE(category, 'TOTAL') AS category,
+    COALESCE(brand, 'Subtotal') AS brand,
+    COUNT(*) AS count,
+    SUM(price) AS total
+FROM products
+GROUP BY category, brand WITH ROLLUP;
+
+-- Conditional aggregation
+SELECT 
+    COUNT(*) AS total,
+    SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) AS completed,
+    SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END) AS pending,
+    SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) AS cancelled,
+    AVG(CASE WHEN status = 'COMPLETED' THEN amount END) AS avg_completed_amount
+FROM orders;</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Aggregate Functions Summary</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Function</th>
+                                        <th>Description</th>
+                                        <th>NULL handling</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>COUNT(*)</code></td>
+                                        <td>Count all rows</td>
+                                        <td>Includes NULLs</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>COUNT(col)</code></td>
+                                        <td>Count non-NULL values</td>
+                                        <td>Excludes NULLs</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>SUM(col)</code></td>
+                                        <td>Sum of values</td>
+                                        <td>Ignores NULLs</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>AVG(col)</code></td>
+                                        <td>Average</td>
+                                        <td>Ignores NULLs</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>MIN/MAX(col)</code></td>
+                                        <td>Minimum/Maximum</td>
+                                        <td>Ignores NULLs</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>GROUP_CONCAT</code></td>
+                                        <td>Concatenate values</td>
+                                        <td>Ignores NULLs</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- SUBQUERIES -->
             <section class="content-section">
                 <h2 id="subqueries" class="section-title"><span class="section-icon">🔄</span>Subqueries</h2>
 
@@ -291,64 +636,132 @@ GROUP BY user_id;</code></pre>
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Subquery
                                     Examples</span></div>
-                            <pre><code>-- Scalar subquery (returns single value)
+                            <pre><code class="language-sql">-- 1. SCALAR SUBQUERY (trả về 1 giá trị duy nhất)
 SELECT 
     name,
     salary,
-    (SELECT AVG(salary) FROM employees) AS avg_salary
+    (SELECT AVG(salary) FROM employees) AS company_avg,
+    salary - (SELECT AVG(salary) FROM employees) AS diff_from_avg
 FROM employees;
 
--- Subquery in WHERE
+-- 2. COLUMN SUBQUERY (trả về 1 cột, nhiều rows)
+-- IN clause
 SELECT * FROM users
-WHERE id IN (SELECT DISTINCT user_id FROM orders WHERE amount > 1000);
+WHERE id IN (
+    SELECT DISTINCT user_id 
+    FROM orders 
+    WHERE amount > 1000
+);
 
--- Subquery with EXISTS (usually faster than IN)
+-- NOT IN (cẩn thận với NULL!)
+SELECT * FROM products
+WHERE category_id NOT IN (
+    SELECT id FROM categories WHERE status = 'INACTIVE'
+);
+-- ⚠️ Nếu subquery trả về NULL → toàn bộ NOT IN = FALSE!
+
+-- 3. ROW SUBQUERY (trả về 1 row)
+SELECT * FROM employees
+WHERE (department_id, salary) = (
+    SELECT department_id, MAX(salary)
+    FROM employees
+    WHERE department_id = 1
+);
+
+-- 4. TABLE SUBQUERY / Derived Table (trong FROM)
+SELECT dept_stats.department, dept_stats.avg_salary
+FROM (
+    SELECT department_id, department, AVG(salary) AS avg_salary
+    FROM employees
+    GROUP BY department_id, department
+) AS dept_stats
+WHERE dept_stats.avg_salary > 50000;
+
+-- 5. CORRELATED SUBQUERY (references outer query - chạy cho mỗi row)
+-- Employees có salary cao hơn avg của department mình
+SELECT e.name, e.salary, e.department_id
+FROM employees e
+WHERE e.salary > (
+    SELECT AVG(e2.salary) 
+    FROM employees e2 
+    WHERE e2.department_id = e.department_id  -- Correlated!
+);
+
+-- 6. EXISTS (kiểm tra có row tồn tại không)
 SELECT * FROM users u
 WHERE EXISTS (
-    SELECT 1 FROM orders o 
+    SELECT 1 
+    FROM orders o 
     WHERE o.user_id = u.id AND o.amount > 1000
 );
 
--- NOT EXISTS
+-- NOT EXISTS (tìm users không có orders)
 SELECT * FROM users u
 WHERE NOT EXISTS (
     SELECT 1 FROM orders o WHERE o.user_id = u.id
 );
 
--- Subquery in FROM (derived table)
-SELECT avg_by_dept.department, avg_by_dept.avg_salary
-FROM (
-    SELECT department, AVG(salary) AS avg_salary
-    FROM employees
-    GROUP BY department
-) AS avg_by_dept
-WHERE avg_by_dept.avg_salary > 50000;
+-- EXISTS vs IN comparison
+-- EXISTS: Tốt khi outer table nhỏ hơn, stops at first match
+-- IN: Tốt khi subquery result nhỏ
 
--- Correlated subquery (references outer query)
-SELECT 
-    e.name,
-    e.salary,
-    e.department
-FROM employees e
-WHERE e.salary > (
-    SELECT AVG(e2.salary) 
-    FROM employees e2 
-    WHERE e2.department = e.department  -- Correlated!
-);</code></pre>
+-- 7. Subquery in SELECT, WHERE, FROM, HAVING
+-- SELECT:
+SELECT name, (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) AS order_count
+FROM users u;
+
+-- WHERE:
+SELECT * FROM products WHERE price > (SELECT AVG(price) FROM products);
+
+-- HAVING:
+SELECT category_id, AVG(price) AS avg_price
+FROM products
+GROUP BY category_id
+HAVING AVG(price) > (SELECT AVG(price) FROM products);</code></pre>
                         </div>
 
                         <div class="warning-box">
-                            <h4><i class="fas fa-exclamation-triangle"></i> Performance Tips</h4>
+                            <h4><i class="fas fa-exclamation-triangle"></i> Subquery Performance</h4>
                             <ul>
-                                <li><strong>EXISTS vs IN:</strong> EXISTS often faster for large datasets</li>
-                                <li><strong>Correlated subqueries:</strong> Run for each row - can be slow</li>
-                                <li><strong>Consider JOINs:</strong> Often more efficient than subqueries</li>
+                                <li><strong>Correlated subqueries:</strong> Chạy cho TỪNG row của outer query → có thể
+                                    rất chậm!</li>
+                                <li><strong>Thay thế bằng JOIN:</strong> Thường hiệu quả hơn subquery</li>
+                                <li><strong>EXISTS vs IN:</strong> EXISTS tốt hơn với large datasets (short-circuit)
+                                </li>
+                                <li><strong>Materialized subquery:</strong> MySQL có thể cache subquery result</li>
                             </ul>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Subquery
+                                    → JOIN Conversion</span></div>
+                            <pre><code class="language-sql">-- ❌ Subquery (có thể chậm)
+SELECT * FROM users
+WHERE id IN (SELECT user_id FROM orders WHERE amount > 1000);
+
+-- ✅ JOIN (thường nhanh hơn)
+SELECT DISTINCT u.*
+FROM users u
+JOIN orders o ON u.id = o.user_id
+WHERE o.amount > 1000;
+
+-- ❌ Correlated subquery
+SELECT 
+    name,
+    (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) AS order_count
+FROM users u;
+
+-- ✅ LEFT JOIN + GROUP BY
+SELECT u.name, COUNT(o.id) AS order_count
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+GROUP BY u.id, u.name;</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- WINDOW FUNCTIONS -->
             <section class="content-section">
                 <h2 id="window" class="section-title"><span class="section-icon">🪟</span>Window Functions</h2>
 
@@ -359,73 +772,92 @@ WHERE e.salary > (
                     <div class="concept-content">
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Window
-                                    Function Examples</span></div>
-                            <pre><code>-- ROW_NUMBER: Unique number per row
-SELECT 
-    name,
-    department,
-    salary,
-    ROW_NUMBER() OVER (ORDER BY salary DESC) AS rank
-FROM employees;
+                                    Function Syntax</span></div>
+                            <pre><code class="language-sql">-- Basic syntax
+function_name() OVER (
+    [PARTITION BY column]      -- Reset cho mỗi partition (như GROUP BY)
+    [ORDER BY column]          -- Thứ tự trong partition
+    [ROWS/RANGE frame_clause]  -- Window frame (optional)
+)
 
--- ROW_NUMBER with PARTITION (reset per group)
+-- ROW_NUMBER: Số thứ tự unique (1,2,3,4,5...)
 SELECT 
-    name,
-    department,
-    salary,
+    name, department, salary,
+    ROW_NUMBER() OVER (ORDER BY salary DESC) AS overall_rank,
     ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC) AS dept_rank
 FROM employees;
 
--- RANK vs DENSE_RANK
+-- RANK vs DENSE_RANK (handling ties)
 SELECT 
-    name,
-    salary,
+    name, salary,
     RANK() OVER (ORDER BY salary DESC) AS rank,        -- 1,2,2,4 (skip)
     DENSE_RANK() OVER (ORDER BY salary DESC) AS dense  -- 1,2,2,3 (no skip)
 FROM employees;
+-- Salary: 100, 90, 90, 80
+-- RANK:     1,  2,  2,  4  (skips 3)
+-- DENSE:    1,  2,  2,  3  (no skip)
 
--- Running totals
+-- NTILE: Chia thành n buckets đều nhau
 SELECT 
-    order_date,
-    amount,
-    SUM(amount) OVER (ORDER BY order_date) AS running_total
-FROM orders;
-
--- Moving average
-SELECT 
-    order_date,
-    amount,
-    AVG(amount) OVER (
-        ORDER BY order_date 
-        ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
-    ) AS moving_avg_3days
-FROM orders;
-
--- LAG / LEAD (access previous/next row)
-SELECT 
-    order_date,
-    amount,
-    LAG(amount, 1) OVER (ORDER BY order_date) AS prev_amount,
-    LEAD(amount, 1) OVER (ORDER BY order_date) AS next_amount,
-    amount - LAG(amount, 1) OVER (ORDER BY order_date) AS change
-FROM orders;
-
--- FIRST_VALUE / LAST_VALUE
-SELECT 
-    name,
-    department,
-    salary,
-    FIRST_VALUE(name) OVER (
-        PARTITION BY department ORDER BY salary DESC
-    ) AS highest_paid_in_dept
+    name, salary,
+    NTILE(4) OVER (ORDER BY salary DESC) AS quartile,  -- 1,2,3,4
+    NTILE(10) OVER (ORDER BY salary DESC) AS decile    -- 1-10
 FROM employees;
 
--- NTILE (divide into buckets)
+-- LAG/LEAD: Access previous/next row
 SELECT 
-    name,
-    salary,
-    NTILE(4) OVER (ORDER BY salary DESC) AS quartile
-FROM employees;</code></pre>
+    order_date,
+    amount,
+    LAG(amount, 1, 0) OVER (ORDER BY order_date) AS prev_amount,
+    LEAD(amount, 1, 0) OVER (ORDER BY order_date) AS next_amount,
+    amount - LAG(amount, 1, 0) OVER (ORDER BY order_date) AS change
+FROM orders;
+-- LAG(column, offset, default_value)
+
+-- FIRST_VALUE / LAST_VALUE / NTH_VALUE
+SELECT 
+    name, department, salary,
+    FIRST_VALUE(name) OVER (
+        PARTITION BY department ORDER BY salary DESC
+    ) AS top_earner,
+    LAST_VALUE(name) OVER (
+        PARTITION BY department 
+        ORDER BY salary DESC
+        ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+    ) AS lowest_earner
+FROM employees;
+
+-- Running totals / Moving averages
+SELECT 
+    order_date,
+    amount,
+    
+    -- Running total
+    SUM(amount) OVER (ORDER BY order_date) AS running_total,
+    
+    -- Cumulative average
+    AVG(amount) OVER (ORDER BY order_date) AS cumulative_avg,
+    
+    -- Moving average (last 7 days)
+    AVG(amount) OVER (
+        ORDER BY order_date 
+        ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+    ) AS moving_avg_7,
+    
+    -- Percentage of total
+    amount * 100.0 / SUM(amount) OVER () AS pct_of_total,
+    
+    -- Percentage within department
+    amount * 100.0 / SUM(amount) OVER (PARTITION BY department) AS pct_in_dept
+FROM orders;
+
+-- Window Frame clauses
+-- ROWS: Physical rows
+-- RANGE: Logical range of values
+ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW  -- Default
+ROWS BETWEEN 3 PRECEDING AND 3 FOLLOWING          -- 7-row window
+ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING
+RANGE BETWEEN INTERVAL 7 DAY PRECEDING AND CURRENT ROW  -- Last 7 days</code></pre>
                         </div>
 
                         <div class="comparison-table">
@@ -435,54 +867,107 @@ FROM employees;</code></pre>
                                     <tr>
                                         <th>Function</th>
                                         <th>Description</th>
+                                        <th>Use Case</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
                                         <td><code>ROW_NUMBER()</code></td>
-                                        <td>Unique sequential number</td>
+                                        <td>Unique row number</td>
+                                        <td>Pagination, deduplication</td>
                                     </tr>
                                     <tr>
                                         <td><code>RANK()</code></td>
-                                        <td>Rank with gaps on ties</td>
+                                        <td>Rank with gaps</td>
+                                        <td>Competition ranking</td>
                                     </tr>
                                     <tr>
                                         <td><code>DENSE_RANK()</code></td>
                                         <td>Rank without gaps</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>LAG(col, n)</code></td>
-                                        <td>Value from n rows before</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>LEAD(col, n)</code></td>
-                                        <td>Value from n rows after</td>
+                                        <td>Continuous ranking</td>
                                     </tr>
                                     <tr>
                                         <td><code>NTILE(n)</code></td>
                                         <td>Divide into n buckets</td>
+                                        <td>Quartiles, percentiles</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>LAG(col, n)</code></td>
+                                        <td>Value n rows before</td>
+                                        <td>Compare with previous</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>LEAD(col, n)</code></td>
+                                        <td>Value n rows after</td>
+                                        <td>Compare with next</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>FIRST_VALUE()</code></td>
+                                        <td>First value in window</td>
+                                        <td>Category leader</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>SUM() OVER()</code></td>
+                                        <td>Running/window sum</td>
+                                        <td>Cumulative totals</td>
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span
+                                    class="code-title">Practical Examples</span></div>
+                            <pre><code class="language-sql">-- Top N per group (Top 3 products per category)
+WITH ranked AS (
+    SELECT 
+        *,
+        ROW_NUMBER() OVER (PARTITION BY category_id ORDER BY sales DESC) AS rn
+    FROM products
+)
+SELECT * FROM ranked WHERE rn <= 3;
+
+-- Deduplication (keep latest)
+WITH ranked AS (
+    SELECT 
+        *,
+        ROW_NUMBER() OVER (PARTITION BY email ORDER BY created_at DESC) AS rn
+    FROM users
+)
+DELETE FROM users WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
+
+-- Year-over-year comparison
+SELECT 
+    year,
+    month,
+    revenue,
+    LAG(revenue, 12) OVER (ORDER BY year, month) AS prev_year_revenue,
+    (revenue - LAG(revenue, 12) OVER (ORDER BY year, month)) / 
+        LAG(revenue, 12) OVER (ORDER BY year, month) * 100 AS yoy_growth_pct
+FROM monthly_sales;</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- CTEs -->
             <section class="content-section">
                 <h2 id="cte" class="section-title"><span class="section-icon">📝</span>CTEs (Common Table Expressions)
                 </h2>
 
                 <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>WITH Clause</h3><span class="badge essential">Essential</span>
+                    </div>
                     <div class="concept-content">
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">CTE
                                     Examples</span></div>
-                            <pre><code>-- Basic CTE
+                            <pre><code class="language-sql">-- Basic CTE
 WITH active_users AS (
     SELECT id, name, email
     FROM users
-    WHERE status = 'ACTIVE'
+    WHERE status = 'ACTIVE' AND created_at > '2024-01-01'
 )
 SELECT * FROM active_users WHERE name LIKE 'John%';
 
@@ -491,58 +976,303 @@ WITH
     active_users AS (
         SELECT id, name FROM users WHERE status = 'ACTIVE'
     ),
-    user_orders AS (
-        SELECT user_id, COUNT(*) AS order_count
+    user_stats AS (
+        SELECT 
+            user_id, 
+            COUNT(*) AS order_count,
+            SUM(amount) AS total_spent
         FROM orders
+        WHERE status = 'COMPLETED'
         GROUP BY user_id
     )
 SELECT 
     u.name,
-    COALESCE(o.order_count, 0) AS orders
+    COALESCE(s.order_count, 0) AS orders,
+    COALESCE(s.total_spent, 0) AS spent
 FROM active_users u
-LEFT JOIN user_orders o ON u.id = o.user_id;
+LEFT JOIN user_stats s ON u.id = s.user_id
+ORDER BY s.total_spent DESC;
 
--- Recursive CTE (hierarchical data)
-WITH RECURSIVE org_hierarchy AS (
-    -- Anchor: top-level managers
-    SELECT id, name, manager_id, 1 AS level
+-- CTE referencing another CTE
+WITH 
+    monthly_sales AS (
+        SELECT 
+            DATE_FORMAT(created_at, '%Y-%m') AS month,
+            SUM(amount) AS revenue
+        FROM orders
+        GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+    ),
+    sales_with_growth AS (
+        SELECT 
+            month,
+            revenue,
+            LAG(revenue) OVER (ORDER BY month) AS prev_revenue
+        FROM monthly_sales
+    )
+SELECT 
+    month,
+    revenue,
+    prev_revenue,
+    ROUND((revenue - prev_revenue) / prev_revenue * 100, 2) AS growth_pct
+FROM sales_with_growth
+WHERE prev_revenue IS NOT NULL;
+
+-- RECURSIVE CTE (cho hierarchical data)
+WITH RECURSIVE org_tree AS (
+    -- Base case: Top-level (no manager)
+    SELECT 
+        id, 
+        name, 
+        manager_id, 
+        1 AS level,
+        CAST(name AS CHAR(500)) AS path
     FROM employees
     WHERE manager_id IS NULL
     
     UNION ALL
     
-    -- Recursive: employees under each manager
-    SELECT e.id, e.name, e.manager_id, h.level + 1
+    -- Recursive case: employees with managers
+    SELECT 
+        e.id, 
+        e.name, 
+        e.manager_id, 
+        ot.level + 1,
+        CONCAT(ot.path, ' > ', e.name)
     FROM employees e
-    JOIN org_hierarchy h ON e.manager_id = h.id
+    INNER JOIN org_tree ot ON e.manager_id = ot.id
 )
-SELECT * FROM org_hierarchy ORDER BY level, name;</code></pre>
+SELECT * FROM org_tree ORDER BY level, name;
+
+-- Recursive: Number sequence
+WITH RECURSIVE nums AS (
+    SELECT 1 AS n
+    UNION ALL
+    SELECT n + 1 FROM nums WHERE n < 100
+)
+SELECT * FROM nums;
+
+-- Recursive: Date series
+WITH RECURSIVE date_series AS (
+    SELECT DATE('2024-01-01') AS date
+    UNION ALL
+    SELECT date + INTERVAL 1 DAY FROM date_series WHERE date < '2024-12-31'
+)
+SELECT 
+    ds.date,
+    COALESCE(SUM(o.amount), 0) AS daily_revenue
+FROM date_series ds
+LEFT JOIN orders o ON DATE(o.created_at) = ds.date
+GROUP BY ds.date;</code></pre>
                         </div>
 
                         <div class="info-box">
                             <h4><i class="fas fa-lightbulb"></i> CTE Benefits</h4>
                             <ul>
-                                <li>Improves readability (named subqueries)</li>
-                                <li>Can be referenced multiple times in main query</li>
-                                <li>Recursive CTEs for hierarchical data</li>
-                                <li>Often same performance as subquery (optimizer inline)</li>
+                                <li><strong>Readability:</strong> Named subqueries dễ đọc hơn nested subqueries</li>
+                                <li><strong>Reusability:</strong> CTE có thể reference nhiều lần trong main query</li>
+                                <li><strong>Recursive:</strong> Giải quyết hierarchical data (org charts, categories)
+                                </li>
+                                <li><strong>Optimization:</strong> MySQL thường inline CTE (như subquery)</li>
                             </ul>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- SET OPERATIONS -->
+            <section class="content-section">
+                <h2 id="set-operations" class="section-title"><span class="section-icon">🔀</span>Set Operations</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>UNION, INTERSECT, EXCEPT</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Set
+                                    Operations</span></div>
+                            <pre><code class="language-sql">-- UNION: Combine results (remove duplicates)
+SELECT name, email FROM customers
+UNION
+SELECT name, email FROM suppliers;
+
+-- UNION ALL: Combine results (keep duplicates - faster)
+SELECT product_id, 'order' AS source FROM order_items
+UNION ALL
+SELECT product_id, 'wishlist' AS source FROM wishlist_items;
+
+-- INTERSECT: Common rows (MySQL 8.0.31+)
+SELECT product_id FROM order_items
+INTERSECT
+SELECT product_id FROM wishlist_items;
+-- Products in both orders AND wishlists
+
+-- Pre-MySQL 8.0.31: Use INNER JOIN instead
+SELECT DISTINCT oi.product_id
+FROM order_items oi
+INNER JOIN wishlist_items wi ON oi.product_id = wi.product_id;
+
+-- EXCEPT (MySQL 8.0.31+): Rows in first but not second
+SELECT product_id FROM wishlist_items
+EXCEPT
+SELECT product_id FROM order_items;
+-- Wishlisted but never ordered
+
+-- Pre-MySQL 8.0.31: Use LEFT JOIN + IS NULL
+SELECT DISTINCT wi.product_id
+FROM wishlist_items wi
+LEFT JOIN order_items oi ON wi.product_id = oi.product_id
+WHERE oi.product_id IS NULL;</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Set Operations Rules</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Operation</th>
+                                        <th>Result</th>
+                                        <th>Requirement</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>UNION</strong></td>
+                                        <td>A ∪ B (distinct)</td>
+                                        <td>Same # columns, compatible types</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>UNION ALL</strong></td>
+                                        <td>A + B (all rows)</td>
+                                        <td>Same # columns, compatible types</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>INTERSECT</strong></td>
+                                        <td>A ∩ B</td>
+                                        <td>Same # columns, compatible types</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>EXCEPT</strong></td>
+                                        <td>A - B</td>
+                                        <td>Same # columns, compatible types</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DML OPERATIONS -->
+            <section class="content-section">
+                <h2 id="dml" class="section-title"><span class="section-icon">✏️</span>DML Operations</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>INSERT, UPDATE, DELETE</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">DML
+                                    Examples</span></div>
+                            <pre><code class="language-sql">-- INSERT single row
+INSERT INTO users (name, email, status) 
+VALUES ('John Doe', 'john@example.com', 'ACTIVE');
+
+-- INSERT multiple rows
+INSERT INTO users (name, email, status) VALUES
+    ('Alice', 'alice@example.com', 'ACTIVE'),
+    ('Bob', 'bob@example.com', 'PENDING'),
+    ('Charlie', 'charlie@example.com', 'ACTIVE');
+
+-- INSERT from SELECT
+INSERT INTO user_archive (id, name, email, archived_at)
+SELECT id, name, email, NOW()
+FROM users
+WHERE status = 'DELETED';
+
+-- INSERT IGNORE (skip duplicates)
+INSERT IGNORE INTO users (email, name) VALUES ('john@example.com', 'John');
+
+-- ON DUPLICATE KEY UPDATE (upsert)
+INSERT INTO products (sku, name, price, stock)
+VALUES ('ABC123', 'Widget', 29.99, 100)
+ON DUPLICATE KEY UPDATE 
+    price = VALUES(price),
+    stock = stock + VALUES(stock);
+
+-- REPLACE (delete + insert)
+REPLACE INTO settings (key_name, value) VALUES ('theme', 'dark');
+
+-- UPDATE basic
+UPDATE users SET status = 'INACTIVE' WHERE last_login < '2023-01-01';
+
+-- UPDATE multiple columns
+UPDATE products 
+SET 
+    price = price * 1.1,
+    updated_at = NOW()
+WHERE category = 'Electronics';
+
+-- UPDATE with JOIN
+UPDATE orders o
+JOIN users u ON o.user_id = u.id
+SET o.shipping_address = u.address
+WHERE o.shipping_address IS NULL;
+
+-- UPDATE with subquery
+UPDATE products 
+SET category_id = (SELECT id FROM categories WHERE name = 'Electronics')
+WHERE name LIKE '%Phone%';
+
+-- UPDATE with LIMIT (process in batches)
+UPDATE orders SET status = 'ARCHIVED' 
+WHERE created_at < '2022-01-01' 
+LIMIT 1000;
+
+-- DELETE basic
+DELETE FROM users WHERE status = 'DELETED' AND deleted_at < '2023-01-01';
+
+-- DELETE with JOIN
+DELETE o FROM orders o
+JOIN users u ON o.user_id = u.id
+WHERE u.status = 'DELETED';
+
+-- DELETE with LIMIT
+DELETE FROM logs WHERE created_at < '2023-01-01' LIMIT 10000;
+
+-- TRUNCATE (delete all, reset auto_increment)
+TRUNCATE TABLE temp_data;
+-- vs DELETE FROM temp_data; (slower, keeps auto_increment)</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> DML Best Practices</h4>
+                            <ul>
+                                <li><strong>Always use WHERE:</strong> Trước khi DELETE/UPDATE, SELECT trước để verify
+                                </li>
+                                <li><strong>Use transactions:</strong> Wrap trong transaction để rollback nếu lỗi</li>
+                                <li><strong>Batch large operations:</strong> Dùng LIMIT để tránh lock table quá lâu</li>
+                                <li><strong>Backup trước:</strong> Đặc biệt với production data</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INTERVIEW QUESTIONS -->
             <section id="interview" class="content-section">
                 <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
 
                 <div class="interview-questions">
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q1</span>
-                            <p>Difference between WHERE and HAVING?</p>
+                            <p>WHERE vs HAVING?</p>
                         </div>
                         <div class="answer">
-                            <p><code>WHERE</code> filters rows BEFORE grouping. <code>HAVING</code> filters groups AFTER
-                                aggregation. Use WHERE for row conditions, HAVING for aggregate conditions.</p>
+                            <p><code>WHERE</code> lọc rows TRƯỚC grouping (execution step 2). <code>HAVING</code> lọc
+                                groups SAU aggregation (step 4). Dùng WHERE cho row conditions, HAVING cho aggregate
+                                conditions như <code>HAVING COUNT(*) > 5</code>.</p>
                         </div>
                     </div>
                     <div class="question-card">
@@ -550,9 +1280,9 @@ SELECT * FROM org_hierarchy ORDER BY level, name;</code></pre>
                             <p>LEFT JOIN vs INNER JOIN?</p>
                         </div>
                         <div class="answer">
-                            <p><strong>INNER:</strong> Only matching rows from both tables. <strong>LEFT:</strong> All
-                                from left table + matching from right (NULL if no match). Use LEFT to include rows
-                                without matches.</p>
+                            <p><strong>INNER:</strong> Chỉ trả về rows match cả 2 bảng. <strong>LEFT:</strong> Tất cả
+                                rows từ bảng trái + matching từ phải (NULL nếu không match). Dùng LEFT khi muốn giữ tất
+                                cả từ bảng chính.</p>
                         </div>
                     </div>
                     <div class="question-card">
@@ -560,28 +1290,95 @@ SELECT * FROM org_hierarchy ORDER BY level, name;</code></pre>
                             <p>EXISTS vs IN?</p>
                         </div>
                         <div class="answer">
-                            <p><code>EXISTS</code> returns true/false, stops on first match. <code>IN</code> compares
-                                against list. EXISTS often faster for large datasets because it short-circuits.</p>
+                            <p><code>EXISTS</code> trả về true/false, dừng ngay khi tìm thấy match đầu tiên.
+                                <code>IN</code> so sánh với list values. EXISTS thường nhanh hơn với large datasets vì
+                                short-circuits. Cẩn thận: IN với NULL trong subquery có thể cho kết quả không mong muốn.
+                            </p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q4</span>
-                            <p>RANK vs DENSE_RANK?</p>
+                            <p>RANK vs DENSE_RANK vs ROW_NUMBER?</p>
                         </div>
                         <div class="answer">
-                            <p>Both rank rows. <strong>RANK:</strong> skips numbers on ties (1,2,2,4).
-                                <strong>DENSE_RANK:</strong> no gaps (1,2,2,3). Use DENSE_RANK when you need continuous
-                                ranking.</p>
+                            <ul>
+                                <li><strong>ROW_NUMBER:</strong> Số unique (1,2,3,4,5...)</li>
+                                <li><strong>RANK:</strong> Có gap khi tie (1,2,2,4 - skip 3)</li>
+                                <li><strong>DENSE_RANK:</strong> Không gap (1,2,2,3)</li>
+                            </ul>
+                            <p>Dùng ROW_NUMBER cho pagination/deduplication, RANK cho competition ranking.</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q5</span>
-                            <p>What is a CTE?</p>
+                            <p>CTE là gì? Khi nào dùng?</p>
                         </div>
                         <div class="answer">
-                            <p>Common Table Expression - named temporary result set. Improves readability, can be
-                                referenced multiple times. WITH clause defines CTE before main SELECT. Supports
-                                recursion for hierarchical data.</p>
+                            <p>Common Table Expression - named temporary result set với <code>WITH</code> clause. Dùng
+                                để: (1) Improve readability thay vì nested subqueries, (2) Reference nhiều lần trong
+                                query, (3) Recursive queries cho hierarchical data (org chart, category tree).</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>UNION vs UNION ALL?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>UNION:</strong> Gộp results và loại bỏ duplicates (có sort). <strong>UNION
+                                    ALL:</strong> Gộp tất cả rows kể cả duplicates (nhanh hơn vì không cần
+                                sort/compare). Dùng UNION ALL khi chắc chắn không có duplicates hoặc cần giữ duplicates.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>Subquery trong SELECT vs JOIN?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Correlated subquery trong SELECT chạy cho từng row → O(n²) với large tables. JOIN thường
+                                hiệu quả hơn vì optimizer có thể chọn join strategy tốt nhất. Convert subquery → LEFT
+                                JOIN khi có thể.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>COALESCE vs IFNULL?</p>
+                        </div>
+                        <div class="answer">
+                            <p><code>IFNULL(a, b)</code>: MySQL specific, 2 arguments.
+                                <code>COALESCE(a, b, c, ...)</code>: SQL standard, multiple arguments, trả về first
+                                non-NULL. Prefer COALESCE for portability và flexibility.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q9</span>
+                            <p>Làm sao tìm Nth highest salary?</p>
+                        </div>
+                        <div class="answer">
+                            <pre><code class="language-sql">-- Using DENSE_RANK
+WITH ranked AS (
+    SELECT salary, DENSE_RANK() OVER (ORDER BY salary DESC) AS rn
+    FROM employees
+)
+SELECT DISTINCT salary FROM ranked WHERE rn = 3;
+
+-- Using LIMIT OFFSET
+SELECT DISTINCT salary FROM employees 
+ORDER BY salary DESC LIMIT 1 OFFSET 2;</code></pre>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q10</span>
+                            <p>DELETE vs TRUNCATE?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>DELETE:</strong> DML, row-by-row, can use WHERE, triggers fire, can
+                                    rollback, keeps auto_increment</li>
+                                <li><strong>TRUNCATE:</strong> DDL, drop & recreate table, no WHERE, no triggers,
+                                    faster, resets auto_increment</li>
+                            </ul>
+                            <p>Dùng TRUNCATE để clear entire table nhanh, DELETE khi cần filter hoặc trigger.</p>
                         </div>
                     </div>
                 </div>
@@ -596,6 +1393,8 @@ SELECT * FROM org_hierarchy ORDER BY level, name;</code></pre>
     </main>
 
     <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
     <script src="../js/main.js"></script>
 </body>
 
