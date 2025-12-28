@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storage Engines - MySQL Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="transactions.html" class="nav-back"><i class="fas fa-arrow-left"></i> Transactions</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon mysql"><i class="fas fa-cogs"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">MySQL</span>
+            <h1>Storage Engines</h1>
+            <p class="topic-desc">InnoDB, MyISAM, Buffer Pool, Redo/Undo Log, Row Formats</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#overview">Engine Overview</a></li>
+                <li><a href="#innodb">InnoDB Deep Dive</a></li>
+                <li><a href="#buffer-pool">Buffer Pool</a></li>
+                <li><a href="#redo-undo">Redo & Undo Logs</a></li>
+                <li><a href="#row-format">Row Formats</a></li>
+                <li><a href="#tablespace">Tablespace</a></li>
+                <li><a href="#other-engines">Other Engines</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <!-- ENGINE OVERVIEW -->
+            <section class="content-section">
+                <h2 id="overview" class="section-title"><span class="section-icon">📊</span>Engine Overview</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Storage Engine Comparison</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>InnoDB vs MyISAM vs Memory</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>InnoDB</th>
+                                        <th>MyISAM</th>
+                                        <th>Memory</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Transactions</strong></td>
+                                        <td>✅ Full ACID</td>
+                                        <td>❌ No</td>
+                                        <td>❌ No</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Locking</strong></td>
+                                        <td>Row-level</td>
+                                        <td>Table-level</td>
+                                        <td>Table-level</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Foreign Keys</strong></td>
+                                        <td>✅ Yes</td>
+                                        <td>❌ No</td>
+                                        <td>❌ No</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Crash Recovery</strong></td>
+                                        <td>✅ Auto</td>
+                                        <td>❌ Manual</td>
+                                        <td>❌ Data lost</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Fulltext Index</strong></td>
+                                        <td>✅ (5.6+)</td>
+                                        <td>✅ Yes</td>
+                                        <td>❌ No</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Spatial Index</strong></td>
+                                        <td>✅ Yes</td>
+                                        <td>✅ Yes</td>
+                                        <td>❌ No</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>COUNT(*)</strong></td>
+                                        <td>Table scan</td>
+                                        <td>Stored (fast)</td>
+                                        <td>Fast</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Data Caching</strong></td>
+                                        <td>Buffer Pool</td>
+                                        <td>Key Cache</td>
+                                        <td>In RAM</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Storage</strong></td>
+                                        <td>.ibd files</td>
+                                        <td>.MYD, .MYI</td>
+                                        <td>RAM only</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Default</strong></td>
+                                        <td>✅ (5.5+)</td>
+                                        <td>❌</td>
+                                        <td>❌</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Engine
+                                    Commands</span></div>
+                            <pre><code class="language-sql">-- Check table engine
+SHOW TABLE STATUS WHERE Name = 'users';
+SHOW CREATE TABLE users;
+
+-- List all available engines
+SHOW ENGINES;
+
+-- Create table with specific engine
+CREATE TABLE sessions (
+    id VARCHAR(64) PRIMARY KEY,
+    data TEXT,
+    expires_at TIMESTAMP
+) ENGINE = MEMORY;
+
+-- Change engine
+ALTER TABLE old_table ENGINE = InnoDB;
+
+-- Set default engine
+SET default_storage_engine = InnoDB;
+
+-- In my.cnf
+[mysqld]
+default-storage-engine = InnoDB</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INNODB DEEP DIVE -->
+            <section class="content-section">
+                <h2 id="innodb" class="section-title"><span class="section-icon">🔷</span>InnoDB Deep Dive</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>InnoDB Architecture</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Visual</span><span
+                                    class="code-title">InnoDB Architecture</span></div>
+                            <pre><code>┌─────────────────────────────────────────────────────────────────┐
+│                        MySQL Server                              │
+├─────────────────────────────────────────────────────────────────┤
+│                      InnoDB Storage Engine                       │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │                    IN-MEMORY                              │   │
+│  │  ┌─────────────────┐  ┌────────────────┐                 │   │
+│  │  │   Buffer Pool   │  │   Log Buffer   │                 │   │
+│  │  │  (Data Pages)   │  │  (Redo Log)    │                 │   │
+│  │  │  (Index Pages)  │  └────────────────┘                 │   │
+│  │  │  (Undo Pages)   │                                      │   │
+│  │  │  (Change Buffer)│  ┌─────────────────────────────┐    │   │
+│  │  └─────────────────┘  │ Adaptive Hash Index         │    │   │
+│  │                       └─────────────────────────────┘    │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                              │                                   │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │                      ON-DISK                              │   │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌───────────────┐   │   │
+│  │  │  System      │  │   Redo Logs  │  │  Undo Logs    │   │   │
+│  │  │  Tablespace  │  │  (ib_logfile)│  │  (undo_001)   │   │   │
+│  │  │  (ibdata1)   │  └──────────────┘  └───────────────┘   │   │
+│  │  └──────────────┘                                         │   │
+│  │  ┌──────────────────────────────────────────────────┐    │   │
+│  │  │        File-per-Table Tablespaces (.ibd)         │    │   │
+│  │  │   users.ibd  orders.ibd  products.ibd  ...       │    │   │
+│  │  └──────────────────────────────────────────────────┘    │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> InnoDB Key Features</h4>
+                            <ul>
+                                <li><strong>ACID Compliant:</strong> Full transaction support with crash recovery</li>
+                                <li><strong>Row-level Locking:</strong> Higher concurrency than table locks</li>
+                                <li><strong>MVCC:</strong> Non-blocking reads via versioning</li>
+                                <li><strong>Clustered Index:</strong> Data stored in PK order</li>
+                                <li><strong>Foreign Keys:</strong> Referential integrity enforcement</li>
+                                <li><strong>Crash Recovery:</strong> Automatic via redo logs</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- BUFFER POOL -->
+            <section class="content-section">
+                <h2 id="buffer-pool" class="section-title"><span class="section-icon">💾</span>Buffer Pool</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Buffer Pool Management</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Visual</span><span
+                                    class="code-title">Buffer Pool Structure</span></div>
+                            <pre><code>BUFFER POOL: In-memory cache for data and index pages
+
+┌─────────────────────────────────────────────────────────────┐
+│                      Buffer Pool (12GB)                      │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │                    LRU List                            │  │
+│  │  ┌────────────────────┬───────────────────────────┐   │  │
+│  │  │    Young Sublist   │     Old Sublist           │   │  │
+│  │  │   (Hot/Frequent)   │    (Newly loaded)         │   │  │
+│  │  │       5/8          │         3/8               │   │  │
+│  │  └────────────────────┴───────────────────────────┘   │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                                                              │
+│  ┌──────────────────┐  ┌──────────────────────────────┐    │
+│  │   Free List      │  │      Flush List              │    │
+│  │  (Unused pages)  │  │  (Dirty pages to write)      │    │
+│  └──────────────────┘  └──────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+
+LRU with Midpoint Insertion:
+• New pages loaded at "midpoint" (3/8 from end)
+• If accessed again, moved to "young" sublist head
+• Prevents one-time table scans from flushing cache</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Buffer
+                                    Pool Configuration</span></div>
+                            <pre><code class="language-sql">-- Check buffer pool size
+SHOW VARIABLES LIKE 'innodb_buffer_pool_size';
+
+-- Set buffer pool (70-80% of RAM for dedicated server)
+SET GLOBAL innodb_buffer_pool_size = 12884901888;  -- 12GB
+
+-- In my.cnf (permanent)
+[mysqld]
+innodb_buffer_pool_size = 12G
+innodb_buffer_pool_instances = 8  -- Reduce contention
+
+-- Monitor buffer pool hit rate (should be > 99%)
+SHOW GLOBAL STATUS LIKE 'Innodb_buffer_pool_read%';
+
+-- Calculate hit rate
+SELECT 
+    (1 - 
+        (SELECT VARIABLE_VALUE FROM performance_schema.global_status 
+         WHERE VARIABLE_NAME = 'Innodb_buffer_pool_reads') /
+        (SELECT VARIABLE_VALUE FROM performance_schema.global_status 
+         WHERE VARIABLE_NAME = 'Innodb_buffer_pool_read_requests')
+    ) * 100 AS hit_rate_percent;
+
+-- Buffer pool contents
+SELECT 
+    page_type,
+    COUNT(*) as pages,
+    ROUND(SUM(data_size)/1024/1024, 2) as size_mb
+FROM information_schema.innodb_buffer_page
+GROUP BY page_type
+ORDER BY pages DESC;</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-lightbulb"></i> Buffer Pool Sizing</h4>
+                            <ul>
+                                <li><strong>Dedicated DB server:</strong> 70-80% of total RAM</li>
+                                <li><strong>Shared server:</strong> 50-60% of available RAM</li>
+                                <li><strong>Instances:</strong> 1 per 1GB (up to 8-16)</li>
+                                <li><strong>Monitor:</strong> Hit rate should be > 99%</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- REDO & UNDO LOGS -->
+            <section class="content-section">
+                <h2 id="redo-undo" class="section-title"><span class="section-icon">📝</span>Redo & Undo Logs</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Transaction Logging</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Visual</span><span class="code-title">Redo
+                                    vs Undo Log</span></div>
+                            <pre><code>REDO LOG (Write-Ahead Log):
+┌────────────────────────────────────────────────────────────┐
+│ Purpose: DURABILITY - Ensure committed changes survive     │
+│                                                            │
+│ Transaction: UPDATE balance SET amount = 500               │
+│     1. Write change to LOG BUFFER                          │
+│     2. Flush log to REDO LOG FILES (ib_logfile0/1)        │
+│     3. COMMIT - log is on disk, data is durable!          │
+│     4. Later: Background flush dirty pages to tablespace   │
+│                                                            │
+│ Crash Recovery: Replay redo log to restore committed data  │
+└────────────────────────────────────────────────────────────┘
+
+        ┌─────────┐    Flush on   ┌────────────────┐
+        │ Log     │──────────────►│  Redo Log      │
+        │ Buffer  │   commit      │  (ib_logfile)  │
+        └─────────┘               └────────────────┘
+
+
+UNDO LOG:
+┌────────────────────────────────────────────────────────────┐
+│ Purpose: ATOMICITY + ISOLATION                             │
+│                                                            │
+│ 1. ROLLBACK: Undo uncommitted changes                      │
+│ 2. MVCC: Provide old versions for consistent reads         │
+│                                                            │
+│ Transaction modifies row:                                  │
+│   Original: {id:1, balance:1000}                          │
+│   Modified: {id:1, balance:500}                           │
+│   Undo stores: "Change balance from 500 back to 1000"     │
+│                                                            │
+│ Other transactions reading at earlier snapshot             │
+│ follow undo chain to get old version                       │
+└────────────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Log
+                                    Configuration</span></div>
+                            <pre><code class="language-sql">-- Redo log settings
+SHOW VARIABLES LIKE 'innodb_log%';
+
+-- In my.cnf
+[mysqld]
+# Redo log size (larger = better write performance, longer recovery)
+innodb_log_file_size = 1G
+innodb_log_files_in_group = 2
+
+# Flush behavior
+innodb_flush_log_at_trx_commit = 1  
+# 1 = flush on every commit (safest, default)
+# 2 = flush once per second (faster, risk 1 sec data loss)
+# 0 = no flush (fastest, risk data loss on crash)
+
+# Undo tablespace (MySQL 8.0+)
+innodb_undo_tablespaces = 2
+innodb_undo_log_truncate = ON
+
+-- Check undo space usage
+SELECT 
+    TABLESPACE_NAME, 
+    FILE_NAME,
+    ROUND(TOTAL_EXTENTS * 1048576 / 1024 / 1024, 2) as size_mb
+FROM information_schema.FILES 
+WHERE FILE_TYPE = 'UNDO LOG';</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Redo vs Undo Log</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Aspect</th>
+                                        <th>Redo Log</th>
+                                        <th>Undo Log</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Purpose</strong></td>
+                                        <td>Durability (crash recovery)</td>
+                                        <td>Atomicity + Isolation (MVCC)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Contains</strong></td>
+                                        <td>Physical changes to apply</td>
+                                        <td>Logical changes to reverse</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>On Crash</strong></td>
+                                        <td>Replay to restore committed</td>
+                                        <td>Rollback uncommitted</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Lifecycle</strong></td>
+                                        <td>Circular, overwritten</td>
+                                        <td>Purged after snapshot</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ROW FORMAT -->
+            <section class="content-section">
+                <h2 id="row-format" class="section-title"><span class="section-icon">📦</span>Row Formats</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>InnoDB Row Formats</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Row Format Comparison</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Format</th>
+                                        <th>Large Data</th>
+                                        <th>Compression</th>
+                                        <th>Default</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>COMPACT</strong></td>
+                                        <td>768 bytes inline, rest off-page</td>
+                                        <td>❌ No</td>
+                                        <td>MySQL 5.0-5.6</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>DYNAMIC</strong></td>
+                                        <td>All off-page if exceeds</td>
+                                        <td>❌ No</td>
+                                        <td>✅ MySQL 5.7+</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>COMPRESSED</strong></td>
+                                        <td>All off-page if exceeds</td>
+                                        <td>✅ Yes</td>
+                                        <td>❌</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>REDUNDANT</strong></td>
+                                        <td>768 bytes inline</td>
+                                        <td>❌ No</td>
+                                        <td>Legacy only</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Row
+                                    Format Commands</span></div>
+                            <pre><code class="language-sql">-- Check row format
+SELECT TABLE_NAME, ROW_FORMAT 
+FROM information_schema.TABLES 
+WHERE TABLE_SCHEMA = 'mydb';
+
+-- Create with specific format
+CREATE TABLE logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    message TEXT,
+    created_at TIMESTAMP
+) ROW_FORMAT = DYNAMIC;
+
+-- Compressed table (reduces I/O, uses CPU)
+CREATE TABLE archive_data (
+    id BIGINT PRIMARY KEY,
+    data MEDIUMBLOB
+) ROW_FORMAT = COMPRESSED, KEY_BLOCK_SIZE = 8;
+
+-- Change row format
+ALTER TABLE users ROW_FORMAT = DYNAMIC;
+
+-- Default row format setting
+SET GLOBAL innodb_default_row_format = DYNAMIC;</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-lightbulb"></i> When to Use COMPRESSED</h4>
+                            <ul>
+                                <li>Large TEXT/BLOB data with high compression ratio</li>
+                                <li>Disk I/O is bottleneck (SSD helps less)</li>
+                                <li>Read-heavy workloads</li>
+                                <li>⚠️ Trade-off: CPU overhead for compression/decompression</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TABLESPACE -->
+            <section class="content-section">
+                <h2 id="tablespace" class="section-title"><span class="section-icon">📁</span>Tablespace</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Tablespace Management</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span
+                                    class="code-title">Tablespace Operations</span></div>
+                            <pre><code class="language-sql">-- File-per-table (recommended, default)
+SET GLOBAL innodb_file_per_table = ON;
+-- Each table gets its own .ibd file
+
+-- Check tablespace info
+SELECT 
+    NAME, 
+    SPACE_TYPE, 
+    ROW_FORMAT,
+    ROUND(FILE_SIZE/1024/1024, 2) as size_mb
+FROM information_schema.INNODB_TABLESPACES;
+
+-- System tablespace (ibdata1)
+-- Contains: Data dictionary, Undo logs (old), Doublewrite buffer, Change buffer
+
+-- Create general tablespace
+CREATE TABLESPACE ts1 
+ADD DATAFILE 'ts1.ibd' 
+ENGINE = InnoDB;
+
+-- Create table in specific tablespace
+CREATE TABLE orders (
+    id BIGINT PRIMARY KEY
+) TABLESPACE = ts1;
+
+-- Move table to different tablespace
+ALTER TABLE orders TABLESPACE = innodb_system;
+ALTER TABLE orders TABLESPACE = innodb_file_per_table;
+
+-- Reclaim space (file-per-table)
+-- Drop and recreate, or:
+ALTER TABLE large_table ENGINE = InnoDB;
+-- This rebuilds and shrinks the file
+
+-- Optimize table (may help with fragmentation)
+OPTIMIZE TABLE fragmented_table;</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- OTHER ENGINES -->
+            <section class="content-section">
+                <h2 id="other-engines" class="section-title"><span class="section-icon">🔧</span>Other Engines</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Alternative Storage Engines</h3><span class="badge">Reference</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Use Cases for Different Engines</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Engine</th>
+                                        <th>Best For</th>
+                                        <th>Avoid When</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>MEMORY</strong></td>
+                                        <td>Session data, temp tables, caching</td>
+                                        <td>Data must persist, large datasets</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ARCHIVE</strong></td>
+                                        <td>Append-only logs, compressed archives</td>
+                                        <td>Updates needed, random access</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>CSV</strong></td>
+                                        <td>Data import/export, simple files</td>
+                                        <td>Performance critical, indexing needed</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>BLACKHOLE</strong></td>
+                                        <td>Replication relay, testing</td>
+                                        <td>Actually storing data</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>FEDERATED</strong></td>
+                                        <td>Remote table access</td>
+                                        <td>High performance, transactions</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span
+                                    class="code-title">Alternative Engine Examples</span></div>
+                            <pre><code class="language-sql">-- MEMORY engine (RAM-only, lost on restart)
+CREATE TABLE sessions (
+    session_id VARCHAR(64) PRIMARY KEY,
+    user_id BIGINT,
+    data TEXT,
+    expires_at TIMESTAMP,
+    INDEX idx_expires (expires_at)
+) ENGINE = MEMORY;
+-- Note: Only BTREE and HASH indexes, no BLOB/TEXT support
+
+-- ARCHIVE engine (compressed, insert-only)
+CREATE TABLE access_logs (
+    id BIGINT AUTO_INCREMENT,
+    ip VARCHAR(45),
+    url TEXT,
+    timestamp TIMESTAMP
+) ENGINE = ARCHIVE;
+-- Super compressed, fast inserts, no updates/deletes
+
+-- CSV engine (plain text files)
+CREATE TABLE import_data (
+    col1 VARCHAR(100),
+    col2 VARCHAR(100)
+) ENGINE = CSV;
+-- Data stored as comma-separated values file</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INTERVIEW QUESTIONS -->
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>InnoDB và MyISAM khác nhau thế nào?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>InnoDB:</strong> Transactions, row locking, foreign keys, crash recovery,
+                                    MVCC. Default từ MySQL 5.5.</li>
+                                <li><strong>MyISAM:</strong> No transactions, table locking, fast COUNT(*), full-text
+                                    (legacy). Chỉ dùng cho read-only workloads.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>Buffer Pool là gì? Tại sao quan trọng?</p>
+                        </div>
+                        <div class="answer">
+                            <p>In-memory cache cho data và index pages. Disk read ~10ms, memory read ~0.1ms → 100x
+                                faster. Size nên = 70-80% RAM trên dedicated server. Monitor hit rate > 99%.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>Redo Log và Undo Log khác nhau?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Redo Log:</strong> Durability - "how to redo committed changes". Crash
+                                    recovery replay.</li>
+                                <li><strong>Undo Log:</strong> Atomicity + Isolation - "how to undo changes". Rollback
+                                    và MVCC versioning.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>innodb_flush_log_at_trx_commit các giá trị?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>1 (default):</strong> Flush log on every commit. Safest, slowest.</li>
+                                <li><strong>2:</strong> Write to OS cache, flush 1x/second. Risk 1 second data loss.
+                                </li>
+                                <li><strong>0:</strong> No explicit flush. Fastest, risk data loss on crash.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>Row format DYNAMIC vs COMPACT?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>COMPACT:</strong> Store 768 bytes inline, rest off-page. Old default.</li>
+                                <li><strong>DYNAMIC:</strong> Store all large data off-page if exceeds. Better for large
+                                    TEXT/BLOB. Default từ MySQL 5.7.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>File-per-table tablespace có lợi ích gì?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li>Easy backup/restore individual tables</li>
+                                <li>Reclaim space when DROP TABLE</li>
+                                <li>Move tables to different disks</li>
+                                <li>Better for large number of tables</li>
+                            </ul>
+                            <p>Enabled by default: <code>innodb_file_per_table = ON</code></p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>MEMORY engine dùng khi nào?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li>Temporary session data</li>
+                                <li>Lookup tables (read-heavy)</li>
+                                <li>Intermediate results for complex queries</li>
+                            </ul>
+                            <p>⚠️ Data lost on restart, table-level locks, no BLOB/TEXT support.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>Change Buffer là gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Cache changes to secondary index pages khi page không trong buffer pool. Later merged khi
+                                page được read. Giảm random I/O. Configured bằng
+                                <code>innodb_change_buffer_max_size</code>.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q9</span>
+                            <p>Adaptive Hash Index (AHI) là gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p>InnoDB tự động build in-memory hash index cho "hot" pages. O(1) lookup thay vì B-tree
+                                O(log n). Enabled by default. Có thể disable nếu gây contention:
+                                <code>innodb_adaptive_hash_index = OFF</code>.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q10</span>
+                            <p>Làm sao reclaim disk space sau DELETE?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li>File-per-table: <code>ALTER TABLE t ENGINE=InnoDB</code> rebuilds and shrinks</li>
+                                <li>System tablespace: Cannot shrink, need dump and restore</li>
+                                <li><code>OPTIMIZE TABLE t</code> may help with fragmentation</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="transactions.html" class="nav-btn prev"><i
+                        class="fas fa-arrow-left"></i><span>Transactions</span></a>
+                <a href="replication.html" class="nav-btn next"><span>Replication & Scaling</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

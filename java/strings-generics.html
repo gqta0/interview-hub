@@ -39,6 +39,7 @@
                 <li><a href="#string-basics">String Basics</a></li>
                 <li><a href="#string-pool">String Pool</a></li>
                 <li><a href="#string-classes">String vs StringBuilder</a></li>
+                <li><a href="#string-methods">String Methods</a></li>
                 <li><a href="#generics-basics">Generics Basics</a></li>
                 <li><a href="#wildcards">Wildcards</a></li>
                 <li><a href="#type-erasure">Type Erasure</a></li>
@@ -47,117 +48,132 @@
         </aside>
 
         <article class="main-content">
+            <!-- STRING BASICS -->
             <section class="content-section">
                 <h2 id="string-basics" class="section-title"><span class="section-icon">📝</span>String Basics</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>String Immutability</h3><span class="badge essential">Essential</span>
+                        <h3>String Immutability</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
-                        <p>String trong Java là <strong>immutable</strong> - một khi được tạo, không thể thay đổi nội
-                            dung.</p>
-
                         <div class="key-points">
-                            <h4><i class="fas fa-question-circle"></i> Tại sao String là Immutable?</h4>
+                            <h4><i class="fas fa-key"></i> Tại sao String là Immutable?</h4>
                             <ul>
-                                <li><strong>String Pool:</strong> Cho phép caching và reuse</li>
-                                <li><strong>Security:</strong> Không thể thay đổi giá trị sau khi tạo (passwords, URLs)
+                                <li><strong>Security:</strong> Không thể thay đổi sau khi tạo (database URLs, passwords)
                                 </li>
-                                <li><strong>Thread-safe:</strong> Có thể share giữa các threads</li>
-                                <li><strong>Hashing:</strong> hashCode được cache (hiệu quả cho HashMap keys)</li>
+                                <li><strong>Thread Safety:</strong> Immutable objects tự động thread-safe</li>
+                                <li><strong>String Pool:</strong> Cho phép caching và tái sử dụng</li>
+                                <li><strong>Hashcode Caching:</strong> hashCode được cache vì value không đổi</li>
                             </ul>
                         </div>
 
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span class="code-title">String
                                     Immutability Demo</span></div>
-                            <pre><code>String s1 = "Hello";
-String s2 = s1.concat(" World");  // Creates NEW String
+                            <pre><code class="language-java">String s1 = "Hello";
+String s2 = s1.concat(" World");  // Tạo String MỚI
 
-System.out.println(s1);  // "Hello" - unchanged!
-System.out.println(s2);  // "Hello World" - new object
+System.out.println(s1);  // "Hello" - không đổi!
+System.out.println(s2);  // "Hello World" - object mới
 
-// Every modification creates new object
-String s3 = s1.toUpperCase();   // New object
-String s4 = s1.substring(0, 2); // New object
-String s5 = s1.replace('l', 'x'); // New object
+// Mọi modification đều tạo object mới
+String s3 = s1.toUpperCase();   // Object mới
+String s4 = s1.substring(0, 3); // Object mới
+String s5 = s1.replace('l', 'x'); // Object mới
 
-// Internally, String is:
+// Internally, String là:
 public final class String {
-    private final char[] value;  // Java 8
     private final byte[] value;  // Java 9+ (compact strings)
     private int hash;  // Cached hash code
+    // ...
 }</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- STRING POOL -->
             <section class="content-section">
                 <h2 id="string-pool" class="section-title"><span class="section-icon">🏊</span>String Pool</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>String Interning</h3><span class="badge essential">Essential</span>
+                        <h3>String Interning</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
-                        <p>String Pool là vùng đặc biệt trong Heap lưu trữ String literals để tái sử dụng.</p>
-
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span class="code-title">String
-                                    Pool Examples</span></div>
-                            <pre><code>// String literals go to pool
+                                    Pool Demo</span></div>
+                            <pre><code class="language-java">// Literals go to String Pool
 String s1 = "Hello";
 String s2 = "Hello";
-System.out.println(s1 == s2);  // true - same reference from pool
+System.out.println(s1 == s2);  // true - same reference
 
-// new String() creates in heap, NOT pool
+// new creates object in Heap (not pool)
 String s3 = new String("Hello");
 System.out.println(s1 == s3);  // false - different objects
 System.out.println(s1.equals(s3));  // true - same content
 
-// intern() adds to pool and returns pooled reference
+// intern() thêm vào pool và trả về pooled reference
 String s4 = s3.intern();
 System.out.println(s1 == s4);  // true - s4 now points to pool
 
-// Concatenation at compile time
+// Compile-time concatenation → Pool
 String s5 = "Hel" + "lo";
 System.out.println(s1 == s5);  // true - optimized by compiler
 
-// Runtime concatenation creates new object
+// Runtime concatenation → Heap (not pool)
 String prefix = "Hel";
 String s6 = prefix + "lo";
-System.out.println(s1 == s6);  // false - runtime concat</code></pre>
+System.out.println(s1 == s6);  // false - runtime concat
+
+// Nhưng intern() sẽ thêm vào pool
+System.out.println(s1 == s6.intern());  // true</code></pre>
                         </div>
 
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Memory</span></div>
-                            <pre><code>    HEAP MEMORY
-┌──────────────────────────────────────┐
-│   String Pool (special area)         │
-│   ┌─────────────────────────────┐   │
-│   │  "Hello"  "World"  "Java"   │   │
-│   └─────────────────────────────┘   │
+                            <div class="code-header"><span class="code-lang">Diagram</span></div>
+                            <pre><code>┌──────────────────────────────────────┐
+│              HEAP                    │
+│   ┌─────────────────────────────┐    │
+│   │       String Pool           │    │
+│   │  ┌───────────────────────┐  │    │
+│   │  │  "Hello"              │  │    │
+│   │  │  s1, s2, s4 ──────────┼──┘    │
+│   │  └───────────────────────┘       │
+│   └─────────────────────────────┘    │
 │                                      │
-│   Regular Heap Objects               │
-│   ┌─────────────────────────────┐   │
-│   │  new String("Hello")        │   │
-│   │  (separate from pool)       │   │
-│   └─────────────────────────────┘   │
+│   ┌─────────────────────────────┐    │
+│   │  new String("Hello")        │    │
+│   │  s3 ────────────────────────┘    │
+│   └─────────────────────────────┘    │
 └──────────────────────────────────────┘</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> == vs equals()</h4>
+                            <ul>
+                                <li><strong>==</strong>: So sánh references (địa chỉ memory)</li>
+                                <li><strong>equals()</strong>: So sánh content (giá trị)</li>
+                                <li>⚠️ LUÔN dùng equals() để so sánh Strings!</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- STRING CLASSES -->
             <section class="content-section">
                 <h2 id="string-classes" class="section-title"><span class="section-icon">🔧</span>String vs
                     StringBuilder vs StringBuffer</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>Comparison</h3><span class="badge essential">Essential</span>
+                        <h3>Comparison</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
                         <div class="comparison-table">
@@ -172,26 +188,26 @@ System.out.println(s1 == s6);  // false - runtime concat</code></pre>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Mutability</td>
+                                        <td><strong>Mutability</strong></td>
                                         <td>Immutable</td>
                                         <td>Mutable</td>
                                         <td>Mutable</td>
                                     </tr>
                                     <tr>
-                                        <td>Thread-safe</td>
-                                        <td>Yes (immutable)</td>
-                                        <td>No</td>
-                                        <td>Yes (synchronized)</td>
+                                        <td><strong>Thread-safe</strong></td>
+                                        <td>✅ (immutable)</td>
+                                        <td>❌</td>
+                                        <td>✅ (synchronized)</td>
                                     </tr>
                                     <tr>
-                                        <td>Performance</td>
-                                        <td>Slow for concat</td>
+                                        <td><strong>Performance</strong></td>
+                                        <td>Slow (concat)</td>
                                         <td>Fast</td>
                                         <td>Slower (sync overhead)</td>
                                     </tr>
                                     <tr>
-                                        <td>When to use</td>
-                                        <td>Few modifications</td>
+                                        <td><strong>Use case</strong></td>
+                                        <td>Constants</td>
                                         <td>Single thread</td>
                                         <td>Multi-thread (rare)</td>
                                     </tr>
@@ -201,57 +217,139 @@ System.out.println(s1 == s6);  // false - runtime concat</code></pre>
 
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span
-                                    class="code-title">Performance Comparison</span></div>
-                            <pre><code>// Bad - creates many intermediate objects
+                                    class="code-title">StringBuilder Usage</span></div>
+                            <pre><code class="language-java">// ❌ Bad: String concatenation in loop
 String result = "";
-for (int i = 0; i < 10000; i++) {
-    result += i;  // Creates new String each iteration!
+for (int i = 0; i < 1000; i++) {
+    result += i;  // Creates 1000 String objects!
 }
 
-// Good - mutable, efficient
+// ✅ Good: StringBuilder
 StringBuilder sb = new StringBuilder();
-for (int i = 0; i < 10000; i++) {
-    sb.append(i);  // Modifies same buffer
+for (int i = 0; i < 1000; i++) {
+    sb.append(i);  // Modifies same object
 }
 String result = sb.toString();
 
-// StringBuilder common methods
-sb.append("text");
-sb.insert(0, "prefix");
-sb.delete(0, 5);
-sb.reverse();
-sb.replace(0, 3, "new");
-String str = sb.toString();
+// Common methods
+StringBuilder sb = new StringBuilder("Hello");
+sb.append(" World");    // "Hello World"
+sb.insert(5, ",");      // "Hello, World"
+sb.replace(0, 5, "Hi"); // "Hi, World"
+sb.delete(2, 4);        // "Hi World" (chỉ số 2-3)
+sb.reverse();           // "dlroW iH"
+sb.setLength(0);        // Clear
 
-// Also consider String.join() and StringJoiner
-String joined = String.join(", ", list);  // Java 8+
-StringJoiner sj = new StringJoiner(", ", "[", "]");
-sj.add("a").add("b");  // "[a, b]"</code></pre>
+// Method chaining
+String result = new StringBuilder()
+    .append("Hello")
+    .append(" ")
+    .append("World")
+    .toString();</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-lightbulb"></i> Best Practices</h4>
+                            <ul>
+                                <li>String concatenation trong loop → <strong>StringBuilder</strong></li>
+                                <li>Thread-safe needed → <strong>StringBuffer</strong> (hoặc StringBuilder + external
+                                    sync)</li>
+                                <li>Simple concat (ít lần) → <strong>String +</strong> OK (compiler optimizes)</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- STRING METHODS -->
             <section class="content-section">
-                <h2 id="generics-basics" class="section-title"><span class="section-icon">🔷</span>Generics Basics</h2>
+                <h2 id="string-methods" class="section-title"><span class="section-icon">⚡</span>String Methods</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Common
+                                    String Methods</span></div>
+                            <pre><code class="language-java">String s = "Hello World";
+
+// Length và character access
+s.length();              // 11
+s.charAt(0);             // 'H'
+s.isEmpty();             // false
+s.isBlank();             // false (Java 11)
+
+// Tìm kiếm
+s.indexOf("o");          // 4
+s.lastIndexOf("o");      // 7
+s.contains("World");     // true
+s.startsWith("Hello");   // true
+s.endsWith("World");     // true
+
+// Cắt và ghép
+s.substring(0, 5);       // "Hello"
+s.substring(6);          // "World"
+"a,b,c".split(",");      // ["a", "b", "c"]
+String.join("-", "a", "b"); // "a-b"
+
+// Transform
+s.toLowerCase();         // "hello world"
+s.toUpperCase();         // "HELLO WORLD"
+"  hi  ".trim();         // "hi"
+"  hi  ".strip();        // "hi" (Java 11, Unicode-aware)
+s.replace("l", "L");     // "HeLLo WorLd"
+s.replaceAll("\\s", "-"); // "Hello-World" (regex)
+
+// Java 11+ methods
+"hello".repeat(3);       // "hellohellohello"
+"line1\nline2".lines();  // Stream&lt;String&gt;
+"  ".isBlank();          // true
+
+// Java 12+
+"  hello  ".indent(4);   // "      hello  \n"
+"HELLO".transform(String::toLowerCase); // "hello"
+
+// Formatting
+String.format("Hello %s, age %d", "John", 30);
+"Hello %s".formatted("World");  // Java 15+</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GENERICS BASICS -->
+            <section class="content-section">
+                <h2 id="generics-basics" class="section-title"><span class="section-icon">📦</span>Generics Basics</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>Generic Types</h3><span class="badge essential">Essential</span>
+                        <h3>Generic Types</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
-                        <p>Generics cho phép type-safe code bằng cách parameterize types.</p>
-
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Generic
                                     Class & Method</span></div>
-                            <pre><code>// Generic class
+                            <pre><code class="language-java">// Generic class
 public class Box&lt;T&gt; {
     private T content;
     
     public void set(T content) { this.content = content; }
     public T get() { return content; }
 }
+
+Box&lt;String&gt; stringBox = new Box&lt;&gt;();
+stringBox.set("Hello");
+String s = stringBox.get();  // No cast needed
+
+Box&lt;Integer&gt; intBox = new Box&lt;&gt;();
+intBox.set(42);
+
+// Generic method
+public &lt;T&gt; T getFirst(List&lt;T&gt; list) {
+    return list.isEmpty() ? null : list.get(0);
+}
+
+String first = getFirst(List.of("a", "b"));  // Type inference
 
 // Multiple type parameters
 public class Pair&lt;K, V&gt; {
@@ -264,62 +362,42 @@ public class Pair&lt;K, V&gt; {
     }
 }
 
-// Generic method
-public class Utils {
-    public static &lt;T&gt; T getFirst(List&lt;T&gt; list) {
-        return list.isEmpty() ? null : list.get(0);
-    }
-    
-    // Multiple type parameters in method
-    public static &lt;K, V&gt; V getValue(Map&lt;K, V&gt; map, K key) {
-        return map.get(key);
-    }
-}
-
-// Usage
-Box&lt;String&gt; stringBox = new Box&lt;&gt;();
-stringBox.set("Hello");
-String s = stringBox.get();  // No cast needed
-
-Pair&lt;String, Integer&gt; pair = new Pair&lt;&gt;("age", 30);
-String first = Utils.getFirst(Arrays.asList("a", "b", "c"));</code></pre>
+Pair&lt;String, Integer&gt; pair = new Pair&lt;&gt;("age", 30);</code></pre>
                         </div>
 
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Bounded
                                     Type Parameters</span></div>
-                            <pre><code>// Upper bound - T must be Number or subclass
+                            <pre><code class="language-java">// Upper bound - T phải là Number hoặc subclass
 public class NumberBox&lt;T extends Number&gt; {
-    private T value;
+    private T number;
     
     public double getDoubleValue() {
-        return value.doubleValue();  // Can call Number methods
+        return number.doubleValue();  // Number methods available
     }
 }
 
-NumberBox&lt;Integer&gt; intBox = new NumberBox&lt;&gt;();
-NumberBox&lt;Double&gt; doubleBox = new NumberBox&lt;&gt;();
-// NumberBox&lt;String&gt; stringBox;  // Compile error!
+NumberBox&lt;Integer&gt; intBox = new NumberBox&lt;&gt;();  // OK
+NumberBox&lt;Double&gt; doubleBox = new NumberBox&lt;&gt;();  // OK
+// NumberBox&lt;String&gt; stringBox;  // ❌ Compile error
 
-// Multiple bounds (extends class & interface)
-public class MultiBox&lt;T extends Number & Comparable&lt;T&gt;&gt; {
-    private T value;
-    
-    public int compareTo(T other) {
-        return value.compareTo(other);
-    }
+// Multiple bounds (class first, then interfaces)
+public &lt;T extends Number & Comparable&lt;T&gt;&gt; T max(T a, T b) {
+    return a.compareTo(b) > 0 ? a : b;
 }</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- WILDCARDS -->
             <section class="content-section">
-                <h2 id="wildcards" class="section-title"><span class="section-icon">❓</span>Wildcards & PECS</h2>
+                <h2 id="wildcards" class="section-title"><span class="section-icon">❓</span>Wildcards</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>PECS: Producer Extends, Consumer Super</h3><span class="badge essential">Essential</span>
+                        <h3>PECS: Producer Extends, Consumer Super</h3>
+                        <span class="badge important">Important</span>
                     </div>
                     <div class="concept-content">
                         <div class="comparison-table">
@@ -327,64 +405,72 @@ public class MultiBox&lt;T extends Number & Comparable&lt;T&gt;&gt; {
                                 <thead>
                                     <tr>
                                         <th>Wildcard</th>
-                                        <th>Example</th>
-                                        <th>Purpose</th>
-                                        <th>Rule</th>
+                                        <th>Syntax</th>
+                                        <th>Read</th>
+                                        <th>Write</th>
+                                        <th>Use Case</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td><code>?</code></td>
-                                        <td>List&lt;?&gt;</td>
-                                        <td>Unknown type</td>
-                                        <td>Read only (as Object)</td>
+                                        <td><strong>Unbounded</strong></td>
+                                        <td>&lt;?&gt;</td>
+                                        <td>Object</td>
+                                        <td>❌ (null only)</td>
+                                        <td>Read-only operations</td>
                                     </tr>
                                     <tr>
-                                        <td><code>? extends T</code></td>
-                                        <td>List&lt;? extends Number&gt;</td>
-                                        <td>Upper bound</td>
-                                        <td>Read only (Producer)</td>
+                                        <td><strong>Upper Bound</strong></td>
+                                        <td>&lt;? extends T&gt;</td>
+                                        <td>T</td>
+                                        <td>❌ (null only)</td>
+                                        <td>Producer (read)</td>
                                     </tr>
                                     <tr>
-                                        <td><code>? super T</code></td>
-                                        <td>List&lt;? super Integer&gt;</td>
-                                        <td>Lower bound</td>
-                                        <td>Write only (Consumer)</td>
+                                        <td><strong>Lower Bound</strong></td>
+                                        <td>&lt;? super T&gt;</td>
+                                        <td>Object</td>
+                                        <td>T</td>
+                                        <td>Consumer (write)</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
 
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">PECS
-                                    Pattern</span></div>
-                            <pre><code>// Producer Extends - READ from it
-public void printNumbers(List&lt;? extends Number&gt; list) {
-    for (Number n : list) {
-        System.out.println(n);  // Can read as Number
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Wildcards Examples</span></div>
+                            <pre><code class="language-java">// Unbounded wildcard - chỉ đọc
+public void printList(List&lt;?&gt; list) {
+    for (Object item : list) {
+        System.out.println(item);
     }
-    // list.add(1);  // Compile error! Can't add
+    // list.add(something);  // ❌ Cannot add
 }
 
-printNumbers(Arrays.asList(1, 2, 3));      // List&lt;Integer&gt; OK
-printNumbers(Arrays.asList(1.0, 2.0));     // List&lt;Double&gt; OK
+// Upper bound - Producer (đọc T)
+public double sumOfList(List&lt;? extends Number&gt; list) {
+    double sum = 0;
+    for (Number n : list) {  // Đọc được Number
+        sum += n.doubleValue();
+    }
+    // list.add(1);  // ❌ Cannot add
+    return sum;
+}
+sumOfList(List.of(1, 2, 3));      // List&lt;Integer&gt;
+sumOfList(List.of(1.0, 2.0));     // List&lt;Double&gt;
 
-// Consumer Super - WRITE to it
+// Lower bound - Consumer (ghi T)
 public void addNumbers(List&lt;? super Integer&gt; list) {
-    list.add(1);
+    list.add(1);      // ✅ Can add Integer
     list.add(2);
-    // Integer num = list.get(0);  // Error! Returns Object
-    Object obj = list.get(0);  // OK
+    // Integer n = list.get(0);  // ❌ Returns Object
 }
+List&lt;Number&gt; numbers = new ArrayList&lt;&gt;();
+addNumbers(numbers);  // Works - Number is super of Integer
 
-addNumbers(new ArrayList&lt;Integer&gt;());  // OK
-addNumbers(new ArrayList&lt;Number&gt;());   // OK
-addNumbers(new ArrayList&lt;Object&gt;());   // OK
-
-// Copy example using PECS
-public static &lt;T&gt; void copy(
-    List&lt;? super T&gt; dest,      // Consumer (write)
-    List&lt;? extends T&gt; src) {   // Producer (read)
+// PECS in action: copy từ src (producer) sang dest (consumer)
+public static &lt;T&gt; void copy(List&lt;? super T&gt; dest, List&lt;? extends T&gt; src) {
     for (T item : src) {
         dest.add(item);
     }
@@ -392,148 +478,213 @@ public static &lt;T&gt; void copy(
                         </div>
 
                         <div class="info-box">
-                            <h4><i class="fas fa-lightbulb"></i> Remember PECS</h4>
+                            <h4><i class="fas fa-lightbulb"></i> PECS Rule</h4>
                             <ul>
-                                <li><strong>Get/Read:</strong> Use <code>? extends T</code> (Producer)</li>
-                                <li><strong>Put/Write:</strong> Use <code>? super T</code> (Consumer)</li>
-                                <li><strong>Both:</strong> Use exact type <code>&lt;T&gt;</code></li>
+                                <li><strong>Producer Extends:</strong> Nếu bạn chỉ đọc từ collection → &lt;? extends
+                                    T&gt;</li>
+                                <li><strong>Consumer Super:</strong> Nếu bạn chỉ ghi vào collection → &lt;? super T&gt;
+                                </li>
+                                <li>Nếu cả đọc lẫn ghi → dùng exact type &lt;T&gt;</li>
                             </ul>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- TYPE ERASURE -->
             <section class="content-section">
                 <h2 id="type-erasure" class="section-title"><span class="section-icon">🔍</span>Type Erasure</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>How Generics Work at Runtime</h3><span class="badge important">Important</span>
+                        <h3>How Generics Work at Runtime</h3>
+                        <span class="badge important">Important</span>
                     </div>
                     <div class="concept-content">
-                        <p>Java generics sử dụng <strong>type erasure</strong> - thông tin generic bị xóa tại runtime.
-                        </p>
+                        <p>Java generics là compile-time feature. At runtime, generic types bị "erased" → raw types.</p>
 
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Type
-                                    Erasure Examples</span></div>
-                            <pre><code>// At compile time
+                                    Erasure</span></div>
+                            <pre><code class="language-java">// Compile time
 List&lt;String&gt; strings = new ArrayList&lt;&gt;();
 List&lt;Integer&gt; integers = new ArrayList&lt;&gt;();
 
-// At runtime - same class!
-System.out.println(strings.getClass() == integers.getClass()); // true
+// Runtime - both become List (raw type)
+strings.getClass() == integers.getClass();  // true!
 
-// Both become: ArrayList (raw type)
-// Generic info is erased
+// Compiler thay thế:
+// Box&lt;T&gt; → Box
+// Box&lt;T extends Number&gt; → Box&lt;Number&gt;
 
-// Can't do at runtime:
-// if (obj instanceof List&lt;String&gt;) {}  // Compile error!
-// T item = new T();  // Compile error!
-// T[] array = new T[10];  // Compile error!
+// Hệ quả 1: Không thể instanceof generic type
+// if (obj instanceof List&lt;String&gt;) {}  // ❌ Compile error
+if (obj instanceof List&lt;?&gt;) {}  // ✅ OK
 
-// Workaround - pass Class token
-public &lt;T&gt; T create(Class&lt;T&gt; clazz) throws Exception {
-    return clazz.getDeclaredConstructor().newInstance();
-}
+// Hệ quả 2: Không thể tạo generic array
+// T[] array = new T[10];  // ❌ Compile error
+T[] array = (T[]) new Object[10];  // Workaround (unchecked)
 
-String s = create(String.class);</code></pre>
-                        </div>
+// Hệ quả 3: Không thể overload với chỉ khác generic type
+public void process(List&lt;String&gt; list) {}
+// public void process(List&lt;Integer&gt; list) {}  // ❌ Same erasure
 
-                        <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Before/After</span><span
-                                    class="code-title">Type Erasure</span></div>
-                            <pre><code>// Source code (with generics)
-public class Box&lt;T&gt; {
-    private T item;
-    public void set(T item) { this.item = item; }
-    public T get() { return item; }
-}
-
-// After type erasure (bytecode)
-public class Box {
-    private Object item;
-    public void set(Object item) { this.item = item; }
-    public Object get() { return item; }
-}
-
-// Bounded type
-public class Box&lt;T extends Number&gt; {
-    private T item;
-}
-
-// After erasure - bound type is kept
-public class Box {
-    private Number item;  // Erased to bound
+// Hệ quả 4: Bridge methods được tạo cho inheritance
+class StringBox extends Box&lt;String&gt; {
+    @Override
+    public void set(String content) { ... }
+    // Compiler generates bridge method:
+    // public void set(Object content) { set((String) content); }
 }</code></pre>
                         </div>
 
                         <div class="warning-box">
-                            <h4><i class="fas fa-exclamation-triangle"></i> Type Erasure Limitations</h4>
+                            <h4><i class="fas fa-exclamation-triangle"></i> Common Generic Gotchas</h4>
                             <ul>
-                                <li>Can't create generic arrays: <code>new T[10]</code></li>
-                                <li>Can't use instanceof with generics</li>
-                                <li>Can't catch generic exceptions</li>
-                                <li>Can't create instance of type parameter</li>
-                                <li>Can't overload methods that differ only by generic type</li>
+                                <li><code>List&lt;Object&gt;</code> không phải supertype của
+                                    <code>List&lt;String&gt;</code></li>
+                                <li>Không thể <code>new T()</code> (type erasure)</li>
+                                <li>Static fields không thể có generic type của class</li>
+                                <li>Checked exceptions trong generic code phức tạp</li>
                             </ul>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Getting
+                                    Type at Runtime</span></div>
+                            <pre><code class="language-java">// Workaround: Pass Class&lt;T&gt; explicitly
+public class GenericFactory&lt;T&gt; {
+    private Class&lt;T&gt; type;
+    
+    public GenericFactory(Class&lt;T&gt; type) {
+        this.type = type;
+    }
+    
+    public T create() throws Exception {
+        return type.getDeclaredConstructor().newInstance();
+    }
+}
+
+GenericFactory&lt;User&gt; factory = new GenericFactory&lt;&gt;(User.class);
+User user = factory.create();</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- INTERVIEW QUESTIONS -->
             <section id="interview" class="content-section">
                 <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
 
                 <div class="interview-questions">
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q1</span>
-                            <p>Why is String immutable in Java?</p>
+                            <p>Tại sao String là immutable?</p>
                         </div>
                         <div class="answer">
-                            <p><strong>Security:</strong> Can't modify after creation. <strong>Thread-safety:</strong>
-                                Safe to share. <strong>Caching:</strong> String pool optimization.
-                                <strong>Hashing:</strong> hashCode cached for HashMap performance.</p>
+                            <ul>
+                                <li><strong>Security:</strong> Sensitive data không thể bị sửa</li>
+                                <li><strong>Thread Safety:</strong> Tự động thread-safe</li>
+                                <li><strong>String Pool:</strong> Cho phép caching</li>
+                                <li><strong>Hashcode:</strong> Có thể cache hashCode</li>
+                            </ul>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q2</span>
-                            <p>Difference between == and equals() for String?</p>
+                            <p>String Pool là gì?</p>
                         </div>
                         <div class="answer">
-                            <p><code>==</code> compares references (same object?). <code>equals()</code> compares
-                                content. String literals share pool references, but <code>new String()</code> creates
-                                new objects.</p>
+                            <p>Vùng memory đặc biệt trong Heap lưu string literals. Khi tạo literal, JVM check pool
+                                trước. Nếu tồn tại → return reference. intern() thêm string vào pool.</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q3</span>
-                            <p>What is String.intern()?</p>
+                            <p>== vs equals() cho String?</p>
                         </div>
                         <div class="answer">
-                            <p>Adds String to pool and returns the pooled reference. If already in pool, returns
-                                existing reference. Useful for memory optimization with many duplicate strings.</p>
+                            <ul>
+                                <li><strong>==</strong>: So sánh reference (địa chỉ)</li>
+                                <li><strong>equals()</strong>: So sánh content</li>
+                            </ul>
+                            <p>Luôn dùng equals() để tránh bugs!</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q4</span>
-                            <p>Explain PECS principle?</p>
+                            <p>StringBuilder vs StringBuffer?</p>
                         </div>
                         <div class="answer">
-                            <p><strong>Producer Extends:</strong> Use <code>? extends T</code> when you only READ from
-                                collection. <strong>Consumer Super:</strong> Use <code>? super T</code> when you only
-                                WRITE to collection.</p>
+                            <ul>
+                                <li><strong>StringBuilder:</strong> Không synchronized, nhanh, single-thread</li>
+                                <li><strong>StringBuffer:</strong> Synchronized, chậm hơn, thread-safe</li>
+                            </ul>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q5</span>
-                            <p>What is Type Erasure?</p>
+                            <p>Type Erasure là gì?</p>
                         </div>
                         <div class="answer">
-                            <p>Java removes generic type info at runtime for backward compatibility.
-                                <code>List&lt;String&gt;</code> and <code>List&lt;Integer&gt;</code> become same
-                                <code>List</code> class at runtime. Limits: can't use instanceof, can't create generic
-                                arrays.</p>
+                            <p>Compiler xóa generic type info at compile time. Runtime chỉ thấy raw types.
+                                List&lt;String&gt; → List. Đó là lý do không thể instanceof, new T(), hoặc T.class.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>PECS là gì?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Producer Extends:</strong> &lt;? extends T&gt; khi đọc/produce</li>
+                                <li><strong>Consumer Super:</strong> &lt;? super T&gt; khi ghi/consume</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>Tại sao List&lt;Object&gt; không phải supertype của List&lt;String&gt;?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Generics là invariant. Nếu là supertype, bạn có thể add Integer vào List&lt;Object&gt;
+                                reference pointing to List&lt;String&gt;. Type safety bị phá vỡ.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>Bounded vs Unbounded wildcards?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>&lt;?&gt;</strong>: Unbounded, matches any type</li>
+                                <li><strong>&lt;? extends T&gt;</strong>: Upper bound, T hoặc subtypes</li>
+                                <li><strong>&lt;? super T&gt;</strong>: Lower bound, T hoặc supertypes</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q9</span>
+                            <p>new String("hello") tạo bao nhiêu objects?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Có thể 1 hoặc 2:</p>
+                            <ul>
+                                <li>1 object trong Heap (always)</li>
+                                <li>1 trong String Pool nếu "hello" chưa tồn tại</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q10</span>
+                            <p>Làm sao tạo instance của generic type T?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Không thể new T() do type erasure. Workaround: pass Class&lt;T&gt; và dùng reflection:
+                            </p>
+                            <pre><code class="language-java">public &lt;T&gt; T create(Class&lt;T&gt; clazz) {
+    return clazz.getDeclaredConstructor().newInstance();
+}</code></pre>
                         </div>
                     </div>
                 </div>
@@ -542,13 +693,15 @@ public class Box {
             <div class="page-navigation">
                 <a href="design-patterns.html" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>Design
                         Patterns</span></a>
-                <a href="../index.html#java" class="nav-btn next"><span>Quay lại Java Core</span><i
+                <a href="oop-principles.html" class="nav-btn next"><span>OOP Principles</span><i
                         class="fas fa-arrow-right"></i></a>
             </div>
         </article>
     </main>
 
     <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
     <script src="../js/main.js"></script>
 </body>
 

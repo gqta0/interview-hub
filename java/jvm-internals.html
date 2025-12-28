@@ -37,10 +37,11 @@
             <h3><i class="fas fa-list"></i> Nội dung</h3>
             <ul>
                 <li><a href="#architecture">JVM Architecture</a></li>
+                <li><a href="#classloading">Class Loading</a></li>
                 <li><a href="#memory">Memory Model</a></li>
-                <li><a href="#classloader">Class Loading</a></li>
+                <li><a href="#heap">Heap Structure</a></li>
                 <li><a href="#gc">Garbage Collection</a></li>
-                <li><a href="#gc-algorithms">GC Algorithms</a></li>
+                <li><a href="#gc-types">GC Algorithms</a></li>
                 <li><a href="#jit">JIT Compilation</a></li>
                 <li><a href="#tuning">JVM Tuning</a></li>
                 <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
@@ -48,47 +49,142 @@
         </aside>
 
         <article class="main-content">
+            <!-- JVM ARCHITECTURE -->
             <section class="content-section">
                 <h2 id="architecture" class="section-title"><span class="section-icon">🏗️</span>JVM Architecture</h2>
 
                 <div class="concept-card">
                     <div class="concept-content">
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Architecture</span></div>
+                            <div class="code-header"><span class="code-lang">Diagram</span></div>
                             <pre><code>┌─────────────────────────────────────────────────────────────┐
-│                        JVM                                  │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │              Class Loader Subsystem                   │  │
-│  │   Bootstrap → Extension → Application ClassLoader    │  │
-│  └──────────────────────────────────────────────────────┘  │
-│                           ↓                                 │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │                 Runtime Data Areas                    │  │
-│  │  ┌─────────┐ ┌─────────┐ ┌────────┐ ┌────────────┐  │  │
-│  │  │ Method  │ │  Heap   │ │  Stack │ │ PC Register│  │  │
-│  │  │  Area   │ │(Objects)│ │(Thread)│ │  (Thread)  │  │  │
-│  │  └─────────┘ └─────────┘ └────────┘ └────────────┘  │  │
-│  │              ┌──────────────────────┐                │  │
-│  │              │   Native Method Stack │                │  │
-│  │              └──────────────────────┘                │  │
-│  └──────────────────────────────────────────────────────┘  │
-│                           ↓                                 │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │                 Execution Engine                      │  │
-│  │     Interpreter ─→ JIT Compiler ─→ GC                │  │
-│  └──────────────────────────────────────────────────────┘  │
+│                        JVM                                   │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │               Class Loader Subsystem                 │    │
+│  │   Loading → Linking → Initialization                 │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                           │                                  │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │               Runtime Data Areas                     │    │
+│  │  ┌───────────┐ ┌─────────┐ ┌────────┐ ┌──────────┐  │    │
+│  │  │  Method   │ │  Heap   │ │ Stack  │ │    PC    │  │    │
+│  │  │   Area    │ │(Objects)│ │(Thread)│ │ Register │  │    │
+│  │  └───────────┘ └─────────┘ └────────┘ └──────────┘  │    │
+│  │              ┌──────────────────┐                    │    │
+│  │              │ Native Method    │                    │    │
+│  │              │     Stack        │                    │    │
+│  │              └──────────────────┘                    │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                           │                                  │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │               Execution Engine                       │    │
+│  │   Interpreter → JIT Compiler → Garbage Collector     │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                           │                                  │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │           Native Method Interface (JNI)              │    │
+│  └─────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────┘</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- CLASS LOADING -->
+            <section class="content-section">
+                <h2 id="classloading" class="section-title"><span class="section-icon">📦</span>Class Loading</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Class Loader Hierarchy</h3>
+                        <span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Hierarchy</span></div>
+                            <pre><code>         Bootstrap ClassLoader (null)
+              loads rt.jar, core Java classes
+                        │
+                        ▼
+         Extension ClassLoader (Platform)
+              loads jre/lib/ext/*.jar
+                        │
+                        ▼
+         Application ClassLoader (System)
+              loads classpath (your code)
+                        │
+                        ▼
+         Custom ClassLoaders
+              ví dụ: URLClassLoader, WebAppClassLoader</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Class Loading Process</h4>
+                            <ul>
+                                <li><strong>Loading:</strong> Đọc .class file, tạo Class object trong memory</li>
+                                <li><strong>Linking:</strong>
+                                    <ul>
+                                        <li><em>Verification:</em> Kiểm tra bytecode hợp lệ</li>
+                                        <li><em>Preparation:</em> Cấp phát memory cho static fields (default values)
+                                        </li>
+                                        <li><em>Resolution:</em> Symbolic references → direct references</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Initialization:</strong> Chạy static initializers và khối static</li>
+                            </ul>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Delegation Model</span></div>
+                            <pre><code class="language-java">// Parent-first delegation model
+protected Class&lt;?&gt; loadClass(String name) throws ClassNotFoundException {
+    // 1. Check if already loaded
+    Class&lt;?&gt; c = findLoadedClass(name);
+    
+    if (c == null) {
+        try {
+            // 2. Delegate to parent first
+            if (parent != null) {
+                c = parent.loadClass(name);
+            } else {
+                c = findBootstrapClassOrNull(name);
+            }
+        } catch (ClassNotFoundException e) {
+            // 3. Only if parent can't load, try self
+            c = findClass(name);
+        }
+    }
+    return c;
+}
+
+// Kiểm tra class loader
+String.class.getClassLoader();  // null (Bootstrap)
+ArrayList.class.getClassLoader();  // null (Bootstrap)
+MyClass.class.getClassLoader();  // AppClassLoader</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> ClassLoader Issues</h4>
+                            <ul>
+                                <li><strong>ClassNotFoundException:</strong> Class không tìm thấy trong classpath</li>
+                                <li><strong>NoClassDefFoundError:</strong> Class có lúc compile nhưng không có lúc
+                                    runtime</li>
+                                <li><strong>ClassCastException:</strong> Cùng class nhưng load bởi khác loaders</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MEMORY MODEL -->
             <section class="content-section">
                 <h2 id="memory" class="section-title"><span class="section-icon">🧠</span>Memory Model</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>Memory Areas</h3><span class="badge essential">Essential</span>
+                        <h3>Memory Areas</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
                         <div class="comparison-table">
@@ -97,39 +193,39 @@
                                     <tr>
                                         <th>Area</th>
                                         <th>Scope</th>
-                                        <th>Stores</th>
+                                        <th>Lưu trữ</th>
                                         <th>Error</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
                                         <td><strong>Heap</strong></td>
-                                        <td>All threads</td>
-                                        <td>Objects, instance variables</td>
-                                        <td>OutOfMemoryError</td>
+                                        <td>Shared (tất cả threads)</td>
+                                        <td>Objects, instance variables, arrays</td>
+                                        <td>OutOfMemoryError: Java heap space</td>
                                     </tr>
                                     <tr>
                                         <td><strong>Stack</strong></td>
                                         <td>Per thread</td>
-                                        <td>Local variables, method calls</td>
+                                        <td>Local variables, method calls, frames</td>
                                         <td>StackOverflowError</td>
                                     </tr>
                                     <tr>
                                         <td><strong>Metaspace</strong></td>
-                                        <td>All threads</td>
-                                        <td>Class metadata, static vars</td>
-                                        <td>OutOfMemoryError</td>
+                                        <td>Shared</td>
+                                        <td>Class metadata, method bytecode</td>
+                                        <td>OutOfMemoryError: Metaspace</td>
                                     </tr>
                                     <tr>
                                         <td><strong>PC Register</strong></td>
                                         <td>Per thread</td>
-                                        <td>Current instruction address</td>
+                                        <td>Địa chỉ instruction hiện tại</td>
                                         <td>-</td>
                                     </tr>
                                     <tr>
                                         <td><strong>Native Stack</strong></td>
                                         <td>Per thread</td>
-                                        <td>Native method calls</td>
+                                        <td>Native method calls (JNI)</td>
                                         <td>StackOverflowError</td>
                                     </tr>
                                 </tbody>
@@ -137,164 +233,183 @@
                         </div>
 
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Heap Structure</span></div>
-                            <pre><code>                      HEAP MEMORY
-┌────────────────────────────────────────────────────┐
-│                   YOUNG GENERATION                  │
-│  ┌─────────┐  ┌───────────┐  ┌───────────┐        │
-│  │  Eden   │  │ Survivor0 │  │ Survivor1 │        │
-│  │ (new)   │  │   (S0)    │  │   (S1)    │        │
-│  └─────────┘  └───────────┘  └───────────┘        │
-│         Minor GC (frequent, fast)                  │
-├────────────────────────────────────────────────────┤
-│                   OLD GENERATION                    │
-│  ┌──────────────────────────────────────────────┐ │
-│  │   Long-lived objects (survived Minor GC)     │ │
-│  │                                              │ │
-│  └──────────────────────────────────────────────┘ │
-│         Major/Full GC (less frequent, slow)       │
-└────────────────────────────────────────────────────┘</code></pre>
-                        </div>
-
-                        <div class="key-points">
-                            <h4><i class="fas fa-memory"></i> Object Lifecycle in Heap</h4>
-                            <ul>
-                                <li><strong>1.</strong> New object created in Eden space</li>
-                                <li><strong>2.</strong> Minor GC: Survivors move to S0 or S1 (alternating)</li>
-                                <li><strong>3.</strong> After surviving multiple Minor GCs (threshold), move to Old Gen
-                                </li>
-                                <li><strong>4.</strong> Major GC cleans Old Gen when full</li>
-                            </ul>
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Heap vs
+                                    Stack Example</span></div>
+                            <pre><code class="language-java">public class MemoryExample {
+    // Instance variable → HEAP
+    private String name;
+    
+    // Static variable → METASPACE (class metadata)
+    private static int count;
+    
+    public void compute(int x) {
+        // Parameter 'x' → STACK (local variable)
+        // Reference 'list' → STACK
+        // ArrayList object → HEAP
+        List&lt;String&gt; list = new ArrayList&lt;&gt;();
+        
+        // Primitive → STACK
+        int result = x * 2;
+        
+        // String literals → String Pool (part of Heap)
+        String literal = "hello";
+    }
+}</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- HEAP STRUCTURE -->
             <section class="content-section">
-                <h2 id="classloader" class="section-title"><span class="section-icon">📦</span>Class Loading</h2>
+                <h2 id="heap" class="section-title"><span class="section-icon">📊</span>Heap Structure</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>ClassLoader Hierarchy</h3><span class="badge important">Important</span>
+                        <h3>Generational Heap</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Hierarchy</span></div>
-                            <pre><code>Bootstrap ClassLoader (C/C++)
-        ↓ (parent)
-    ├── java.lang, java.util, rt.jar
-        ↓
-Extension/Platform ClassLoader
-        ↓ (parent)
-    ├── jre/lib/ext/*.jar
-        ↓
-Application/System ClassLoader
-        ↓ (parent)
-    ├── CLASSPATH, -cp
-        ↓
-Custom ClassLoader</code></pre>
+                            <div class="code-header"><span class="code-lang">Diagram</span></div>
+                            <pre><code>┌───────────────────────────────────────────────────────────┐
+│                          HEAP                              │
+│ ┌─────────────────────────────────────┐ ┌───────────────┐ │
+│ │         Young Generation            │ │Old Generation │ │
+│ │ ┌─────────┐ ┌────────┐ ┌────────┐   │ │  (Tenured)    │ │
+│ │ │  Eden   │ │   S0   │ │   S1   │   │ │               │ │
+│ │ │         │ │(from)  │ │ (to)   │   │ │  Long-lived   │ │
+│ │ │ New     │ │Survivor│ │Survivor│   │ │   objects     │ │
+│ │ │ objects │ │        │ │        │   │ │               │ │
+│ │ └─────────┘ └────────┘ └────────┘   │ │               │ │
+│ └─────────────────────────────────────┘ └───────────────┘ │
+│        ~1/3 of heap                      ~2/3 of heap     │
+└───────────────────────────────────────────────────────────┘
+
+Object lifecycle:
+1. Object tạo trong Eden
+2. Minor GC → Surviving objects → S0 (age+1)
+3. Next Minor GC → Eden + S0 survivors → S1 (age+1)
+4. Objects với age > threshold → Old Gen (promoted)
+5. Major GC (Full GC) clean Old Gen</code></pre>
                         </div>
 
                         <div class="key-points">
-                            <h4><i class="fas fa-cogs"></i> Class Loading Process</h4>
+                            <h4><i class="fas fa-key"></i> Generational Hypothesis</h4>
                             <ul>
-                                <li><strong>Loading:</strong> Read .class file, create Class object</li>
-                                <li><strong>Linking:</strong>
-                                    <ul>
-                                        <li>Verification: Verify bytecode</li>
-                                        <li>Preparation: Allocate memory for static vars (default values)</li>
-                                        <li>Resolution: Replace symbolic refs with direct refs</li>
-                                    </ul>
-                                </li>
-                                <li><strong>Initialization:</strong> Execute static blocks, initialize static vars</li>
+                                <li><strong>Weak generational hypothesis:</strong> Most objects die young</li>
+                                <li><strong>Young Gen:</strong> Minor GC (nhanh, frequent) - Stop-the-world ngắn</li>
+                                <li><strong>Old Gen:</strong> Major GC (chậm, ít frequent) - Stop-the-world dài</li>
+                                <li><strong>Default ratio:</strong> Young:Old = 1:2</li>
                             </ul>
                         </div>
 
-                        <div class="info-box">
-                            <h4><i class="fas fa-info-circle"></i> Delegation Model</h4>
-                            <p>ClassLoader asks parent first before loading itself (parent-first delegation). This
-                                ensures core Java classes are loaded by Bootstrap ClassLoader.</p>
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Bash</span><span class="code-title">JVM
+                                    Memory Parameters</span></div>
+                            <pre><code class="language-bash"># Heap size
+-Xms512m        # Initial heap size
+-Xmx2g          # Maximum heap size
+
+# Young generation
+-Xmn256m        # Young generation size
+-XX:NewRatio=2  # Young:Old = 1:2
+
+# Survivor ratio
+-XX:SurvivorRatio=8  # Eden:Survivor = 8:1:1
+
+# Metaspace
+-XX:MetaspaceSize=256m
+-XX:MaxMetaspaceSize=512m
+
+# Stack size
+-Xss1m          # Thread stack size</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- GARBAGE COLLECTION -->
             <section class="content-section">
                 <h2 id="gc" class="section-title"><span class="section-icon">🗑️</span>Garbage Collection</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>GC Basics</h3><span class="badge essential">Essential</span>
+                        <h3>GC Basics</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
                         <div class="key-points">
-                            <h4><i class="fas fa-recycle"></i> How GC Identifies Garbage</h4>
+                            <h4><i class="fas fa-key"></i> GC Concepts</h4>
                             <ul>
-                                <li><strong>Reference Counting:</strong> Count references (not used - circular reference
-                                    problem)</li>
-                                <li><strong>Tracing (Mark and Sweep):</strong> Start from GC roots, mark reachable
-                                    objects</li>
+                                <li><strong>Reachability:</strong> Object reachable từ GC Roots (stack, static refs) →
+                                    live</li>
+                                <li><strong>Mark-Sweep:</strong> Mark live objects → Sweep unreachable</li>
+                                <li><strong>Compaction:</strong> Move objects để eliminate fragmentation</li>
+                                <li><strong>Stop-the-world:</strong> Pause application threads during GC</li>
                             </ul>
                         </div>
 
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">GC Roots</span></div>
-                            <pre><code>GC Roots - Starting points for reachability:
-├── Local variables in stack frames
-├── Active threads
-├── Static fields of loaded classes
-├── JNI references
-└── Objects held by synchronized monitors
-
-Mark-and-Sweep Algorithm:
-1. MARK: Traverse from GC roots, mark all reachable objects
-2. SWEEP: Free memory of unmarked objects
-3. COMPACT: Move surviving objects together (optional)</code></pre>
+                            <div class="code-header"><span class="code-lang">Diagram</span></div>
+                            <pre><code>GC Roots:
+┌─────────────────────────────────────────────────────┐
+│ • Stack variables (local, parameters)               │
+│ • Static variables                                  │
+│ • JNI references                                    │
+│ • Thread objects                                    │
+│ • Classes loaded by system class loader             │
+│ • Monitor objects (synchronized)                    │
+└─────────────────────────────────────────────────────┘
+                    │
+                    ▼
+            Object Graph Traversal
+                    │
+    ┌───────────────┼───────────────┐
+    ▼               ▼               ▼
+  [LIVE]         [LIVE]       [UNREACHABLE]
+    │                               │
+    ▼                               ▼
+  KEEP                           COLLECT</code></pre>
                         </div>
 
-                        <div class="comparison-table">
-                            <h4>GC Types</h4>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Type</th>
-                                        <th>Area</th>
-                                        <th>When</th>
-                                        <th>Impact</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Minor GC</td>
-                                        <td>Young Gen</td>
-                                        <td>Eden full</td>
-                                        <td>Fast (ms)</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Major GC</td>
-                                        <td>Old Gen</td>
-                                        <td>Old Gen full</td>
-                                        <td>Slow (seconds)</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Full GC</td>
-                                        <td>Entire Heap + Metaspace</td>
-                                        <td>Major + Metaspace</td>
-                                        <td>Slowest</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Memory
+                                    Leak Example</span></div>
+                            <pre><code class="language-java">// ❌ Memory Leak: collection grows forever
+class Cache {
+    private static List&lt;Object&gt; cache = new ArrayList&lt;&gt;();
+    
+    public void add(Object obj) {
+        cache.add(obj);  // Never removed!
+    }
+}
+
+// ❌ Memory Leak: listener not removed
+class EventSource {
+    List&lt;Listener&gt; listeners = new ArrayList&lt;&gt;();
+    
+    public void addListener(Listener l) {
+        listeners.add(l);
+    }
+    // Missing removeListener()!
+}
+
+// ✅ Fix: Use WeakReference
+Map&lt;Key, WeakReference&lt;Value&gt;&gt; cache = new WeakHashMap&lt;&gt;();</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- GC ALGORITHMS -->
             <section class="content-section">
-                <h2 id="gc-algorithms" class="section-title"><span class="section-icon">⚙️</span>GC Algorithms</h2>
+                <h2 id="gc-types" class="section-title"><span class="section-icon">⚙️</span>GC Algorithms</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>Available GC Options</h3><span class="badge essential">Essential</span>
+                        <h3>Garbage Collectors</h3>
+                        <span class="badge important">Important</span>
                     </div>
                     <div class="concept-content">
                         <div class="comparison-table">
@@ -302,211 +417,384 @@ Mark-and-Sweep Algorithm:
                                 <thead>
                                     <tr>
                                         <th>GC</th>
-                                        <th>Flag</th>
-                                        <th>Characteristics</th>
+                                        <th>Algorithm</th>
+                                        <th>Pause</th>
                                         <th>Use Case</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
                                         <td><strong>Serial GC</strong></td>
-                                        <td>-XX:+UseSerialGC</td>
-                                        <td>Single thread, STW</td>
-                                        <td>Small apps, single CPU</td>
+                                        <td>Mark-Sweep-Compact</td>
+                                        <td>Long</td>
+                                        <td>Single CPU, small heap</td>
                                     </tr>
                                     <tr>
                                         <td><strong>Parallel GC</strong></td>
-                                        <td>-XX:+UseParallelGC</td>
-                                        <td>Multi-thread, STW</td>
+                                        <td>Mark-Sweep-Compact (parallel)</td>
+                                        <td>Medium</td>
                                         <td>Throughput priority</td>
                                     </tr>
                                     <tr>
+                                        <td><strong>CMS</strong></td>
+                                        <td>Concurrent Mark-Sweep</td>
+                                        <td>Short</td>
+                                        <td>Deprecated (Java 9)</td>
+                                    </tr>
+                                    <tr>
                                         <td><strong>G1 GC</strong></td>
-                                        <td>-XX:+UseG1GC</td>
-                                        <td>Region-based, concurrent</td>
-                                        <td>Default since Java 9</td>
+                                        <td>Region-based</td>
+                                        <td>Predictable</td>
+                                        <td>Default (Java 9+)</td>
                                     </tr>
                                     <tr>
                                         <td><strong>ZGC</strong></td>
-                                        <td>-XX:+UseZGC</td>
-                                        <td>Low latency (< 10ms)</td>
-                                        <td>Large heaps, low latency</td>
+                                        <td>Concurrent, Region-based</td>
+                                        <td>&lt;10ms</td>
+                                        <td>Ultra-low latency</td>
                                     </tr>
                                     <tr>
                                         <td><strong>Shenandoah</strong></td>
-                                        <td>-XX:+UseShenandoahGC</td>
-                                        <td>Ultra-low pause</td>
-                                        <td>Latency-sensitive</td>
+                                        <td>Concurrent compaction</td>
+                                        <td>Consistent low</td>
+                                        <td>Low latency</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
 
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Bash</span><span class="code-title">GC
+                                    Selection</span></div>
+                            <pre><code class="language-bash"># Serial GC
+-XX:+UseSerialGC
+
+# Parallel GC (throughput)
+-XX:+UseParallelGC
+
+# G1 GC (default Java 9+)
+-XX:+UseG1GC
+-XX:MaxGCPauseMillis=200  # Target pause time
+
+# ZGC (Java 11+)
+-XX:+UseZGC
+
+# Shenandoah (Java 12+)
+-XX:+UseShenandoahGC
+
+# GC Logging
+-Xlog:gc*:file=gc.log:time,uptime:filecount=5,filesize=10M</code></pre>
+                        </div>
+
                         <div class="info-box">
-                            <h4><i class="fas fa-star"></i> G1 GC (Default since Java 9)</h4>
+                            <h4><i class="fas fa-lightbulb"></i> G1 GC (Garbage First)</h4>
                             <ul>
-                                <li>Divides heap into equal-sized regions</li>
-                                <li>Prioritizes regions with most garbage (Garbage First)</li>
-                                <li>Concurrent marking, incremental compaction</li>
-                                <li>Target pause time: <code>-XX:MaxGCPauseMillis=200</code></li>
+                                <li>Chia heap thành regions (~2000 regions)</li>
+                                <li>Thu gom region có nhiều garbage nhất trước</li>
+                                <li>Predictable pause times với -XX:MaxGCPauseMillis</li>
+                                <li>Concurrent marking, parallel collection</li>
                             </ul>
                         </div>
 
-                        <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Shell</span><span
-                                    class="code-title">Monitor GC</span></div>
-                            <pre><code># Enable GC logging
--Xlog:gc*:file=gc.log:time,uptime:filecount=5,filesize=10m
-
-# View GC info
-jstat -gc &lt;pid&gt; 1000   # Every 1 second
-jcmd &lt;pid&gt; GC.heap_info
-
-# Force GC (not recommended in production)
-System.gc();  // Only suggests, not guarantees</code></pre>
+                        <div class="info-box">
+                            <h4><i class="fas fa-rocket"></i> ZGC (Z Garbage Collector)</h4>
+                            <ul>
+                                <li>Pause times &lt; 10ms (thường &lt; 1ms)</li>
+                                <li>Scales từ 8MB đến 16TB heap</li>
+                                <li>Concurrent marking, relocation, reference processing</li>
+                                <li>Colored pointers + load barriers</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- JIT COMPILATION -->
             <section class="content-section">
                 <h2 id="jit" class="section-title"><span class="section-icon">🚀</span>JIT Compilation</h2>
 
                 <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Just-In-Time Compiler</h3>
+                        <span class="badge important">Important</span>
+                    </div>
                     <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Diagram</span></div>
+                            <pre><code>Bytecode Execution Flow:
+
+.java → javac → .class (bytecode) → JVM
+
+┌─────────────────────────────────────────────────┐
+│                    JVM                           │
+│  ┌─────────────────────────────────────────┐    │
+│  │           Interpreter                    │    │
+│  │  (chậm, chạy bytecode trực tiếp)         │    │
+│  └──────────────────┬──────────────────────┘    │
+│                     │ hot code detected          │
+│                     ▼                            │
+│  ┌─────────────────────────────────────────┐    │
+│  │           JIT Compiler                   │    │
+│  │  ┌─────────┐         ┌─────────┐        │    │
+│  │  │   C1    │  ─────> │   C2    │        │    │
+│  │  │ (fast)  │         │(optimal)│        │    │
+│  │  └─────────┘         └─────────┘        │    │
+│  └──────────────────┬──────────────────────┘    │
+│                     │                            │
+│                     ▼                            │
+│  ┌─────────────────────────────────────────┐    │
+│  │         Native Machine Code              │    │
+│  │    (nhanh, chạy trực tiếp trên CPU)      │    │
+│  └─────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────┘</code></pre>
+                        </div>
+
                         <div class="key-points">
-                            <h4><i class="fas fa-bolt"></i> How JIT Works</h4>
+                            <h4><i class="fas fa-key"></i> Tiered Compilation (Default)</h4>
                             <ul>
-                                <li><strong>Interpreter:</strong> Executes bytecode line by line (slow, starts fast)
-                                </li>
-                                <li><strong>JIT Compiler:</strong> Compiles hot code to native (fast, compilation
-                                    overhead)</li>
-                                <li><strong>Tiered Compilation:</strong> Combines both - interpret first, compile when
-                                    hot</li>
+                                <li><strong>Level 0:</strong> Interpreter</li>
+                                <li><strong>Level 1-3:</strong> C1 compiler (fast compile, some optimization)</li>
+                                <li><strong>Level 4:</strong> C2 compiler (slow compile, full optimization)</li>
+                                <li><strong>Hot methods:</strong> Methods gọi nhiều lần → compile lên native code</li>
                             </ul>
                         </div>
 
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Tiered Compilation</span></div>
-                            <pre><code>Level 0: Interpreter
-    ↓ (method called multiple times)
-Level 1: C1 - Simple compilation
-    ↓ (method is hot)
-Level 2: C1 - Limited profiling
-    ↓
-Level 3: C1 - Full profiling
-    ↓ (very hot method)
-Level 4: C2 - Aggressive optimization
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">JIT
+                                    Optimizations</span></div>
+                            <pre><code class="language-java">// 1. Inlining - tránh method call overhead
+// Compiler thay thế call bằng code trực tiếp
+int result = add(a, b);  // → int result = a + b;
 
-Optimizations include:
-- Method inlining
-- Loop unrolling
-- Dead code elimination
-- Escape analysis (stack allocation)</code></pre>
+// 2. Dead code elimination
+if (false) {
+    doSomething();  // Removed
+}
+
+// 3. Loop unrolling
+for (int i = 0; i < 4; i++) {
+    process(i);
+}
+// → process(0); process(1); process(2); process(3);
+
+// 4. Escape analysis
+void compute() {
+    Point p = new Point(1, 2);  // Object doesn't escape
+    return p.x + p.y;
+}
+// → Allocate on stack instead of heap (scalar replacement)</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Bash</span><span class="code-title">JIT
+                                    Tuning</span></div>
+                            <pre><code class="language-bash"># Disable tiered compilation (C2 only)
+-XX:-TieredCompilation
+
+# Compile threshold (iterations before compiling)
+-XX:CompileThreshold=10000
+
+# Print compilation
+-XX:+PrintCompilation
+
+# Disable specific optimization (debugging)
+-XX:+UnlockDiagnosticVMOptions
+-XX:-DoEscapeAnalysis</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- JVM TUNING -->
             <section class="content-section">
                 <h2 id="tuning" class="section-title"><span class="section-icon">🔧</span>JVM Tuning</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>Common JVM Parameters</h3><span class="badge important">Important</span>
+                        <h3>Performance Tuning</h3>
+                        <span class="badge advanced">Advanced</span>
                     </div>
                     <div class="concept-content">
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Shell</span><span class="code-title">Memory
-                                    Settings</span></div>
-                            <pre><code># Heap size
--Xms512m          # Initial heap size
--Xmx2g            # Maximum heap size
--Xmn256m          # Young generation size
+                            <div class="code-header"><span class="code-lang">Bash</span><span class="code-title">Common
+                                    JVM Options</span></div>
+                            <pre><code class="language-bash"># Memory settings
+-Xms4g -Xmx4g           # Set min = max to avoid resize
+-XX:MaxMetaspaceSize=512m
 
-# Metaspace
--XX:MetaspaceSize=128m
--XX:MaxMetaspaceSize=256m
-
-# Stack size
--Xss256k          # Thread stack size
-
-# GC tuning
+# GC for web applications (low latency)
 -XX:+UseG1GC
 -XX:MaxGCPauseMillis=200
 -XX:G1HeapRegionSize=16m
--XX:InitiatingHeapOccupancyPercent=45
 
-# Debugging
+# GC for batch processing (throughput)
+-XX:+UseParallelGC
+-XX:ParallelGCThreads=8
+
+# Diagnostics
 -XX:+HeapDumpOnOutOfMemoryError
--XX:HeapDumpPath=/path/to/dump.hprof
--XX:+PrintGCDetails (deprecated, use -Xlog:gc)</code></pre>
+-XX:HeapDumpPath=/path/to/dump
+-XX:OnOutOfMemoryError="kill -9 %p"
+
+# JFR (Java Flight Recorder)
+-XX:StartFlightRecording=duration=60s,filename=recording.jfr</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Bash</span><span
+                                    class="code-title">Monitoring & Debugging</span></div>
+                            <pre><code class="language-bash"># JVM process info
+jps -lv
+
+# Thread dump
+jstack &lt;pid&gt;
+
+# Heap dump
+jmap -dump:format=b,file=heap.hprof &lt;pid&gt;
+
+# GC statistics
+jstat -gcutil &lt;pid&gt; 1000 10
+
+# Native memory tracking
+-XX:NativeMemoryTracking=summary
+jcmd &lt;pid&gt; VM.native_memory summary
+
+# JFR recording
+jcmd &lt;pid&gt; JFR.start duration=60s filename=recording.jfr
+jcmd &lt;pid&gt; JFR.dump filename=recording.jfr</code></pre>
                         </div>
 
                         <div class="warning-box">
                             <h4><i class="fas fa-exclamation-triangle"></i> Common Memory Issues</h4>
                             <ul>
-                                <li><strong>OutOfMemoryError: Heap:</strong> Increase -Xmx or fix memory leak</li>
-                                <li><strong>OutOfMemoryError: Metaspace:</strong> Increase MaxMetaspaceSize (classloader
-                                    leak)</li>
-                                <li><strong>StackOverflowError:</strong> Deep recursion, increase -Xss</li>
+                                <li><strong>OOM: Java heap space:</strong> Tăng -Xmx hoặc fix memory leak</li>
+                                <li><strong>OOM: Metaspace:</strong> Tăng -XX:MaxMetaspaceSize (class loading issue)
+                                </li>
+                                <li><strong>OOM: GC overhead limit:</strong> GC chạy >98% time, thu <2% memory</li>
+                                <li><strong>StackOverflowError:</strong> Recursion quá sâu, tăng -Xss</li>
                             </ul>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- INTERVIEW QUESTIONS -->
             <section id="interview" class="content-section">
                 <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
 
                 <div class="interview-questions">
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q1</span>
-                            <p>Explain JVM memory model?</p>
+                            <p>JVM Memory Model có những vùng nào?</p>
                         </div>
                         <div class="answer">
-                            <p><strong>Heap:</strong> Objects (shared). <strong>Stack:</strong> Local vars, method calls
-                                (per thread). <strong>Metaspace:</strong> Class metadata. <strong>PC Register:</strong>
-                                Current instruction.</p>
+                            <ul>
+                                <li><strong>Heap:</strong> Objects, shared giữa threads</li>
+                                <li><strong>Stack:</strong> Local variables, method calls, per thread</li>
+                                <li><strong>Metaspace:</strong> Class metadata (thay PermGen từ Java 8)</li>
+                                <li><strong>PC Register:</strong> Instruction pointer, per thread</li>
+                                <li><strong>Native Stack:</strong> Native method calls</li>
+                            </ul>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q2</span>
-                            <p>How does G1 GC work?</p>
+                            <p>Sự khác biệt giữa Stack và Heap?</p>
                         </div>
                         <div class="answer">
-                            <p>Divides heap into <strong>regions</strong>. Collects regions with most garbage first.
-                                Uses concurrent marking. Target pause time with <code>MaxGCPauseMillis</code>.</p>
+                            <ul>
+                                <li><strong>Stack:</strong> Per thread, LIFO, local vars, method frames, fast access,
+                                    StackOverflowError</li>
+                                <li><strong>Heap:</strong> Shared, objects/arrays, GC managed, slower access,
+                                    OutOfMemoryError</li>
+                            </ul>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q3</span>
-                            <p>What causes memory leak in Java?</p>
+                            <p>Generational GC là gì?</p>
                         </div>
                         <div class="answer">
-                            <p>Objects still referenced but not needed: <strong>Static collections</strong>, unclosed
-                                resources, listeners not removed, <strong>ThreadLocal</strong> not cleaned, inner class
-                                holding outer reference.</p>
+                            <p>Heap chia thành Young Gen (Eden + Survivors) và Old Gen. Dựa trên "weak generational
+                                hypothesis" - hầu hết objects die young. Young Gen có Minor GC (nhanh, frequent). Old
+                                Gen có Major GC (chậm, ít frequent).</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q4</span>
-                            <p>What is ClassLoader delegation model?</p>
+                            <p>G1 GC hoạt động thế nào?</p>
                         </div>
                         <div class="answer">
-                            <p><strong>Parent-first delegation:</strong> Child asks parent to load first. Prevents
-                                loading core classes from untrusted sources. Bootstrap → Extension → Application →
-                                Custom.</p>
+                            <p>Chia heap thành regions (~2000). Thu gom region có nhiều garbage nhất trước (Garbage
+                                First). Concurrent marking + parallel collection. Predictable pause times với
+                                -XX:MaxGCPauseMillis.</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q5</span>
-                            <p>When is an object eligible for GC?</p>
+                            <p>Class Loader Delegation Model là gì?</p>
                         </div>
                         <div class="answer">
-                            <p>When there are <strong>no reachable references</strong> from GC roots. Setting reference
-                                to null, reassigning, going out of scope. finalize() is deprecated - use
-                                try-with-resources.</p>
+                            <p>Parent-first delegation: ClassLoader hỏi parent trước khi tự load. Bootstrap → Extension
+                                → Application → Custom. Đảm bảo core classes (java.lang.*) không bị override.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>JIT Compilation là gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Just-In-Time Compiler chuyển hot bytecode thành native machine code at runtime. Tiered
+                                compilation: Interpreter → C1 (fast compile) → C2 (optimized). Optimizations: inlining,
+                                escape analysis, loop unrolling.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>Memory leak trong Java có không? Ví dụ?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Có! Không phải C-style leak nhưng objects vẫn reachable mà không cần. Ví dụ: static
+                                collections grow forever, listener không remove, ThreadLocal không clear, unclosed
+                                resources.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>Khác biệt giữa Minor GC và Major GC?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Minor GC:</strong> Young Gen only, nhanh (~ms), frequent, short pause</li>
+                                <li><strong>Major GC (Full GC):</strong> Cả Young + Old, chậm hơn, ít frequent, longer
+                                    pause</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q9</span>
+                            <p>ZGC vs G1 GC?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>G1:</strong> Pause ~200ms (configurable), good default, most workloads</li>
+                                <li><strong>ZGC:</strong> Pause &lt;10ms (often &lt;1ms), up to 16TB heap, ultra-low
+                                    latency apps</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q10</span>
+                            <p>Làm sao debug memory issues?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>jmap:</strong> Heap dump</li>
+                                <li><strong>jstat:</strong> GC statistics</li>
+                                <li><strong>jstack:</strong> Thread dump</li>
+                                <li><strong>JFR:</strong> Java Flight Recorder (production profiling)</li>
+                                <li><strong>Tools:</strong> VisualVM, Eclipse MAT, JProfiler</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -522,6 +810,9 @@ Optimizations include:
     </main>
 
     <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
     <script src="../js/main.js"></script>
 </body>
 

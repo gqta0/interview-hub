@@ -33,7 +33,7 @@ body {
     width: 100%;
     height: 100%;
     z-index: -1;
-    background: 
+    background:
         radial-gradient(ellipse at 20% 20%, rgba(248, 152, 32, 0.1) 0%, transparent 50%),
         radial-gradient(ellipse at 80% 80%, rgba(176, 114, 25, 0.1) 0%, transparent 50%);
 }
@@ -111,10 +111,21 @@ body {
     flex-shrink: 0;
 }
 
-.topic-icon.java { background: var(--java-gradient); }
-.topic-icon.spring { background: var(--spring-gradient); }
-.topic-icon.aws { background: var(--aws-gradient); }
-.topic-icon.mysql { background: var(--mysql-gradient); }
+.topic-icon.java {
+    background: var(--java-gradient);
+}
+
+.topic-icon.spring {
+    background: var(--spring-gradient);
+}
+
+.topic-icon.aws {
+    background: var(--aws-gradient);
+}
+
+.topic-icon.mysql {
+    background: var(--mysql-gradient);
+}
 
 .topic-info {
     flex: 1;
@@ -208,7 +219,8 @@ body {
     padding: 5px 0;
 }
 
-.toc a:hover, .toc a.active {
+.toc a:hover,
+.toc a.active {
     color: #f89820;
 }
 
@@ -263,7 +275,7 @@ body {
     padding: 25px;
 }
 
-.concept-content > p {
+.concept-content>p {
     margin-bottom: 20px;
 }
 
@@ -276,9 +288,20 @@ body {
     text-transform: uppercase;
 }
 
-.badge.essential { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
-.badge.important { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
-.badge.advanced { background: rgba(139, 92, 246, 0.2); color: #8b5cf6; }
+.badge.essential {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.badge.important {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.badge.advanced {
+    background: rgba(139, 92, 246, 0.2);
+    color: #8b5cf6;
+}
 
 /* Key Points */
 .key-points {
@@ -345,8 +368,13 @@ body {
     color: #e6e6e6;
 }
 
-.code-block.bad .code-header { border-left: 3px solid #ef4444; }
-.code-block.good .code-header { border-left: 3px solid #22c55e; }
+.code-block.bad .code-header {
+    border-left: 3px solid #ef4444;
+}
+
+.code-block.good .code-header {
+    border-left: 3px solid #22c55e;
+}
 
 /* Tables */
 .comparison-table {
@@ -366,7 +394,8 @@ body {
     overflow: hidden;
 }
 
-.comparison-table th, .comparison-table td {
+.comparison-table th,
+.comparison-table td {
     padding: 12px 16px;
     text-align: left;
     border-bottom: 1px solid var(--card-border);
@@ -420,7 +449,8 @@ body {
 }
 
 /* Info & Warning Boxes */
-.info-box, .warning-box {
+.info-box,
+.warning-box {
     border-radius: 12px;
     padding: 20px;
     margin: 20px 0;
@@ -431,7 +461,9 @@ body {
     border-left: 4px solid #3b82f6;
 }
 
-.info-box h4 { color: #3b82f6; }
+.info-box h4 {
+    color: #3b82f6;
+}
 
 .warning-box {
     background: rgba(239, 68, 68, 0.1);
@@ -446,11 +478,13 @@ body {
     margin-bottom: 10px;
 }
 
-.warning-box ul, .info-box ul {
+.warning-box ul,
+.info-box ul {
     margin-left: 20px;
 }
 
-.warning-box li, .info-box li {
+.warning-box li,
+.info-box li {
     color: var(--text-secondary);
     margin-bottom: 6px;
 }
@@ -608,37 +642,544 @@ blockquote cite {
     box-shadow: 0 10px 30px rgba(248, 152, 32, 0.4);
 }
 
-/* Responsive */
-@media (max-width: 900px) {
+/* ==========================================
+   RESPONSIVE DESIGN - Mobile First
+   Optimized for Samsung S22 Ultra (360-412px)
+   ========================================== */
+
+/* Base Mobile Styles (< 480px) - S22 Ultra Portrait */
+@media (max-width: 480px) {
+    html {
+        font-size: 15px;
+        scroll-behavior: smooth;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+        line-height: 1.6;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Top Navigation - Mobile */
+    .top-nav {
+        padding: 12px 16px;
+    }
+
+    .nav-logo {
+        font-size: 1rem;
+        gap: 8px;
+    }
+
+    .nav-logo span {
+        display: none;
+        /* Hide text, show only icon on small screens */
+    }
+
+    .nav-back {
+        font-size: 0.9rem;
+        gap: 6px;
+    }
+
+    /* Topic Header - Mobile */
+    .topic-header {
+        margin-top: 60px;
+        padding: 20px 16px;
+        flex-direction: column;
+        text-align: center;
+        gap: 20px;
+    }
+
+    .topic-icon {
+        width: 64px;
+        height: 64px;
+        font-size: 28px;
+        border-radius: 16px;
+    }
+
+    .topic-info {
+        min-width: 100%;
+    }
+
+    .topic-info h1 {
+        font-size: 1.5rem;
+        line-height: 1.3;
+    }
+
+    .topic-desc {
+        font-size: 0.9rem;
+    }
+
+    .topic-stats {
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .topic-stats .stat-value {
+        font-size: 1.5rem;
+    }
+
+    .topic-stats .stat-label {
+        font-size: 0.75rem;
+    }
+
+    /* Content Container - Mobile */
     .content-container {
         grid-template-columns: 1fr;
+        padding: 16px;
+        gap: 20px;
     }
-    
+
+    /* TOC - Collapsible on Mobile */
+    .toc {
+        position: relative;
+        top: 0;
+        padding: 16px;
+        border-radius: 12px;
+    }
+
+    .toc h3 {
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+    }
+
+    .toc a {
+        font-size: 0.85rem;
+        padding: 8px 0;
+        min-height: 44px;
+        /* Touch target */
+        display: flex;
+        align-items: center;
+    }
+
+    /* Section Title - Mobile */
+    .section-title {
+        font-size: 1.3rem;
+        gap: 10px;
+        padding-bottom: 12px;
+        margin-bottom: 20px;
+    }
+
+    .section-icon {
+        font-size: 1.2rem;
+    }
+
+    /* Concept Cards - Mobile */
+    .concept-card {
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+
+    .concept-header {
+        padding: 16px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .concept-header h3 {
+        font-size: 1.05rem;
+        flex: 1;
+        min-width: 60%;
+    }
+
+    .concept-content {
+        padding: 16px;
+    }
+
+    /* Badges - Mobile */
+    .badge {
+        padding: 4px 10px;
+        font-size: 0.7rem;
+    }
+
+    /* Code Blocks - Mobile (Critical for readability) */
+    .code-block {
+        border-radius: 10px;
+        margin: 16px -16px;
+        /* Full width on mobile */
+        border-radius: 0;
+    }
+
+    .code-header {
+        padding: 10px 16px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .code-lang {
+        font-size: 0.8rem;
+    }
+
+    .code-title {
+        font-size: 0.75rem;
+        width: 100%;
+    }
+
+    .code-block pre {
+        padding: 16px;
+        font-size: 0.75rem;
+        line-height: 1.5;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .code-block code {
+        word-break: break-word;
+    }
+
+    /* Tables - Mobile Scroll */
+    .comparison-table {
+        margin: 16px -16px;
+        padding: 0 16px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .comparison-table table {
+        min-width: 500px;
+        /* Force horizontal scroll for complex tables */
+        font-size: 0.85rem;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+        padding: 10px 12px;
+        white-space: nowrap;
+    }
+
+    .comparison-table code {
+        font-size: 0.75rem;
+        padding: 2px 4px;
+    }
+
+    /* Two Column - Stack on Mobile */
+    .two-column {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .column.highlight-box {
+        padding: 16px;
+        border-radius: 10px;
+    }
+
+    /* Info & Warning Boxes - Mobile */
+    .info-box,
+    .warning-box {
+        padding: 16px;
+        border-radius: 10px;
+        margin: 16px 0;
+    }
+
+    .info-box h4,
+    .warning-box h4 {
+        font-size: 0.95rem;
+        margin-bottom: 8px;
+    }
+
+    .info-box ul,
+    .warning-box ul {
+        margin-left: 16px;
+        font-size: 0.9rem;
+    }
+
+    /* Key Points - Mobile */
+    .key-points {
+        padding: 16px;
+        border-radius: 0 10px 10px 0;
+    }
+
+    .key-points h4 {
+        font-size: 0.95rem;
+    }
+
+    .key-points ul {
+        margin-left: 16px;
+        font-size: 0.9rem;
+    }
+
+    /* Interview Questions - Mobile */
+    .interview-questions {
+        gap: 16px;
+    }
+
+    .question-card {
+        border-radius: 12px;
+    }
+
+    .question {
+        padding: 16px;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .q-number {
+        padding: 4px 10px;
+        font-size: 0.8rem;
+    }
+
+    .question p {
+        font-size: 0.95rem;
+        flex: 1;
+        min-width: 70%;
+    }
+
+    .answer {
+        padding: 16px;
+    }
+
+    .answer p {
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+
+    .answer ul {
+        margin-left: 16px;
+        font-size: 0.9rem;
+    }
+
+    .answer pre {
+        font-size: 0.75rem;
+        padding: 12px;
+        margin-top: 12px;
+    }
+
+    /* Code Comparison - Stack */
+    .code-comparison {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    /* Page Navigation - Mobile */
+    .page-navigation {
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 30px;
+        padding-top: 20px;
+    }
+
+    .page-navigation .nav-btn {
+        padding: 14px 20px;
+        justify-content: center;
+        min-height: 48px;
+        /* Touch target */
+        font-size: 0.9rem;
+    }
+
+    .page-navigation .nav-btn.next {
+        margin-left: 0;
+    }
+
+    /* Back to Top - Mobile */
+    .back-to-top {
+        bottom: 20px;
+        right: 20px;
+        width: 48px;
+        height: 48px;
+        font-size: 1.1rem;
+    }
+
+    /* Blockquote - Mobile */
+    blockquote {
+        padding: 16px 20px;
+        margin: 16px 0;
+        font-size: 0.9rem;
+    }
+
+    blockquote cite {
+        font-size: 0.8rem;
+    }
+}
+
+/* Small Tablets / Large Phones (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+    .top-nav {
+        padding: 14px 20px;
+    }
+
+    .topic-header {
+        margin-top: 70px;
+        padding: 30px 20px;
+        flex-direction: column;
+        text-align: center;
+        gap: 24px;
+    }
+
+    .topic-icon {
+        width: 70px;
+        height: 70px;
+        font-size: 32px;
+    }
+
+    .topic-info h1 {
+        font-size: 1.8rem;
+    }
+
+    .content-container {
+        grid-template-columns: 1fr;
+        padding: 20px;
+        gap: 30px;
+    }
+
     .toc {
         position: relative;
         top: 0;
     }
-    
-    .topic-header {
-        padding: 80px 20px 30px;
+
+    .code-block pre {
+        font-size: 0.8rem;
+    }
+
+    .page-navigation {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .page-navigation .nav-btn.next {
+        margin-left: 0;
     }
 }
 
-@media (max-width: 600px) {
-    .topic-header {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .topic-stats {
-        justify-content: center;
-    }
-    
-    .code-comparison {
+/* Tablets (769px - 900px) */
+@media (min-width: 769px) and (max-width: 900px) {
+    .content-container {
         grid-template-columns: 1fr;
+        padding: 24px;
     }
-    
-    .page-navigation {
-        flex-direction: column;
+
+    .toc {
+        position: relative;
+        top: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .toc h3 {
+        width: 100%;
+    }
+
+    .toc ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .toc li {
+        margin-bottom: 0;
+    }
+
+    .toc a {
+        padding: 8px 16px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        display: inline-block;
+    }
+
+    .topic-header {
+        padding: 80px 24px 40px;
+    }
+}
+
+/* Desktop (> 900px) */
+@media (min-width: 901px) {
+    .content-container {
+        grid-template-columns: 250px 1fr;
+    }
+
+    .toc {
+        position: sticky;
+        top: 100px;
+    }
+}
+
+/* Landscape Mode - Mobile */
+@media (max-width: 900px) and (orientation: landscape) {
+    .topic-header {
+        flex-direction: row;
+        text-align: left;
+        padding: 20px;
+        margin-top: 50px;
+    }
+
+    .topic-icon {
+        width: 56px;
+        height: 56px;
+        font-size: 24px;
+    }
+
+    .content-container {
+        padding: 16px 24px;
+    }
+
+    .toc {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+}
+
+/* High DPI Screens (S22 Ultra, etc) */
+@media (-webkit-min-device-pixel-ratio: 2),
+(min-resolution: 192dpi) {
+
+    .code-block pre,
+    .answer pre {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+/* Safe Area for Notched Phones */
+@supports (padding: max(0px)) {
+    .top-nav {
+        padding-left: max(16px, env(safe-area-inset-left));
+        padding-right: max(16px, env(safe-area-inset-right));
+    }
+
+    .content-container {
+        padding-left: max(16px, env(safe-area-inset-left));
+        padding-right: max(16px, env(safe-area-inset-right));
+    }
+
+    .back-to-top {
+        right: max(20px, env(safe-area-inset-right));
+        bottom: max(20px, env(safe-area-inset-bottom));
+    }
+}
+
+/* Reduce Motion for Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    .concept-card,
+    .page-navigation .nav-btn,
+    .back-to-top,
+    .toc a {
+        transition: none;
+    }
+}
+
+/* Touch Improvements */
+@media (hover: none) and (pointer: coarse) {
+    .concept-card:hover {
+        transform: none;
+    }
+
+    .page-navigation .nav-btn:hover {
+        transform: none;
+    }
+
+    .back-to-top:hover {
+        transform: none;
+    }
+
+    /* Better touch targets */
+    .toc a {
+        min-height: 44px;
+    }
+
+    .page-navigation .nav-btn {
+        min-height: 48px;
     }
 }

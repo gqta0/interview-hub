@@ -19,7 +19,7 @@
     <nav class="top-nav">
         <div class="nav-container">
             <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
-            <a href="../index.html#mysql" class="nav-back"><i class="fas fa-arrow-left"></i> MySQL</a>
+            <a href="optimization.html" class="nav-back"><i class="fas fa-arrow-left"></i> Optimization</a>
         </div>
     </nav>
 
@@ -28,7 +28,7 @@
         <div class="topic-info">
             <span class="topic-category">MySQL</span>
             <h1>Database Design</h1>
-            <p class="topic-desc">Normalization, Data Types, Constraints, Schema Design</p>
+            <p class="topic-desc">Normalization, Data Types, Constraints, Schema Design, Storage Engines</p>
         </div>
     </header>
 
@@ -40,12 +40,15 @@
                 <li><a href="#datatypes">Data Types</a></li>
                 <li><a href="#constraints">Constraints</a></li>
                 <li><a href="#relationships">Relationships</a></li>
+                <li><a href="#keys">Keys & Identifiers</a></li>
+                <li><a href="#engines">Storage Engines</a></li>
                 <li><a href="#best-practices">Best Practices</a></li>
                 <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
             </ul>
         </aside>
 
         <article class="main-content">
+            <!-- NORMALIZATION -->
             <section class="content-section">
                 <h2 id="normalization" class="section-title"><span class="section-icon">📐</span>Normalization</h2>
 
@@ -55,6 +58,7 @@
                     </div>
                     <div class="concept-content">
                         <div class="comparison-table">
+                            <h4>Normal Forms Overview</h4>
                             <table>
                                 <thead>
                                     <tr>
@@ -67,22 +71,22 @@
                                     <tr>
                                         <td><strong>1NF</strong></td>
                                         <td>Atomic values, no repeating groups</td>
-                                        <td>phone: "123,456" → needs separate rows/table</td>
+                                        <td>products = "Phone, Laptop, Mouse"</td>
                                     </tr>
                                     <tr>
                                         <td><strong>2NF</strong></td>
-                                        <td>1NF + no partial dependencies</td>
-                                        <td>In (OrderID, ProductID) → ProductPrice depends only on ProductID</td>
+                                        <td>1NF + No partial dependencies</td>
+                                        <td>order_item(order_id, product_id, customer_name)</td>
                                     </tr>
                                     <tr>
                                         <td><strong>3NF</strong></td>
-                                        <td>2NF + no transitive dependencies</td>
-                                        <td>Employee → DeptID → DeptName (DeptName depends on DeptID, not Employee)</td>
+                                        <td>2NF + No transitive dependencies</td>
+                                        <td>order(id, customer_id, customer_city)</td>
                                     </tr>
                                     <tr>
                                         <td><strong>BCNF</strong></td>
-                                        <td>3NF + every determinant is candidate key</td>
-                                        <td>Stricter than 3NF for complex dependencies</td>
+                                        <td>Every determinant is a candidate key</td>
+                                        <td>Complex multi-column dependencies</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -91,41 +95,81 @@
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Example</span><span
                                     class="code-title">Normalization Process</span></div>
-                            <pre><code>-- ❌ Unnormalized (violates 1NF)
-orders: id, customer_name, products("Phone,Laptop,Mouse"), amounts("100,500,20")
+                            <pre><code class="language-sql">-- ❌ Unnormalized (violates 1NF)
+-- orders: id, customer_name, products("Phone,Laptop,Mouse"), amounts("100,500,20")
 
--- ✅ 1NF: Atomic values
-order_items: order_id, customer_name, product, amount
+-- ✅ 1NF: Atomic values (one value per cell)
+CREATE TABLE order_items (
+    order_id INT,
+    customer_name VARCHAR(100),
+    product VARCHAR(100),
+    amount DECIMAL(10,2)
+);
 
--- ❌ Violates 2NF: customer_name depends on order, not order+product
--- ✅ 2NF: Remove partial dependency
-orders: id, customer_name
-order_items: order_id, product, amount
+-- ❌ Violates 2NF: customer_name depends on order_id only
+-- (partial dependency on composite key order_id + product)
 
--- ❌ Violates 3NF: customer_city depends on customer_name, not order
-orders: id, customer_name, customer_city
+-- ✅ 2NF: Remove partial dependencies
+CREATE TABLE orders (
+    id INT PRIMARY KEY,
+    customer_name VARCHAR(100),
+    customer_city VARCHAR(100)
+);
 
--- ✅ 3NF: Remove transitive dependency
-orders: id, customer_id
-customers: id, name, city
-order_items: order_id, product_id, quantity
-products: id, name, price</code></pre>
+CREATE TABLE order_items (
+    order_id INT,
+    product_id INT,
+    quantity INT,
+    PRIMARY KEY (order_id, product_id)
+);
+
+-- ❌ Violates 3NF: customer_city depends on customer_name
+-- (transitive: order → customer → city)
+
+-- ✅ 3NF: Remove transitive dependencies  
+CREATE TABLE customers (
+    id INT PRIMARY KEY,
+    name VARCHAR(100),
+    city VARCHAR(100)
+);
+
+CREATE TABLE orders (
+    id INT PRIMARY KEY,
+    customer_id INT,
+    FOREIGN KEY (customer_id) REFERENCES customers(id)
+);
+
+CREATE TABLE products (
+    id INT PRIMARY KEY,
+    name VARCHAR(100),
+    price DECIMAL(10,2)
+);
+
+CREATE TABLE order_items (
+    order_id INT,
+    product_id INT,
+    quantity INT,
+    PRIMARY KEY (order_id, product_id),
+    FOREIGN KEY (order_id) REFERENCES orders(id),
+    FOREIGN KEY (product_id) REFERENCES products(id)
+);</code></pre>
                         </div>
 
                         <div class="info-box">
                             <h4><i class="fas fa-lightbulb"></i> When to Denormalize</h4>
                             <ul>
-                                <li><strong>Read-heavy workloads:</strong> Avoid JOINs for frequently accessed data</li>
-                                <li><strong>Reporting tables:</strong> Pre-aggregated data for dashboards</li>
-                                <li><strong>Caching columns:</strong> Store computed values (with triggers to sync)</li>
-                                <li><strong>Trade-off:</strong> Faster reads vs data redundancy and update complexity
-                                </li>
+                                <li><strong>Read-heavy workloads:</strong> Reduce JOINs for faster reads</li>
+                                <li><strong>Reporting/Analytics:</strong> Pre-aggregated summary tables</li>
+                                <li><strong>Caching:</strong> Store computed values</li>
+                                <li><strong>Performance:</strong> When normalization causes unacceptable JOIN cost</li>
                             </ul>
+                            <p>⚠️ Denormalization adds write complexity và data consistency risk!</p>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- DATA TYPES -->
             <section class="content-section">
                 <h2 id="datatypes" class="section-title"><span class="section-icon">📦</span>Data Types</h2>
 
@@ -135,46 +179,46 @@ products: id, name, price</code></pre>
                     </div>
                     <div class="concept-content">
                         <div class="comparison-table">
-                            <h4>Numeric Types</h4>
+                            <h4>Integer Types</h4>
                             <table>
                                 <thead>
                                     <tr>
                                         <th>Type</th>
                                         <th>Bytes</th>
-                                        <th>Range</th>
-                                        <th>Use Case</th>
+                                        <th>Signed Range</th>
+                                        <th>Unsigned Range</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>TINYINT</td>
+                                        <td><code>TINYINT</code></td>
                                         <td>1</td>
                                         <td>-128 to 127</td>
-                                        <td>Status, flags</td>
+                                        <td>0 to 255</td>
                                     </tr>
                                     <tr>
-                                        <td>SMALLINT</td>
+                                        <td><code>SMALLINT</code></td>
                                         <td>2</td>
                                         <td>-32K to 32K</td>
-                                        <td>Small counts</td>
+                                        <td>0 to 65K</td>
                                     </tr>
                                     <tr>
-                                        <td>INT</td>
+                                        <td><code>MEDIUMINT</code></td>
+                                        <td>3</td>
+                                        <td>-8M to 8M</td>
+                                        <td>0 to 16M</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>INT</code></td>
                                         <td>4</td>
                                         <td>-2B to 2B</td>
-                                        <td>Most IDs, counts</td>
+                                        <td>0 to 4B</td>
                                     </tr>
                                     <tr>
-                                        <td>BIGINT</td>
+                                        <td><code>BIGINT</code></td>
                                         <td>8</td>
                                         <td>-9×10¹⁸</td>
-                                        <td>Large IDs, timestamps</td>
-                                    </tr>
-                                    <tr>
-                                        <td>DECIMAL(M,D)</td>
-                                        <td>varies</td>
-                                        <td>Exact</td>
-                                        <td>Money, precise decimals</td>
+                                        <td>0 to 18×10¹⁸</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -193,34 +237,34 @@ products: id, name, price</code></pre>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>CHAR(n)</td>
+                                        <td><code>CHAR(n)</code></td>
                                         <td>255</td>
                                         <td>Fixed n bytes</td>
-                                        <td>Fixed-length codes (country, UUID)</td>
+                                        <td>Fixed-length codes</td>
                                     </tr>
                                     <tr>
-                                        <td>VARCHAR(n)</td>
-                                        <td>65535</td>
+                                        <td><code>VARCHAR(n)</code></td>
+                                        <td>65,535</td>
                                         <td>Length + data</td>
-                                        <td>Variable text (names, emails)</td>
+                                        <td>Variable text</td>
                                     </tr>
                                     <tr>
-                                        <td>TEXT</td>
-                                        <td>65KB</td>
-                                        <td>Stored separately</td>
-                                        <td>Long text (comments)</td>
+                                        <td><code>TEXT</code></td>
+                                        <td>64KB</td>
+                                        <td>Separate</td>
+                                        <td>Long text</td>
                                     </tr>
                                     <tr>
-                                        <td>MEDIUMTEXT</td>
+                                        <td><code>MEDIUMTEXT</code></td>
                                         <td>16MB</td>
-                                        <td>Stored separately</td>
-                                        <td>Articles, HTML</td>
+                                        <td>Separate</td>
+                                        <td>Very long text</td>
                                     </tr>
                                     <tr>
-                                        <td>ENUM</td>
-                                        <td>65535 values</td>
-                                        <td>1-2 bytes</td>
-                                        <td>Fixed set (status, type)</td>
+                                        <td><code>LONGTEXT</code></td>
+                                        <td>4GB</td>
+                                        <td>Separate</td>
+                                        <td>Huge text</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -229,275 +273,654 @@ products: id, name, price</code></pre>
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Data
                                     Type Best Practices</span></div>
-                            <pre><code>-- Use smallest type that fits
-id BIGINT UNSIGNED AUTO_INCREMENT,  -- For tables growing to billions
-status TINYINT,                      -- 0-255 values
-age TINYINT UNSIGNED,                -- 0-255
+                            <pre><code class="language-sql">-- NUMERIC COLUMNS
+-- Use smallest type that fits your data
+status TINYINT UNSIGNED,                    -- 0-255
+age TINYINT UNSIGNED,                       -- 0-255
+quantity SMALLINT UNSIGNED,                 -- 0-65K
+user_id INT UNSIGNED,                       -- 0-4B
+transaction_id BIGINT UNSIGNED,             -- Very large IDs
 
--- Money: Always DECIMAL, never FLOAT
-price DECIMAL(10, 2),                -- Up to 99,999,999.99
-amount DECIMAL(19, 4),               -- Financial precision
+-- For money: Use DECIMAL, not FLOAT!
+price DECIMAL(10, 2),                       -- 99999999.99
+amount DECIMAL(19, 4),                      -- High precision
 
--- Dates and Times
-created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
-birth_date DATE,                     -- No time component
-event_at TIMESTAMP,                  -- Auto-converts to UTC
 
--- Boolean (MySQL has no true boolean)
-is_active TINYINT(1) DEFAULT 0,      -- Or BIT(1)
+-- STRING COLUMNS
+-- VARCHAR for variable-length
+name VARCHAR(100),
+email VARCHAR(255),
+description VARCHAR(1000),
 
--- UUID storage
-uuid BINARY(16),                     -- More efficient than CHAR(36)
--- Convert: UNHEX(REPLACE(uuid_string, '-', ''))
+-- CHAR for fixed-length codes
+country_code CHAR(2),                       -- 'US', 'VN'
+currency_code CHAR(3),                      -- 'USD', 'VND'
+uuid CHAR(36),                              -- Fixed 36 chars
+
+-- TEXT for unbounded content
+article_body TEXT,
+comments MEDIUMTEXT,
+
+
+-- DATE/TIME COLUMNS
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+birth_date DATE,
+appointment_time TIME,
+event_datetime DATETIME,
+
+-- TIMESTAMP vs DATETIME
+-- TIMESTAMP: 4 bytes, auto timezone conversion, range 1970-2038
+-- DATETIME: 8 bytes, no timezone, range 1000-9999
+
+
+-- BOOLEAN (MySQL has no native BOOLEAN)
+is_active TINYINT(1) DEFAULT 1,             -- 0 or 1
+is_deleted BOOLEAN,                          -- Alias for TINYINT(1)
+
+
+-- ENUM (use sparingly)
+status ENUM('PENDING', 'ACTIVE', 'INACTIVE'),
+-- Pros: Storage efficient, self-documenting
+-- Cons: Hard to modify, implicit ordering issues
+
 
 -- JSON (MySQL 5.7+)
-metadata JSON,                       -- For flexible schema</code></pre>
+metadata JSON,
+settings JSON DEFAULT '{}',
+-- Can index with generated columns</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- CONSTRAINTS -->
             <section class="content-section">
-                <h2 id="constraints" class="section-title"><span class="section-icon">🔒</span>Constraints</h2>
+                <h2 id="constraints" class="section-title"><span class="section-icon">🔗</span>Constraints</h2>
 
                 <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Data Integrity Constraints</h3><span class="badge essential">Essential</span>
+                    </div>
                     <div class="concept-content">
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">SQL</span><span
                                     class="code-title">Constraint Types</span></div>
-                            <pre><code>CREATE TABLE users (
-    -- Primary Key
+                            <pre><code class="language-sql">CREATE TABLE users (
+    -- PRIMARY KEY (unique, not null, clustered)
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     
-    -- Unique constraint
+    -- UNIQUE (allows one NULL, prevents duplicates)
     email VARCHAR(255) NOT NULL UNIQUE,
     username VARCHAR(50) UNIQUE,
     
-    -- Not null
+    -- NOT NULL
     name VARCHAR(100) NOT NULL,
     
-    -- Default value
-    status ENUM('active', 'inactive', 'pending') DEFAULT 'pending',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    -- DEFAULT
+    status VARCHAR(20) DEFAULT 'ACTIVE',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    -- Check constraint (MySQL 8.0.16+)
-    age TINYINT UNSIGNED CHECK (age >= 18),
+    -- CHECK (MySQL 8.0.16+)
+    age INT CHECK (age >= 0 AND age <= 150),
     
-    -- Foreign key
-    department_id BIGINT UNSIGNED,
-    FOREIGN KEY (department_id) REFERENCES departments(id)
-        ON DELETE SET NULL
-        ON UPDATE CASCADE,
-    
-    -- Composite unique
-    UNIQUE KEY uk_name_dept (name, department_id)
+    -- Named constraints (easier to drop)
+    CONSTRAINT chk_age CHECK (age >= 0 AND age <= 150),
+    CONSTRAINT uk_email UNIQUE (email)
 );
 
--- Check constraint examples
-ALTER TABLE products 
-ADD CONSTRAINT chk_price CHECK (price > 0);
+-- FOREIGN KEY
+CREATE TABLE orders (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    
+    -- Basic FK
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    
+    -- Named FK with actions
+    CONSTRAINT fk_orders_user 
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE      -- Delete orders when user deleted
+        ON UPDATE CASCADE      -- Update FK when user ID changes
+);
 
-ALTER TABLE orders
-ADD CONSTRAINT chk_dates CHECK (ship_date >= order_date);</code></pre>
-                        </div>
+-- CASCADE OPTIONS:
+-- CASCADE:     Delete/update child rows
+-- SET NULL:    Set FK to NULL (column must be nullable)
+-- RESTRICT:    Prevent delete/update if children exist (default)
+-- NO ACTION:   Same as RESTRICT in MySQL
+-- SET DEFAULT: Not supported by InnoDB
 
-                        <div class="comparison-table">
-                            <h4>Foreign Key Actions</h4>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Action</th>
-                                        <th>ON DELETE</th>
-                                        <th>ON UPDATE</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>CASCADE</td>
-                                        <td>Delete child rows</td>
-                                        <td>Update child FK values</td>
-                                    </tr>
-                                    <tr>
-                                        <td>SET NULL</td>
-                                        <td>Set FK to NULL</td>
-                                        <td>Set FK to NULL</td>
-                                    </tr>
-                                    <tr>
-                                        <td>RESTRICT</td>
-                                        <td>Block delete</td>
-                                        <td>Block update</td>
-                                    </tr>
-                                    <tr>
-                                        <td>NO ACTION</td>
-                                        <td>Same as RESTRICT</td>
-                                        <td>Same as RESTRICT</td>
-                                    </tr>
-                                    <tr>
-                                        <td>SET DEFAULT</td>
-                                        <td>Not supported in InnoDB</td>
-                                        <td>-</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+
+-- Composite UNIQUE constraint
+CREATE TABLE user_roles (
+    user_id BIGINT UNSIGNED,
+    role_id BIGINT UNSIGNED,
+    PRIMARY KEY (user_id, role_id),
+    UNIQUE KEY uk_user_role (user_id, role_id)
+);
+
+
+-- Modify constraints
+ALTER TABLE users ADD CONSTRAINT uk_phone UNIQUE (phone);
+ALTER TABLE users DROP CONSTRAINT uk_phone;
+ALTER TABLE users MODIFY email VARCHAR(255) NULL;  -- Remove NOT NULL</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- RELATIONSHIPS -->
             <section class="content-section">
-                <h2 id="relationships" class="section-title"><span class="section-icon">🔗</span>Relationships</h2>
+                <h2 id="relationships" class="section-title"><span class="section-icon">🔀</span>Relationships</h2>
 
                 <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Relationship Types</h3><span class="badge essential">Essential</span>
+                    </div>
                     <div class="concept-content">
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">SQL</span><span
-                                    class="code-title">Relationship Patterns</span></div>
-                            <pre><code>-- ONE-TO-MANY: User has many Orders
+                                    class="code-title">One-to-One</span></div>
+                            <pre><code class="language-sql">-- ONE-TO-ONE: User has one Profile
+-- Method 1: FK with UNIQUE
 CREATE TABLE users (
-    id BIGINT PRIMARY KEY
-);
-
-CREATE TABLE orders (
     id BIGINT PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
-
--- MANY-TO-MANY: Users have many Roles
-CREATE TABLE users (id BIGINT PRIMARY KEY);
-CREATE TABLE roles (id BIGINT PRIMARY KEY);
-
--- Junction/Bridge table
-CREATE TABLE user_roles (
-    user_id BIGINT,
-    role_id BIGINT,
-    assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, role_id),  -- Composite PK
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
-);
-
-
--- ONE-TO-ONE: User has one Profile
-CREATE TABLE users (
-    id BIGINT PRIMARY KEY
+    email VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE user_profiles (
     id BIGINT PRIMARY KEY,
     user_id BIGINT UNIQUE NOT NULL,  -- UNIQUE enforces 1:1
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    bio TEXT,
+    avatar_url VARCHAR(500),
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
--- Or put profile_id in users table
 
+-- Method 2: Same primary key
+CREATE TABLE user_profiles (
+    user_id BIGINT PRIMARY KEY,      -- PK = FK
+    bio TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);</code></pre>
+                        </div>
 
--- SELF-REFERENCING: Employee has Manager
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span
+                                    class="code-title">One-to-Many</span></div>
+                            <pre><code class="language-sql">-- ONE-TO-MANY: User has many Orders
+CREATE TABLE users (
+    id BIGINT PRIMARY KEY,
+    name VARCHAR(100)
+);
+
+CREATE TABLE orders (
+    id BIGINT PRIMARY KEY,
+    user_id BIGINT NOT NULL,         -- FK on "many" side
+    total DECIMAL(10,2),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Index on FK for JOIN performance
+CREATE INDEX idx_orders_user ON orders(user_id);</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span
+                                    class="code-title">Many-to-Many</span></div>
+                            <pre><code class="language-sql">-- MANY-TO-MANY: Students and Courses
+CREATE TABLE students (
+    id BIGINT PRIMARY KEY,
+    name VARCHAR(100)
+);
+
+CREATE TABLE courses (
+    id BIGINT PRIMARY KEY,
+    title VARCHAR(200)
+);
+
+-- Junction/Bridge table
+CREATE TABLE student_courses (
+    student_id BIGINT,
+    course_id BIGINT,
+    enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    grade CHAR(2),
+    
+    PRIMARY KEY (student_id, course_id),
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+);
+
+-- Alternative: Separate synthetic PK
+CREATE TABLE student_courses (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    student_id BIGINT NOT NULL,
+    course_id BIGINT NOT NULL,
+    enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_student_course (student_id, course_id),
+    FOREIGN KEY (student_id) REFERENCES students(id),
+    FOREIGN KEY (course_id) REFERENCES courses(id)
+);</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span
+                                    class="code-title">Self-Referencing</span></div>
+                            <pre><code class="language-sql">-- SELF-REFERENCING: Employee has Manager (also Employee)
 CREATE TABLE employees (
     id BIGINT PRIMARY KEY,
     name VARCHAR(100),
     manager_id BIGINT,
     FOREIGN KEY (manager_id) REFERENCES employees(id)
+);
+
+-- Hierarchical categories
+CREATE TABLE categories (
+    id BIGINT PRIMARY KEY,
+    name VARCHAR(100),
+    parent_id BIGINT,
+    FOREIGN KEY (parent_id) REFERENCES categories(id)
 );</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- KEYS & IDENTIFIERS -->
             <section class="content-section">
-                <h2 id="best-practices" class="section-title"><span class="section-icon">✅</span>Best Practices</h2>
+                <h2 id="keys" class="section-title"><span class="section-icon">🔑</span>Keys & Identifiers</h2>
 
                 <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Primary Key Strategies</h3><span class="badge important">Important</span>
+                    </div>
                     <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>PK Options Comparison</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Pros</th>
+                                        <th>Cons</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>AUTO_INCREMENT</strong></td>
+                                        <td>Simple, fast inserts, small</td>
+                                        <td>Predictable, single point generation</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>UUID</strong></td>
+                                        <td>Globally unique, distributed</td>
+                                        <td>Large (36 chars), random = fragmentation</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ULID/KSUID</strong></td>
+                                        <td>Sortable, distributed</td>
+                                        <td>Larger than INT, less standard</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Natural Key</strong></td>
+                                        <td>Meaningful, no lookup needed</td>
+                                        <td>May change, composite keys complex</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Guidelines</span><span
-                                    class="code-title">Schema Design Rules</span></div>
-                            <pre><code>✅ DO:
-• Use singular table names (user, not users)
-• Use snake_case for columns (created_at, not createdAt)
-• Always have a primary key (prefer BIGINT UNSIGNED AUTO_INCREMENT)
-• Add created_at and updated_at columns
-• Index foreign keys
-• Use appropriate data types (smallest that fits)
-• Add NOT NULL unless NULL has meaning
-• Use ENUM for fixed sets, VARCHAR for dynamic
-• Store money as DECIMAL(19,4)
-• Store timestamps as DATETIME or TIMESTAMP
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Key
+                                    Examples</span></div>
+                            <pre><code class="language-sql">-- AUTO_INCREMENT (recommended for most cases)
+CREATE TABLE users (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100)
+);
 
-❌ DON'T:
-• Use reserved words as names (order, user, group)
-• Store multiple values in one column (comma-separated)
-• Use FLOAT/DOUBLE for money
-• Create wide tables (100+ columns)
-• Use TEXT/BLOB for short strings
-• Skip foreign key constraints on related tables
-• Use id as column name in JOINed queries (ambiguous)
+-- UUID (when distributed generation needed)
+CREATE TABLE events (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    name VARCHAR(200)
+);
 
--- Table template
-CREATE TABLE table_name (
-    id BIGINT UNSIGNED AUTO_INCREMENT,
-    -- columns
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP 
-               ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;</code></pre>
+-- UUID with binary storage (more efficient)
+CREATE TABLE events (
+    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
+    name VARCHAR(200)
+);
+-- Use BIN_TO_UUID() to convert back
+
+-- Composite/Natural key
+CREATE TABLE order_items (
+    order_id BIGINT,
+    product_id BIGINT,
+    quantity INT,
+    PRIMARY KEY (order_id, product_id)
+);
+
+-- Surrogate key + Natural unique
+CREATE TABLE countries (
+    id INT AUTO_INCREMENT PRIMARY KEY,  -- Surrogate
+    code CHAR(2) NOT NULL UNIQUE,       -- Natural (ISO code)
+    name VARCHAR(100) NOT NULL
+);</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-lightbulb"></i> Key Selection Guidelines</h4>
+                            <ul>
+                                <li><strong>Single-server apps:</strong> Use AUTO_INCREMENT BIGINT</li>
+                                <li><strong>Distributed systems:</strong> Consider UUID, ULID, or Snowflake ID</li>
+                                <li><strong>Security concerns:</strong> UUID hides record count & ordering</li>
+                                <li><strong>Performance critical:</strong> Avoid random UUIDs (use ordered UUIDs)</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- STORAGE ENGINES -->
+            <section class="content-section">
+                <h2 id="engines" class="section-title"><span class="section-icon">⚙️</span>Storage Engines</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>InnoDB vs MyISAM</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Storage Engine Comparison</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>InnoDB</th>
+                                        <th>MyISAM</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Transactions</strong></td>
+                                        <td>✅ Full ACID</td>
+                                        <td>❌ No</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Locking</strong></td>
+                                        <td>Row-level</td>
+                                        <td>Table-level</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Foreign Keys</strong></td>
+                                        <td>✅ Yes</td>
+                                        <td>❌ No</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Crash Recovery</strong></td>
+                                        <td>✅ Auto</td>
+                                        <td>Manual repair</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Full-text Search</strong></td>
+                                        <td>✅ (MySQL 5.6+)</td>
+                                        <td>✅ Yes</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>COUNT(*)</strong></td>
+                                        <td>Table scan</td>
+                                        <td>Stored (fast)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Clustered Index</strong></td>
+                                        <td>✅ PK</td>
+                                        <td>❌ No</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Default (MySQL 5.5+)</strong></td>
+                                        <td>✅ Yes</td>
+                                        <td>❌ No</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Engine
+                                    Operations</span></div>
+                            <pre><code class="language-sql">-- Check table engine
+SHOW TABLE STATUS LIKE 'users';
+
+-- Create with specific engine
+CREATE TABLE logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    message TEXT
+) ENGINE = MyISAM;
+
+-- Change engine
+ALTER TABLE logs ENGINE = InnoDB;
+
+-- Modern alternatives:
+-- MEMORY: In-memory, fast, lost on restart
+-- ARCHIVE: Compressed, insert-only, good for logs
+-- NDB: MySQL Cluster engine
+-- CSV: Plain text CSV files</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Use InnoDB Unless...</h4>
+                            <ul>
+                                <li>Read-only tables with fast COUNT(*) needed → MyISAM</li>
+                                <li>Temporary session data → MEMORY</li>
+                                <li>Compressed archive logs → ARCHIVE</li>
+                                <li>Import/export CSV → CSV engine</li>
+                            </ul>
+                            <p>99% of cases: Just use InnoDB!</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- BEST PRACTICES -->
+            <section class="content-section">
+                <h2 id="best-practices" class="section-title"><span class="section-icon">✨</span>Best Practices</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Schema Design Tips</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Good
+                                    Schema Example</span></div>
+                            <pre><code class="language-sql">-- Naming conventions
+-- Tables: plural, snake_case
+-- Columns: snake_case
+-- PKs: id or table_id
+-- FKs: referenced_table_id
+-- Booleans: is_*, has_*
+
+CREATE TABLE users (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,     -- Always BIGINT for growth
+    email VARCHAR(255) NOT NULL,
+    password_hash CHAR(60) NOT NULL,                   -- bcrypt is 60 chars
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20),                                  -- VARCHAR for intl formats
+    is_active BOOLEAN DEFAULT TRUE,
+    is_verified BOOLEAN DEFAULT FALSE,
+    verification_token CHAR(64),
+    last_login_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL,                          -- Soft delete
+    
+    UNIQUE KEY uk_email (email),
+    INDEX idx_active_verified (is_active, is_verified),
+    INDEX idx_created (created_at)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+-- Notes:
+-- utf8mb4: Full Unicode support (emoji!)
+-- utf8mb4_unicode_ci: Case-insensitive collation
+-- Soft delete with deleted_at
+-- Audit columns: created_at, updated_at</code></pre>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>✅ Do</h4>
+                                <ul>
+                                    <li>Use BIGINT for IDs</li>
+                                    <li>Add created_at, updated_at</li>
+                                    <li>Use utf8mb4 charset</li>
+                                    <li>Index foreign keys</li>
+                                    <li>Use NOT NULL when possible</li>
+                                    <li>Meaningful column names</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>❌ Don't</h4>
+                                <ul>
+                                    <li>Store money as FLOAT</li>
+                                    <li>Use reserved words</li>
+                                    <li>Mix naming conventions</li>
+                                    <li>Store comma-separated lists</li>
+                                    <li>Use ENUM for changing values</li>
+                                    <li>Over-normalize</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INTERVIEW QUESTIONS -->
             <section id="interview" class="content-section">
                 <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
 
                 <div class="interview-questions">
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q1</span>
-                            <p>What is Normalization?</p>
+                            <p>Normalization là gì? Các normal forms?</p>
                         </div>
                         <div class="answer">
-                            <p>Process of organizing data to reduce redundancy. <strong>1NF:</strong> Atomic values.
-                                <strong>2NF:</strong> No partial dependencies. <strong>3NF:</strong> No transitive
-                                dependencies. Balance with denormalization for read performance.</p>
+                            <p>Process tổ chức data để giảm redundancy. 1NF: atomic values. 2NF: no partial
+                                dependencies. 3NF: no transitive dependencies. BCNF: every determinant is candidate key.
+                                Trade-off: normalized = less redundancy, more JOINs.</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q2</span>
-                            <p>CHAR vs VARCHAR?</p>
+                            <p>Khi nào nên denormalize?</p>
                         </div>
                         <div class="answer">
-                            <p><strong>CHAR:</strong> Fixed length, pads with spaces, faster for fixed-size data
-                                (country codes). <strong>VARCHAR:</strong> Variable length, stores actual length + data,
-                                better for varying text.</p>
+                            <ul>
+                                <li><strong>Read-heavy:</strong> Avoid expensive JOINs</li>
+                                <li><strong>Reporting:</strong> Pre-computed aggregates</li>
+                                <li><strong>Performance:</strong> Critical response times</li>
+                            </ul>
+                            <p>⚠️ Cost: data redundancy, write complexity, consistency risk</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q3</span>
-                            <p>Why not use FLOAT for money?</p>
+                            <p>DECIMAL vs FLOAT cho money?</p>
                         </div>
                         <div class="answer">
-                            <p>FLOAT/DOUBLE are approximate types with rounding errors. 0.1 + 0.2 might not equal 0.3
-                                exactly. Use <strong>DECIMAL</strong> for exact precision in financial calculations.</p>
+                            <p><strong>DECIMAL:</strong> Exact precision, no rounding errors.
+                                <strong>FLOAT/DOUBLE:</strong> Approximate, binary representation causes precision loss.
+                                Always use DECIMAL(19,4) hoặc tương tự cho financial data.</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q4</span>
-                            <p>How to model many-to-many?</p>
+                            <p>VARCHAR vs CHAR?</p>
                         </div>
                         <div class="answer">
-                            <p>Use <strong>junction/bridge table</strong> with composite primary key. Contains FKs to
-                                both tables. Example: user_roles(user_id, role_id) linking users and roles.</p>
+                            <ul>
+                                <li><strong>CHAR(n):</strong> Fixed length, padded with spaces. Good for: country codes,
+                                    UUIDs, fixed codes.</li>
+                                <li><strong>VARCHAR(n):</strong> Variable length, stores length prefix. Good for: names,
+                                    emails, descriptions.</li>
+                            </ul>
+                            <p>CHAR slightly faster for fixed-length, VARCHAR saves space for variable.</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q5</span>
-                            <p>ON DELETE CASCADE vs RESTRICT?</p>
+                            <p>Cascade DELETE/UPDATE options?</p>
                         </div>
                         <div class="answer">
-                            <p><strong>CASCADE:</strong> Delete parent → automatically delete children.
-                                <strong>RESTRICT:</strong> Block delete if children exist. Use CASCADE for dependent
-                                data, RESTRICT to protect important references.</p>
+                            <ul>
+                                <li><strong>CASCADE:</strong> Delete/update children automatically</li>
+                                <li><strong>SET NULL:</strong> Set FK to NULL</li>
+                                <li><strong>RESTRICT:</strong> Block if children exist</li>
+                                <li><strong>NO ACTION:</strong> Same as RESTRICT in MySQL</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>InnoDB vs MyISAM?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>InnoDB:</strong> Transactions, row locking, foreign keys, crash recovery.
+                                    Default and recommended.</li>
+                                <li><strong>MyISAM:</strong> No transactions, table locking, fast COUNT(*). Legacy use
+                                    only.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>UUID vs AUTO_INCREMENT cho PK?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>AUTO_INCREMENT:</strong> Fast inserts (sequential), small (8 bytes),
+                                    single-server</li>
+                                <li><strong>UUID:</strong> Distributed generation, larger (36 chars), random →
+                                    fragmentation</li>
+                            </ul>
+                            <p>Use AUTO_INCREMENT unless need distributed ID generation. Consider ordered UUIDs (v7) for
+                                less fragmentation.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>Soft delete vs Hard delete?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Hard:</strong> DELETE FROM - data gone forever</li>
+                                <li><strong>Soft:</strong> SET deleted_at = NOW() - recoverable, audit trail</li>
+                            </ul>
+                            <p>Soft delete cần filter WHERE deleted_at IS NULL everywhere. Consider partitioning old
+                                soft-deleted data.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q9</span>
+                            <p>utf8 vs utf8mb4?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>utf8:</strong> MySQL's "utf8" is actually 3-byte, không support 4-byte chars
+                                (emoji!). <strong>utf8mb4:</strong> True UTF-8, supports all Unicode. Always use utf8mb4
+                                for new databases!</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q10</span>
+                            <p>Design many-to-many relationship?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Create junction/bridge table với FKs to both sides. Options:</p>
+                            <ul>
+                                <li><strong>Composite PK:</strong> PRIMARY KEY (a_id, b_id)</li>
+                                <li><strong>Surrogate PK:</strong> Separate auto-increment + UNIQUE(a_id, b_id)</li>
+                            </ul>
+                            <p>Add indexes on both FK columns. Junction table can store relationship metadata.</p>
                         </div>
                     </div>
                 </div>
@@ -506,13 +929,15 @@ CREATE TABLE table_name (
             <div class="page-navigation">
                 <a href="optimization.html" class="nav-btn prev"><i
                         class="fas fa-arrow-left"></i><span>Optimization</span></a>
-                <a href="../index.html#mysql" class="nav-btn next"><span>Quay lại MySQL</span><i
+                <a href="../index.html#mysql" class="nav-btn next"><span>MySQL Home</span><i
                         class="fas fa-arrow-right"></i></a>
             </div>
         </article>
     </main>
 
     <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
     <script src="../js/main.js"></script>
 </body>
 

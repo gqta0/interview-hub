@@ -17,6 +17,7 @@
             --java-gradient: linear-gradient(135deg, #f89820 0%, #b07219 100%);
             --spring-gradient: linear-gradient(135deg, #6DB33F 0%, #4a9c2d 100%);
             --mysql-gradient: linear-gradient(135deg, #00758F 0%, #005f73 100%);
+            --devops-gradient: linear-gradient(135deg, #E44D26 0%, #F16529 50%, #326CE5 100%);
             --dark-bg: #0f0f1a;
             --card-bg: rgba(255, 255, 255, 0.05);
             --card-border: rgba(255, 255, 255, 0.1);
@@ -273,6 +274,13 @@
             border-color: transparent;
         }
 
+        .nav-btn.devops:hover,
+        .nav-btn.devops.active {
+            background: var(--devops-gradient);
+            color: #fff;
+            border-color: transparent;
+        }
+
         /* Main Content */
         main {
             max-width: 1400px;
@@ -334,6 +342,10 @@
             background: var(--mysql-gradient);
         }
 
+        .section-icon.devops {
+            background: var(--devops-gradient);
+        }
+
         .section-title {
             font-size: 1.8rem;
             font-weight: 700;
@@ -386,6 +398,10 @@
 
         .topic-card.mysql::before {
             background: var(--mysql-gradient);
+        }
+
+        .topic-card.devops::before {
+            background: var(--devops-gradient);
         }
 
         .topic-card:hover {
@@ -507,6 +523,10 @@
             background: var(--mysql-gradient);
         }
 
+        .progress-fill.devops {
+            background: var(--devops-gradient);
+        }
+
         /* Footer */
         footer {
             text-align: center;
@@ -535,23 +555,320 @@
             color: var(--text-primary);
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .topics-grid {
-                grid-template-columns: 1fr;
+        /* ==========================================
+           RESPONSIVE DESIGN - Mobile First
+           Optimized for Samsung S22 Ultra
+           ========================================== */
+
+        /* Base Mobile (< 480px) - S22 Ultra Portrait */
+        @media (max-width: 480px) {
+            html {
+                font-size: 15px;
+                scroll-behavior: smooth;
+                -webkit-text-size-adjust: 100%;
+            }
+
+            body {
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            header {
+                padding: 24px 16px;
+            }
+
+            .logo {
+                gap: 10px;
+                margin-bottom: 16px;
+            }
+
+            .logo-icon {
+                width: 48px;
+                height: 48px;
+                font-size: 22px;
+                border-radius: 12px;
+            }
+
+            h1 {
+                font-size: 1.6rem;
+                margin-bottom: 12px;
+            }
+
+            .subtitle {
+                font-size: 0.95rem;
+                margin-bottom: 20px;
+                padding: 0 8px;
             }
 
             .stats {
-                gap: 20px;
+                gap: 16px;
+                padding: 16px 8px;
+            }
+
+            .stat-number {
+                font-size: 1.8rem;
+            }
+
+            .stat-label {
+                font-size: 0.75rem;
+            }
+
+            /* Navigation - Mobile */
+            nav {
+                padding: 10px 12px;
+            }
+
+            .nav-container {
+                gap: 6px;
+                justify-content: flex-start;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                padding-bottom: 4px;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+
+            .nav-container::-webkit-scrollbar {
+                display: none;
+            }
+
+            .nav-btn {
+                padding: 10px 14px;
+                font-size: 0.8rem;
+                border-radius: 10px;
+                gap: 6px;
+                flex-shrink: 0;
+                min-height: 44px;
+            }
+
+            .nav-btn i {
+                font-size: 1rem;
+            }
+
+            /* Main Content - Mobile */
+            main {
+                padding: 20px 16px;
+            }
+
+            .section {
+                margin-bottom: 40px;
+            }
+
+            .section-header {
+                gap: 14px;
+                margin-bottom: 20px;
+                padding-bottom: 16px;
+                flex-wrap: wrap;
+            }
+
+            .section-icon {
+                width: 48px;
+                height: 48px;
+                font-size: 22px;
+                border-radius: 12px;
+            }
+
+            .section-title {
+                font-size: 1.4rem;
+            }
+
+            .section-desc {
+                font-size: 0.85rem;
+                width: 100%;
+                margin-top: 8px;
+            }
+
+            /* Topic Grid - Mobile */
+            .topics-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .topic-card {
+                padding: 20px;
+                border-radius: 16px;
+            }
+
+            .topic-header {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .topic-title {
+                font-size: 1.05rem;
+                flex: 1;
+                min-width: 60%;
+            }
+
+            .topic-badge {
+                padding: 4px 10px;
+                font-size: 0.7rem;
+            }
+
+            .topic-items li {
+                padding: 8px 0;
+                font-size: 0.9rem;
+                gap: 10px;
+            }
+
+            .progress-container {
+                margin-top: 16px;
+                padding-top: 12px;
+            }
+
+            .progress-label {
+                font-size: 0.8rem;
+            }
+
+            /* Footer - Mobile */
+            footer {
+                padding: 30px 16px;
+            }
+
+            footer p {
+                font-size: 0.9rem;
+            }
+
+            .footer-links {
+                flex-wrap: wrap;
+                gap: 16px;
+            }
+        }
+
+        /* Small Tablets / Large Phones (481px - 768px) */
+        @media (min-width: 481px) and (max-width: 768px) {
+            header {
+                padding: 30px 20px;
+            }
+
+            .logo-icon {
+                width: 52px;
+                height: 52px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .stats {
+                gap: 24px;
             }
 
             .stat-number {
                 font-size: 2rem;
             }
 
+            nav {
+                padding: 12px 16px;
+            }
+
             .nav-btn {
-                padding: 10px 16px;
+                padding: 10px 18px;
                 font-size: 0.85rem;
+            }
+
+            main {
+                padding: 30px 20px;
+            }
+
+            .topics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-header {
+                gap: 16px;
+            }
+
+            .section-icon {
+                width: 52px;
+                height: 52px;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Tablets (769px - 1024px) */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .topics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .nav-btn {
+                padding: 11px 20px;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Safe Area for Notched Phones */
+        @supports (padding: max(0px)) {
+            nav {
+                padding-left: max(12px, env(safe-area-inset-left));
+                padding-right: max(12px, env(safe-area-inset-right));
+            }
+
+            main {
+                padding-left: max(16px, env(safe-area-inset-left));
+                padding-right: max(16px, env(safe-area-inset-right));
+            }
+
+            header {
+                padding-left: max(16px, env(safe-area-inset-left));
+                padding-right: max(16px, env(safe-area-inset-right));
+            }
+        }
+
+        /* Touch Improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .topic-card:hover {
+                transform: none;
+            }
+
+            .nav-btn:hover {
+                transform: none;
+            }
+
+            .topic-card {
+                cursor: pointer;
+                -webkit-tap-highlight-color: rgba(255, 153, 0, 0.1);
+            }
+
+            .nav-btn {
+                min-height: 44px;
+            }
+        }
+
+        /* Landscape Mode - Mobile */
+        @media (max-width: 900px) and (orientation: landscape) {
+            header {
+                padding: 16px 20px;
+            }
+
+            .logo {
+                margin-bottom: 12px;
+            }
+
+            .stats {
+                padding: 12px;
+            }
+
+            .stat-number {
+                font-size: 1.8rem;
+            }
+        }
+
+        /* Reduce Motion for Accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            .topic-card,
+            .nav-btn,
+            .section {
+                animation: none;
+                transition: none;
             }
         }
 
@@ -622,6 +939,9 @@
             </button>
             <button class="nav-btn mysql" onclick="scrollToSection('mysql')">
                 <i class="fas fa-database"></i> MySQL
+            </button>
+            <button class="nav-btn devops" onclick="scrollToSection('devops')">
+                <i class="fas fa-infinity"></i> DevOps
             </button>
         </div>
     </nav>
@@ -824,6 +1144,93 @@
                         <div class="progress-label"><span>Tiến độ</span><span>0%</span></div>
                         <div class="progress-bar">
                             <div class="progress-fill aws" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DEVOPS SECTION -->
+        <section id="devops" class="section">
+            <div class="section-header">
+                <div class="section-icon devops">
+                    <i class="fas fa-infinity"></i>
+                </div>
+                <div>
+                    <h2 class="section-title">DevOps</h2>
+                    <p class="section-desc">Container, Orchestration, CI/CD - Tự động hóa quy trình phát triển</p>
+                </div>
+            </div>
+
+            <div class="topics-grid">
+                <!-- Docker -->
+                <div class="topic-card devops" onclick="location.href='docker/docker.html'" style="cursor:pointer;">
+                    <div class="topic-header">
+                        <div>
+                            <h3 class="topic-title">🐳 Docker</h3>
+                        </div>
+                        <span class="topic-badge badge-essential">Essential</span>
+                    </div>
+                    <ul class="topic-items">
+                        <li>Container vs Virtual Machine</li>
+                        <li>Dockerfile & Multi-stage Build</li>
+                        <li>Images, Layers & Registry</li>
+                        <li>Volumes & Networking</li>
+                        <li>Docker Compose</li>
+                        <li>Best Practices & Security</li>
+                    </ul>
+                    <div class="progress-container">
+                        <div class="progress-label"><span>Tiến độ</span><span>0%</span></div>
+                        <div class="progress-bar">
+                            <div class="progress-fill devops" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kubernetes -->
+                <div class="topic-card devops" onclick="location.href='docker/kubernetes.html'" style="cursor:pointer;">
+                    <div class="topic-header">
+                        <div>
+                            <h3 class="topic-title">☸️ Kubernetes</h3>
+                        </div>
+                        <span class="topic-badge badge-essential">Essential</span>
+                    </div>
+                    <ul class="topic-items">
+                        <li>Cluster Architecture (Control Plane, Nodes)</li>
+                        <li>Pods, Deployments, StatefulSets</li>
+                        <li>Services, Ingress, Networking</li>
+                        <li>ConfigMaps, Secrets, Storage</li>
+                        <li>RBAC & Security</li>
+                        <li>Helm Charts & GitOps</li>
+                    </ul>
+                    <div class="progress-container">
+                        <div class="progress-label"><span>Tiến độ</span><span>0%</span></div>
+                        <div class="progress-bar">
+                            <div class="progress-fill devops" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CI/CD -->
+                <div class="topic-card devops" onclick="location.href='docker/cicd.html'" style="cursor:pointer;">
+                    <div class="topic-header">
+                        <div>
+                            <h3 class="topic-title">🔄 CI/CD Pipeline</h3>
+                        </div>
+                        <span class="topic-badge badge-important">Important</span>
+                    </div>
+                    <ul class="topic-items">
+                        <li>CI vs CD (Delivery/Deployment)</li>
+                        <li>GitHub Actions, Jenkins, GitLab CI</li>
+                        <li>Testing Strategies (Test Pyramid)</li>
+                        <li>Deployment Strategies (Blue/Green, Canary)</li>
+                        <li>Security (DevSecOps, SAST/DAST)</li>
+                        <li>DORA Metrics & Best Practices</li>
+                    </ul>
+                    <div class="progress-container">
+                        <div class="progress-label"><span>Tiến độ</span><span>0%</span></div>
+                        <div class="progress-bar">
+                            <div class="progress-fill devops" style="width: 0%"></div>
                         </div>
                     </div>
                 </div>
@@ -1309,13 +1716,13 @@
                         <span class="topic-badge badge-essential">Essential</span>
                     </div>
                     <ul class="topic-items">
-                        <li>SELECT, JOIN Types (INNER, LEFT, RIGHT, FULL)</li>
-                        <li>Subqueries, Correlated Subqueries</li>
-                        <li>GROUP BY, HAVING, ORDER BY</li>
-                        <li>Window Functions (ROW_NUMBER, RANK, LAG, LEAD)</li>
-                        <li>UNION, INTERSECT, EXCEPT</li>
-                        <li>CASE WHEN, COALESCE, NULLIF</li>
-                        <li>CTEs (Common Table Expressions)</li>
+                        <li>SELECT, Filtering, Query Execution Order</li>
+                        <li>Operators & Functions (CASE, COALESCE, NULLIF)</li>
+                        <li>JOINs (INNER, LEFT, RIGHT, CROSS, SELF)</li>
+                        <li>Aggregate & Window Functions</li>
+                        <li>Subqueries, CTEs, Set Operations</li>
+                        <li>DML: INSERT, UPDATE, DELETE, UPSERT</li>
+                        <li>10 Interview Questions</li>
                     </ul>
                     <div class="progress-container">
                         <div class="progress-label"><span>Tiến độ</span><span>0%</span></div>
@@ -1334,13 +1741,13 @@
                         <span class="topic-badge badge-essential">Essential</span>
                     </div>
                     <ul class="topic-items">
-                        <li>B-Tree Index Structure</li>
-                        <li>Clustered vs Non-clustered Index</li>
-                        <li>Composite Index, Covering Index</li>
-                        <li>Index Selectivity, Cardinality</li>
-                        <li>EXPLAIN & Query Execution Plan</li>
-                        <li>Index Hint, Force Index</li>
-                        <li>Full-text Index, Spatial Index</li>
+                        <li>B-Tree Structure, Clustered vs Secondary</li>
+                        <li>Index Types (UNIQUE, Fulltext, Spatial)</li>
+                        <li>Composite Index & Leftmost Prefix Rule</li>
+                        <li>Covering Index (index-only scans)</li>
+                        <li>EXPLAIN & EXPLAIN ANALYZE</li>
+                        <li>Anti-Patterns & Index Maintenance</li>
+                        <li>10 Interview Questions</li>
                     </ul>
                     <div class="progress-container">
                         <div class="progress-label"><span>Tiến độ</span><span>0%</span></div>
@@ -1359,13 +1766,13 @@
                         <span class="topic-badge badge-essential">Essential</span>
                     </div>
                     <ul class="topic-items">
-                        <li>ACID Properties Deep Dive</li>
-                        <li>Transaction Isolation Levels</li>
-                        <li>Dirty Read, Non-repeatable Read, Phantom Read</li>
-                        <li>MVCC (Multi-Version Concurrency Control)</li>
-                        <li>Locking: Row Lock, Table Lock, Gap Lock</li>
+                        <li>ACID Properties & Transaction Basics</li>
+                        <li>Isolation Levels (4 levels comparison)</li>
+                        <li>Read Phenomena (Dirty, Non-repeatable, Phantom)</li>
+                        <li>Locking: Row, Table, Gap, Next-Key</li>
                         <li>Deadlock Detection & Prevention</li>
-                        <li>COMMIT, ROLLBACK, SAVEPOINT</li>
+                        <li>MVCC & Practical Examples</li>
+                        <li>10 Interview Questions</li>
                     </ul>
                     <div class="progress-container">
                         <div class="progress-label"><span>Tiến độ</span><span>0%</span></div>
@@ -1376,7 +1783,8 @@
                 </div>
 
                 <!-- Storage Engine -->
-                <div class="topic-card mysql">
+                <div class="topic-card mysql" onclick="location.href='mysql/storage-engines.html'"
+                    style="cursor:pointer;">
                     <div class="topic-header">
                         <div>
                             <h3 class="topic-title">⚙️ Storage Engines</h3>
@@ -1384,12 +1792,13 @@
                         <span class="topic-badge badge-important">Important</span>
                     </div>
                     <ul class="topic-items">
-                        <li>InnoDB vs MyISAM Comparison</li>
-                        <li>InnoDB Buffer Pool</li>
-                        <li>Redo Log, Undo Log</li>
-                        <li>Tablespace Management</li>
-                        <li>Row Format: COMPACT, DYNAMIC, COMPRESSED</li>
-                        <li>Memory Engine Use Cases</li>
+                        <li>InnoDB vs MyISAM vs Memory</li>
+                        <li>InnoDB Architecture Deep Dive</li>
+                        <li>Buffer Pool (sizing, monitoring)</li>
+                        <li>Redo Log & Undo Log</li>
+                        <li>Row Formats (COMPACT, DYNAMIC, COMPRESSED)</li>
+                        <li>Tablespace & Other Engines</li>
+                        <li>10 Interview Questions</li>
                     </ul>
                     <div class="progress-container">
                         <div class="progress-label"><span>Tiến độ</span><span>0%</span></div>
@@ -1408,13 +1817,13 @@
                         <span class="topic-badge badge-essential">Essential</span>
                     </div>
                     <ul class="topic-items">
-                        <li>Query Execution Plan Analysis</li>
-                        <li>Slow Query Log, Performance Schema</li>
-                        <li>Avoiding Full Table Scans</li>
+                        <li>Slow Query Log & Analysis</li>
+                        <li>Query Profiling (EXPLAIN ANALYZE)</li>
+                        <li>Query Tuning & Index-Killing Patterns</li>
                         <li>JOIN Optimization Strategies</li>
-                        <li>Subquery vs JOIN Performance</li>
-                        <li>Query Caching</li>
-                        <li>Pagination Optimization (OFFSET problems)</li>
+                        <li>Efficient Pagination (Keyset vs OFFSET)</li>
+                        <li>Caching & Server Configuration</li>
+                        <li>10 Interview Questions</li>
                     </ul>
                     <div class="progress-container">
                         <div class="progress-label"><span>Tiến độ</span><span>0%</span></div>
@@ -1433,12 +1842,13 @@
                         <span class="topic-badge badge-important">Important</span>
                     </div>
                     <ul class="topic-items">
-                        <li>Normalization (1NF, 2NF, 3NF, BCNF)</li>
-                        <li>Denormalization Trade-offs</li>
-                        <li>ER Diagrams, Cardinality</li>
-                        <li>Primary Key vs Composite Key vs Surrogate Key</li>
-                        <li>Foreign Key Constraints, Cascade Options</li>
-                        <li>Data Types Selection Best Practices</li>
+                        <li>Normalization (1NF → BCNF)</li>
+                        <li>Data Types (Numeric, String, Date)</li>
+                        <li>Constraints (PK, FK, UNIQUE, CHECK)</li>
+                        <li>Relationships (1:1, 1:N, N:M)</li>
+                        <li>Keys & Identifiers (UUID vs Auto-increment)</li>
+                        <li>Storage Engines & Best Practices</li>
+                        <li>10 Interview Questions</li>
                     </ul>
                     <div class="progress-container">
                         <div class="progress-label"><span>Tiến độ</span><span>0%</span></div>
@@ -1449,7 +1859,7 @@
                 </div>
 
                 <!-- Replication & Scaling -->
-                <div class="topic-card mysql">
+                <div class="topic-card mysql" onclick="location.href='mysql/replication.html'" style="cursor:pointer;">
                     <div class="topic-header">
                         <div>
                             <h3 class="topic-title">📈 Replication & Scaling</h3>
@@ -1457,13 +1867,13 @@
                         <span class="topic-badge badge-advanced">Advanced</span>
                     </div>
                     <ul class="topic-items">
-                        <li>Master-Slave Replication</li>
-                        <li>Binary Log, Relay Log</li>
-                        <li>GTID-based Replication</li>
-                        <li>Read Replicas, Load Balancing</li>
-                        <li>Sharding Strategies</li>
-                        <li>ProxySQL, MySQL Router</li>
-                        <li>Connection Pooling</li>
+                        <li>Replication Basics (Async, Semi-sync)</li>
+                        <li>Binary Log & GTID Replication</li>
+                        <li>Topologies (Single-source, Multi-master)</li>
+                        <li>Read Replicas & Replication Lag</li>
+                        <li>Sharding Strategies (Range, Hash)</li>
+                        <li>ProxySQL & Connection Pooling</li>
+                        <li>10 Interview Questions</li>
                     </ul>
                     <div class="progress-container">
                         <div class="progress-label"><span>Tiến độ</span><span>0%</span></div>
@@ -1474,7 +1884,8 @@
                 </div>
 
                 <!-- Backup & Security -->
-                <div class="topic-card mysql">
+                <div class="topic-card mysql" onclick="location.href='mysql/backup-security.html'"
+                    style="cursor:pointer;">
                     <div class="topic-header">
                         <div>
                             <h3 class="topic-title">🛡️ Backup & Security</h3>
@@ -1482,13 +1893,13 @@
                         <span class="topic-badge badge-important">Important</span>
                     </div>
                     <ul class="topic-items">
-                        <li>mysqldump, mysqlpump</li>
-                        <li>Physical vs Logical Backup</li>
-                        <li>Point-in-Time Recovery</li>
-                        <li>User Privileges, GRANT, REVOKE</li>
-                        <li>SSL/TLS Encryption</li>
+                        <li>Logical Backup (mysqldump, mysqlpump)</li>
+                        <li>Physical Backup (Percona XtraBackup)</li>
+                        <li>Point-in-Time Recovery (PITR)</li>
+                        <li>User Management & Privileges</li>
                         <li>SQL Injection Prevention</li>
-                        <li>Audit Logging</li>
+                        <li>Encryption (At Rest, In Transit)</li>
+                        <li>10 Interview Questions</li>
                     </ul>
                     <div class="progress-container">
                         <div class="progress-label"><span>Tiến độ</span><span>0%</span></div>

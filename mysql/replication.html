@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Replication & Scaling - MySQL Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="storage-engines.html" class="nav-back"><i class="fas fa-arrow-left"></i> Storage Engines</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon mysql"><i class="fas fa-network-wired"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">MySQL</span>
+            <h1>Replication & Scaling</h1>
+            <p class="topic-desc">Master-Slave, GTID, Read Replicas, Sharding, Connection Pooling</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#replication-basics">Replication Basics</a></li>
+                <li><a href="#binary-log">Binary Log</a></li>
+                <li><a href="#gtid">GTID Replication</a></li>
+                <li><a href="#topologies">Replication Topologies</a></li>
+                <li><a href="#read-replicas">Read Replicas</a></li>
+                <li><a href="#sharding">Sharding</a></li>
+                <li><a href="#proxy">Proxy & Routing</a></li>
+                <li><a href="#pooling">Connection Pooling</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <!-- REPLICATION BASICS -->
+            <section class="content-section">
+                <h2 id="replication-basics" class="section-title"><span class="section-icon">🔄</span>Replication Basics
+                </h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>How MySQL Replication Works</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Visual</span><span
+                                    class="code-title">Replication Flow</span></div>
+                            <pre><code>┌────────────────────────────────────────────────────────────────┐
+│                    MySQL Replication Flow                       │
+├────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌───────────────┐         ┌───────────────┐                  │
+│  │   SOURCE      │         │   REPLICA     │                  │
+│  │   (Master)    │         │   (Slave)     │                  │
+│  │               │         │               │                  │
+│  │  ┌─────────┐  │         │  ┌─────────┐  │                  │
+│  │  │ Client  │  │         │  │I/O Thread│  │                  │
+│  │  │ Write   │  │         │  │         │──┼──► Reads binlog  │
+│  │  └────┬────┘  │         │  └────┬────┘  │     from source  │
+│  │       │       │         │       │       │                  │
+│  │       ▼       │         │       ▼       │                  │
+│  │  ┌─────────┐  │ Network │  ┌─────────┐  │                  │
+│  │  │ Binary  │◄─┼─────────┼──│ Relay   │  │                  │
+│  │  │  Log    │  │         │  │  Log    │  │                  │
+│  │  └─────────┘  │         │  └────┬────┘  │                  │
+│  │               │         │       │       │                  │
+│  │               │         │       ▼       │                  │
+│  │               │         │  ┌─────────┐  │                  │
+│  │               │         │  │SQL Thread│  │                  │
+│  │               │         │  │         │──┼──► Applies       │
+│  │               │         │  └─────────┘  │     changes      │
+│  └───────────────┘         └───────────────┘                  │
+│                                                                 │
+│  Process:                                                       │
+│  1. Client writes to source → Binary log                       │
+│  2. Replica I/O thread reads binlog → writes Relay log         │
+│  3. Replica SQL thread reads relay log → applies to data       │
+└────────────────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Replication Types</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Async</strong></td>
+                                        <td>Source doesn't wait for replica</td>
+                                        <td>Default, high performance</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Semi-sync</strong></td>
+                                        <td>Wait for at least 1 replica ACK</td>
+                                        <td>Stronger durability</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Group Replication</strong></td>
+                                        <td>Multi-master, consensus</td>
+                                        <td>High availability</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- BINARY LOG -->
+            <section class="content-section">
+                <h2 id="binary-log" class="section-title"><span class="section-icon">📝</span>Binary Log</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Binary Log Configuration</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Binary
+                                    Log Commands</span></div>
+                            <pre><code class="language-sql">-- Check if binlog enabled
+SHOW VARIABLES LIKE 'log_bin';
+
+-- View binary log files
+SHOW BINARY LOGS;
+SHOW MASTER STATUS;
+
+-- View events in binlog
+SHOW BINLOG EVENTS IN 'mysql-bin.000001' LIMIT 10;
+
+-- Purge old binlogs
+PURGE BINARY LOGS BEFORE '2024-01-01 00:00:00';
+PURGE BINARY LOGS TO 'mysql-bin.000005';
+
+-- my.cnf configuration
+[mysqld]
+server-id = 1                     # Unique server ID
+log_bin = mysql-bin               # Enable binary logging
+binlog_format = ROW               # Recommended format
+binlog_row_image = FULL           # Full row for each change
+expire_logs_days = 7              # Auto-purge after 7 days
+max_binlog_size = 100M            # Max file size before rotation
+sync_binlog = 1                   # Sync on every commit (safest)</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Binary Log Formats</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Format</th>
+                                        <th>Description</th>
+                                        <th>Pros/Cons</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>STATEMENT</strong></td>
+                                        <td>Logs SQL statements</td>
+                                        <td>Small logs, but non-deterministic issues</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ROW</strong></td>
+                                        <td>Logs row changes</td>
+                                        <td>Larger logs, but deterministic ✅</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>MIXED</strong></td>
+                                        <td>Statement + Row hybrid</td>
+                                        <td>Uses ROW when needed</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GTID REPLICATION -->
+            <section class="content-section">
+                <h2 id="gtid" class="section-title"><span class="section-icon">🔖</span>GTID Replication</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Global Transaction Identifier</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Visual</span><span class="code-title">GTID
+                                    Format</span></div>
+                            <pre><code>GTID = source_uuid:transaction_id
+
+Example: 3E11FA47-71CA-11E1-9E33-C80AA9429562:23
+
+Benefits over file:position:
+• Automatic failover - replica knows exactly where to continue
+• Easy topology changes - no manual binlog position tracking
+• Prevents duplicate transaction execution</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">GTID
+                                    Configuration</span></div>
+                            <pre><code class="language-sql">-- Check GTID status
+SHOW VARIABLES LIKE 'gtid_mode';
+SELECT @@GLOBAL.gtid_executed;
+
+-- my.cnf (Source + Replica)
+[mysqld]
+gtid_mode = ON
+enforce_gtid_consistency = ON
+log_slave_updates = ON
+
+-- Configure replica with GTID
+CHANGE REPLICATION SOURCE TO
+    SOURCE_HOST = '192.168.1.100',
+    SOURCE_USER = 'repl_user',
+    SOURCE_PASSWORD = 'password',
+    SOURCE_AUTO_POSITION = 1;  -- GTID-based positioning
+
+-- Start replication
+START REPLICA;
+
+-- Check replica status
+SHOW REPLICA STATUS\G</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-lightbulb"></i> GTID Benefits</h4>
+                            <ul>
+                                <li><strong>Auto-positioning:</strong> No manual binlog file:position</li>
+                                <li><strong>Easy failover:</strong> Replica knows exact state</li>
+                                <li><strong>Consistency:</strong> Prevents duplicate transactions</li>
+                                <li><strong>Topology changes:</strong> Simpler replica promotion</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- REPLICATION TOPOLOGIES -->
+            <section class="content-section">
+                <h2 id="topologies" class="section-title"><span class="section-icon">🕸️</span>Replication Topologies
+                </h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Common Architectures</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Visual</span><span
+                                    class="code-title">Topology Patterns</span></div>
+                            <pre><code>1. SINGLE SOURCE → MULTIPLE REPLICAS
+   ┌─────────┐
+   │ Source  │
+   └────┬────┘
+        │
+   ┌────┼────┐
+   ▼    ▼    ▼
+  [R1] [R2] [R3]  Read Replicas
+
+
+2. CHAIN REPLICATION (Cascade)
+   [Source] → [Replica1] → [Replica2] → [Replica3]
+   • Reduces source load
+   • Increases replication lag
+
+
+3. MULTI-SOURCE (Multiple Sources → One Replica)
+   [Source1]  [Source2]  [Source3]
+       └──────────┼──────────┘
+                  ▼
+             [Replica]
+   • Aggregate data from multiple databases
+
+
+4. CIRCULAR/MULTI-MASTER (Active-Active)
+   [Server1] ←→ [Server2]
+   • Write to any server
+   • Complex, conflict handling needed
+   • Use Group Replication instead
+
+
+5. GROUP REPLICATION (MySQL 8.0+)
+   ┌─────────┐   ┌─────────┐   ┌─────────┐
+   │ Member1 │◄─►│ Member2 │◄─►│ Member3 │
+   └─────────┘   └─────────┘   └─────────┘
+   • Multi-master or single-master mode
+   • Automatic failover
+   • Consensus-based</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- READ REPLICAS -->
+            <section class="content-section">
+                <h2 id="read-replicas" class="section-title"><span class="section-icon">📖</span>Read Replicas</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Scaling Reads</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Visual</span><span
+                                    class="code-title">Read-Write Splitting</span></div>
+                            <pre><code>┌─────────────────────────────────────────────────────────────┐
+│                     Application Layer                        │
+│                           │                                  │
+│           ┌───────────────┴───────────────┐                 │
+│           ▼                               ▼                 │
+│     ┌───────────┐                 ┌───────────────┐        │
+│     │   WRITE   │                 │     READ      │        │
+│     │ (INSERT,  │                 │   (SELECT)    │        │
+│     │  UPDATE,  │                 │               │        │
+│     │  DELETE)  │                 └───────┬───────┘        │
+│     └─────┬─────┘                         │                │
+│           │                      Load Balancer              │
+│           │                               │                 │
+│           ▼                    ┌──────────┼──────────┐     │
+│     ┌───────────┐              ▼          ▼          ▼     │
+│     │  SOURCE   │          [Replica1] [Replica2] [Replica3]│
+│     │  (Master) │                                          │
+│     └─────┬─────┘                                          │
+│           │                                                 │
+│           └─────────► Replication ─────────►               │
+└─────────────────────────────────────────────────────────────┘
+
+Note: Read replicas may have slight lag (stale reads)</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Pseudocode</span><span
+                                    class="code-title">Application-Level Read-Write Split</span></div>
+                            <pre><code>// DataSource routing
+class ReadWriteDataSource {
+    private DataSource writeSource;  // Master
+    private List&lt;DataSource&gt; readSources;  // Replicas
+    
+    public DataSource getDataSource(boolean isReadOnly) {
+        if (isReadOnly) {
+            // Round-robin or random selection
+            return selectReadReplica();
+        }
+        return writeSource;
+    }
+}
+
+// Spring @Transactional example
+@Transactional(readOnly = true)  // Routes to replica
+public List&lt;User&gt; findAllUsers() {
+    return userRepository.findAll();
+}
+
+@Transactional  // Routes to master
+public User createUser(User user) {
+    return userRepository.save(user);
+}</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Replication Lag Considerations</h4>
+                            <ul>
+                                <li><strong>Stale reads:</strong> Replica có thể behind master vài seconds</li>
+                                <li><strong>Read-your-writes:</strong> After write, read from master to ensure
+                                    consistency</li>
+                                <li><strong>Critical reads:</strong> Route to master for important queries</li>
+                                <li><strong>Monitor lag:</strong> Seconds_Behind_Master in SHOW REPLICA STATUS</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SHARDING -->
+            <section class="content-section">
+                <h2 id="sharding" class="section-title"><span class="section-icon">🧩</span>Sharding</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Horizontal Scaling</h3><span class="badge advanced">Advanced</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Visual</span><span
+                                    class="code-title">Sharding Strategies</span></div>
+                            <pre><code>SHARDING: Distribute data across multiple database servers
+
+1. RANGE-BASED SHARDING
+   ┌─────────────────────────────────────────────────────┐
+   │  Shard 1: user_id 1 - 1M                           │
+   │  Shard 2: user_id 1M - 2M                          │
+   │  Shard 3: user_id 2M - 3M                          │
+   └─────────────────────────────────────────────────────┘
+   ⚠️ Risk: Hotspots if recent data more active
+
+
+2. HASH-BASED SHARDING
+   shard_id = hash(user_id) % num_shards
+   
+   ┌─────────────────────────────────────────────────────┐
+   │  user_id: 12345                                     │
+   │  hash(12345) % 4 = 1                               │
+   │  → Route to Shard 1                                │
+   └─────────────────────────────────────────────────────┘
+   ✅ Even distribution
+   ⚠️ Resharding is hard (consistent hashing helps)
+
+
+3. DIRECTORY/LOOKUP SHARDING
+   ┌──────────────┐
+   │ Shard Map    │ user_id → shard_id
+   │ (in memory   │ 12345   → shard_2
+   │  or cached)  │ 67890   → shard_1
+   └──────────────┘
+   ✅ Flexible
+   ⚠️ Single point of lookup
+
+
+4. GEO-BASED SHARDING
+   ┌─────────────────────────────────────────────────────┐
+   │  Shard US-East: Users in East Coast                │
+   │  Shard US-West: Users in West Coast                │
+   │  Shard EU: Users in Europe                         │
+   └─────────────────────────────────────────────────────┘
+   ✅ Low latency for users
+   ⚠️ Complex cross-region queries</code></pre>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>✅ Sharding Benefits</h4>
+                                <ul>
+                                    <li>Horizontal scalability</li>
+                                    <li>Distribute write load</li>
+                                    <li>Each shard smaller = faster</li>
+                                    <li>Geographic distribution</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>❌ Sharding Challenges</h4>
+                                <ul>
+                                    <li>Cross-shard queries complex</li>
+                                    <li>No foreign keys across shards</li>
+                                    <li>Resharding is painful</li>
+                                    <li>Application complexity</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PROXY & ROUTING -->
+            <section class="content-section">
+                <h2 id="proxy" class="section-title"><span class="section-icon">🔀</span>Proxy & Routing</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Database Proxy Solutions</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Proxy Comparison</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Tool</th>
+                                        <th>Features</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>ProxySQL</strong></td>
+                                        <td>Query routing, caching, connection pooling</td>
+                                        <td>Read-write split, query filtering</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>MySQL Router</strong></td>
+                                        <td>Official MySQL, lightweight</td>
+                                        <td>InnoDB Cluster, Group Replication</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>HAProxy</strong></td>
+                                        <td>TCP load balancing, health checks</td>
+                                        <td>Simple load balancing</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Vitess</strong></td>
+                                        <td>Sharding, scaling, Kubernetes</td>
+                                        <td>Large-scale deployment</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">ProxySQL
+                                    Configuration</span></div>
+                            <pre><code class="language-sql">-- ProxySQL query rules for read-write split
+INSERT INTO mysql_query_rules (rule_id, active, match_pattern, destination_hostgroup, apply)
+VALUES 
+    (1, 1, '^SELECT', 20, 1),  -- SELECTs to read hostgroup
+    (2, 1, '.*', 10, 1);       -- Everything else to write hostgroup
+
+-- Hostgroups
+INSERT INTO mysql_servers (hostgroup_id, hostname, port)
+VALUES 
+    (10, 'master.db.local', 3306),   -- Write
+    (20, 'replica1.db.local', 3306), -- Read
+    (20, 'replica2.db.local', 3306); -- Read
+
+LOAD MYSQL SERVERS TO RUNTIME;
+SAVE MYSQL SERVERS TO DISK;</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CONNECTION POOLING -->
+            <section class="content-section">
+                <h2 id="pooling" class="section-title"><span class="section-icon">🔌</span>Connection Pooling</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Efficient Connection Management</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Visual</span><span
+                                    class="code-title">Connection Pool Architecture</span></div>
+                            <pre><code>WITHOUT POOLING:
+┌─────────┐     New connection      ┌────────────┐
+│ Request │ ───────────────────────► │   MySQL    │
+└─────────┘     (TCP + Auth)         └────────────┘
+                  ~20-100ms
+
+WITH POOLING:
+┌─────────┐                 ┌──────────────────┐      ┌────────────┐
+│ Request │ ──► Get Conn ──►│ Connection Pool  │◄────►│   MySQL    │
+└─────────┘    from pool    │  [C1][C2][C3]... │      └────────────┘
+                  ~1ms      └──────────────────┘
+                               Pre-established connections</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">HikariCP Configuration</span></div>
+                            <pre><code class="language-java">// HikariCP - high-performance connection pool
+HikariConfig config = new HikariConfig();
+config.setJdbcUrl("jdbc:mysql://localhost:3306/mydb");
+config.setUsername("user");
+config.setPassword("password");
+
+// Pool sizing (start small, tune based on load)
+config.setMaximumPoolSize(10);      // Max connections
+config.setMinimumIdle(5);           // Min idle connections
+config.setConnectionTimeout(30000); // 30 sec timeout
+config.setIdleTimeout(600000);      // 10 min idle before close
+config.setMaxLifetime(1800000);     // 30 min max connection age
+
+// Validation
+config.setConnectionTestQuery("SELECT 1");
+
+HikariDataSource dataSource = new HikariDataSource(config);</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Pool Sizing Guidelines</h4>
+                            <ul>
+                                <li><strong>Formula:</strong> connections = (core_count * 2) + effective_spindle_count
+                                </li>
+                                <li><strong>SSD:</strong> connections = (core_count * 2) + 1</li>
+                                <li><strong>Start small:</strong> 10-20 connections, tune up if needed</li>
+                                <li><strong>Monitor:</strong> Wait times, active connections, timeouts</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INTERVIEW QUESTIONS -->
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>MySQL Replication hoạt động thế nào?</p>
+                        </div>
+                        <div class="answer">
+                            <ol>
+                                <li>Source writes changes to Binary Log</li>
+                                <li>Replica I/O thread reads binlog → writes to Relay Log</li>
+                                <li>Replica SQL thread applies relay log to data</li>
+                            </ol>
+                            <p>Async by default. Semi-sync waits for ACK.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>GTID là gì? Lợi ích?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Global Transaction Identifier = UUID + transaction_number. Benefits:</p>
+                            <ul>
+                                <li>Auto-positioning (no file:position)</li>
+                                <li>Easy failover</li>
+                                <li>Prevents duplicate execution</li>
+                                <li>Simpler topology changes</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>Binlog format: STATEMENT vs ROW?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>STATEMENT:</strong> Logs SQL. Small, but non-deterministic issues (NOW(),
+                                    RAND())</li>
+                                <li><strong>ROW:</strong> Logs actual changes. Larger, but deterministic. Recommended.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>Read replica có vấn đề gì?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Replication lag:</strong> Stale data possible</li>
+                                <li><strong>Read-your-writes:</strong> May not see just-written data</li>
+                                <li><strong>Solution:</strong> Route critical reads to master, use semi-sync</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>Sharding strategies?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Range:</strong> Based on value range (date, ID). Risk: hotspots</li>
+                                <li><strong>Hash:</strong> hash(key) % shards. Even distribution, hard to reshard</li>
+                                <li><strong>Directory:</strong> Lookup table. Flexible, single lookup point</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>Sharding challenges?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li>Cross-shard queries (JOIN, aggregations)</li>
+                                <li>No foreign keys across shards</li>
+                                <li>Distributed transactions complex</li>
+                                <li>Resharding is painful (consistent hashing helps)</li>
+                                <li>Application complexity increases</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>ProxySQL dùng để làm gì?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li>Read-write splitting (route queries)</li>
+                                <li>Connection pooling (reduce MySQL connections)</li>
+                                <li>Query caching</li>
+                                <li>Query rewriting/blocking</li>
+                                <li>Load balancing across replicas</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>Connection pooling benefits?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li>Avoid connection overhead (TCP + auth ~20-100ms)</li>
+                                <li>Limit max connections to DB</li>
+                                <li>Reuse connections across requests</li>
+                                <li>Better resource utilization</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q9</span>
+                            <p>Failover strategy cho MySQL?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Manual:</strong> Promote replica, update DNS/config</li>
+                                <li><strong>MHA/Orchestrator:</strong> Automatic failover tools</li>
+                                <li><strong>Group Replication:</strong> Built-in automatic failover</li>
+                                <li><strong>Cloud managed:</strong> RDS Multi-AZ, Aurora</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q10</span>
+                            <p>Vertical vs Horizontal scaling?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Vertical:</strong> Bigger hardware (more RAM, CPU). Simple, limited ceiling.
+                                </li>
+                                <li><strong>Horizontal:</strong> More servers (replicas, sharding). Complex, unlimited
+                                    scale.</li>
+                            </ul>
+                            <p>Start vertical, add read replicas, shard when needed.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="storage-engines.html" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>Storage
+                        Engines</span></a>
+                <a href="backup-security.html" class="nav-btn next"><span>Backup & Security</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

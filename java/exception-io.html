@@ -24,7 +24,7 @@
     </nav>
 
     <header class="topic-header">
-        <div class="topic-icon java"><i class="fas fa-exclamation-circle"></i></div>
+        <div class="topic-icon java"><i class="fas fa-exclamation-triangle"></i></div>
         <div class="topic-info">
             <span class="topic-category">Java Core</span>
             <h1>Exception Handling & I/O</h1>
@@ -38,9 +38,9 @@
             <ul>
                 <li><a href="#hierarchy">Exception Hierarchy</a></li>
                 <li><a href="#checked">Checked vs Unchecked</a></li>
-                <li><a href="#try-catch">Try-Catch-Finally</a></li>
-                <li><a href="#try-resources">Try-with-Resources</a></li>
+                <li><a href="#handling">Exception Handling</a></li>
                 <li><a href="#custom">Custom Exceptions</a></li>
+                <li><a href="#try-resources">try-with-resources</a></li>
                 <li><a href="#io">IO Streams</a></li>
                 <li><a href="#nio">NIO & NIO.2</a></li>
                 <li><a href="#serialization">Serialization</a></li>
@@ -49,8 +49,9 @@
         </aside>
 
         <article class="main-content">
+            <!-- EXCEPTION HIERARCHY -->
             <section class="content-section">
-                <h2 id="hierarchy" class="section-title"><span class="section-icon">🌳</span>Exception Hierarchy</h2>
+                <h2 id="hierarchy" class="section-title"><span class="section-icon">📊</span>Exception Hierarchy</h2>
 
                 <div class="concept-card">
                     <div class="concept-content">
@@ -65,10 +66,9 @@
      StackOverflowError  RuntimeException  Checked Exceptions
                             │              │
                     ┌───────┴───────┐     ├── IOException
-                    │               │     ├── SQLException
-            NullPointerException    │     ├── ClassNotFoundException
-            ArrayIndexOutOfBounds   │     └── InterruptedException
-            IllegalArgumentException│
+            NullPointerException    │     ├── SQLException
+            IndexOutOfBounds        │     ├── ClassNotFoundException
+            IllegalArgumentException│     └── InterruptedException
             IllegalStateException   │
             ClassCastException      │
             ArithmeticException     │</code></pre>
@@ -77,12 +77,14 @@
                 </div>
             </section>
 
+            <!-- CHECKED VS UNCHECKED -->
             <section class="content-section">
                 <h2 id="checked" class="section-title"><span class="section-icon">✔️</span>Checked vs Unchecked</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>Types of Exceptions</h3><span class="badge essential">Essential</span>
+                        <h3>Phân loại Exception</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
                         <div class="comparison-table">
@@ -97,25 +99,25 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Extends</td>
+                                        <td><strong>Extends</strong></td>
                                         <td>Exception</td>
                                         <td>RuntimeException</td>
                                         <td>Error</td>
                                     </tr>
                                     <tr>
-                                        <td>Compile check</td>
-                                        <td>✅ Must handle/declare</td>
-                                        <td>❌ Optional</td>
-                                        <td>❌ Should not catch</td>
+                                        <td><strong>Compile check</strong></td>
+                                        <td>✅ Bắt buộc handle/declare</td>
+                                        <td>❌</td>
+                                        <td>❌</td>
                                     </tr>
                                     <tr>
-                                        <td>Recovery</td>
-                                        <td>Possible</td>
-                                        <td>Usually bugs</td>
-                                        <td>Usually fatal</td>
+                                        <td><strong>Recoverable</strong></td>
+                                        <td>Thường có</td>
+                                        <td>Thường do bug</td>
+                                        <td>Không</td>
                                     </tr>
                                     <tr>
-                                        <td>Examples</td>
+                                        <td><strong>Ví dụ</strong></td>
                                         <td>IOException, SQLException</td>
                                         <td>NullPointerException</td>
                                         <td>OutOfMemoryError</td>
@@ -124,53 +126,50 @@
                             </table>
                         </div>
 
-                        <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Java</span><span
-                                    class="code-title">Handling Strategies</span></div>
-                            <pre><code>// 1. Handle with try-catch
-public void readFile(String path) {
-    try {
-        Files.readString(Path.of(path));
-    } catch (IOException e) {
-        log.error("Error reading file", e);
-    }
-}
-
-// 2. Declare with throws
-public void readFile(String path) throws IOException {
-    Files.readString(Path.of(path));  // Caller must handle
-}
-
-// 3. Wrap as RuntimeException
-public void readFile(String path) {
-    try {
-        Files.readString(Path.of(path));
-    } catch (IOException e) {
-        throw new UncheckedIOException(e);  // Runtime wrapper
-    }
-}</code></pre>
+                        <div class="info-box">
+                            <h4><i class="fas fa-lightbulb"></i> Quy tắc chọn loại Exception</h4>
+                            <ul>
+                                <li><strong>Checked:</strong> Caller có thể recover (file not found, network error)</li>
+                                <li><strong>Unchecked:</strong> Programming errors, caller không thể fix (null, invalid
+                                    args)</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- EXCEPTION HANDLING -->
             <section class="content-section">
-                <h2 id="try-catch" class="section-title"><span class="section-icon">🛡️</span>Try-Catch-Finally</h2>
+                <h2 id="handling" class="section-title"><span class="section-icon">🛡️</span>Exception Handling</h2>
 
                 <div class="concept-card">
                     <div class="concept-content">
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span
-                                    class="code-title">Exception Handling Patterns</span></div>
-                            <pre><code>// Multi-catch (Java 7+)
+                                    class="code-title">try-catch-finally</span></div>
+                            <pre><code class="language-java">// 1. Handle với try-catch
+public void readFile(String path) {
+    try {
+        String content = Files.readString(Path.of(path));
+    } catch (IOException e) {
+        log.error("Lỗi đọc file", e);
+    }
+}
+
+// 2. Declare với throws
+public void readFile(String path) throws IOException {
+    String content = Files.readString(Path.of(path));
+}
+
+// 3. Multi-catch (Java 7+)
 try {
-    // risky code
+    // code
 } catch (IOException | SQLException e) {
-    // Handle both the same way
+    // Xử lý cả hai giống nhau
     log.error("Error: " + e.getMessage());
 }
 
-// Catch order: specific to general
+// Catch order: specific → general
 try {
     // code
 } catch (FileNotFoundException e) {
@@ -179,97 +178,51 @@ try {
     // General later
 }
 
-// Finally always executes (except System.exit)
+// finally LUÔN chạy (trừ System.exit)
 try {
     return doSomething();
 } finally {
-    cleanup();  // ALWAYS runs, even after return
+    cleanup();  // LUÔN chạy, kể cả sau return
 }
 
-// Re-throwing with cause
+// Re-throwing với cause
 try {
     readConfig();
 } catch (IOException e) {
-    throw new ConfigException("Failed to load config", e);
+    throw new ConfigException("Không load được config", e);
 }</code></pre>
                         </div>
 
                         <div class="warning-box">
                             <h4><i class="fas fa-exclamation-triangle"></i> Common Mistakes</h4>
                             <ul>
-                                <li>❌ Empty catch block - swallows exception</li>
-                                <li>❌ Catching Exception/Throwable - too broad</li>
-                                <li>❌ <code>throw e</code> instead of <code>throw e</code> (loses stack trace in old
-                                    Java)</li>
-                                <li>❌ Return in finally - overrides try's return</li>
+                                <li>❌ Catch generic <code>Exception</code> - mất thông tin cụ thể</li>
+                                <li>❌ Empty catch block - swallow exception</li>
+                                <li>❌ Catch <code>Throwable</code> - bao gồm cả Error</li>
+                                <li>❌ Return trong finally - override try/catch return</li>
                             </ul>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- CUSTOM EXCEPTIONS -->
             <section class="content-section">
-                <h2 id="try-resources" class="section-title"><span class="section-icon">🔄</span>Try-with-Resources</h2>
+                <h2 id="custom" class="section-title"><span class="section-icon">🔧</span>Custom Exceptions</h2>
 
                 <div class="concept-card">
-                    <div class="concept-header">
-                        <h3>Automatic Resource Management</h3><span class="badge essential">Essential</span>
-                    </div>
                     <div class="concept-content">
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span
-                                    class="code-title">Try-with-Resources</span></div>
-                            <pre><code>// Resources automatically closed (in reverse order)
-try (FileInputStream fis = new FileInputStream("in.txt");
-     FileOutputStream fos = new FileOutputStream("out.txt")) {
-    // Use streams
-    fos.write(fis.readAllBytes());
-}  // fos.close() then fis.close() called automatically
-
-// Java 9+: effectively final resources
-BufferedReader br = new BufferedReader(new FileReader("file.txt"));
-try (br) {  // Can use variable directly if effectively final
-    return br.readLine();
-}
-
-// Custom AutoCloseable
-public class Connection implements AutoCloseable {
-    @Override
-    public void close() {
-        System.out.println("Connection closed");
-    }
-}
-
-try (Connection conn = new Connection()) {
-    // Use connection
-}  // close() called automatically</code></pre>
-                        </div>
-
-                        <div class="info-box">
-                            <h4><i class="fas fa-info-circle"></i> Suppressed Exceptions</h4>
-                            <p>If both try block and close() throw, close() exception is suppressed and attached to main
-                                exception:</p>
-                            <pre><code>catch (Exception e) {
-    for (Throwable t : e.getSuppressed()) {
-        // Handle suppressed exceptions
-    }
-}</code></pre>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section class="content-section">
-                <h2 id="custom" class="section-title"><span class="section-icon">🎨</span>Custom Exceptions</h2>
-
-                <div class="concept-card">
-                    <div class="concept-content">
-                        <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Best
-                                    Practices</span></div>
-                            <pre><code>// Checked exception (extend Exception)
+                                    class="code-title">Creating Custom Exceptions</span></div>
+                            <pre><code class="language-java">// Checked Exception
 public class BusinessException extends Exception {
     private final String errorCode;
+    
+    public BusinessException(String message) {
+        super(message);
+        this.errorCode = "UNKNOWN";
+    }
     
     public BusinessException(String message, String errorCode) {
         super(message);
@@ -277,47 +230,129 @@ public class BusinessException extends Exception {
     }
     
     public BusinessException(String message, Throwable cause) {
-        super(message, cause);  // Preserve cause
+        super(message, cause);
         this.errorCode = "UNKNOWN";
     }
     
-    public String getErrorCode() { return errorCode; }
+    public String getErrorCode() {
+        return errorCode;
+    }
 }
 
-// Unchecked exception (extend RuntimeException)
-public class ResourceNotFoundException extends RuntimeException {
-    public ResourceNotFoundException(String resource, Long id) {
-        super(String.format("%s not found with id: %d", resource, id));
+// Unchecked Exception
+public class ValidationException extends RuntimeException {
+    private final List&lt;String&gt; errors;
+    
+    public ValidationException(List&lt;String&gt; errors) {
+        super("Validation failed: " + errors);
+        this.errors = errors;
+    }
+    
+    public List&lt;String&gt; getErrors() {
+        return errors;
     }
 }
 
 // Usage
-throw new ResourceNotFoundException("User", 123L);</code></pre>
-                        </div>
-
-                        <div class="key-points">
-                            <h4><i class="fas fa-check"></i> Exception Best Practices</h4>
-                            <ul>
-                                <li>Use checked exceptions for recoverable conditions</li>
-                                <li>Use runtime exceptions for programming errors</li>
-                                <li>Always preserve the cause (constructor with Throwable)</li>
-                                <li>Create specific exceptions, not generic ones</li>
-                                <li>Include useful information in message</li>
-                            </ul>
+if (user == null) {
+    throw new ValidationException(List.of("User không được null"));
+}</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- TRY WITH RESOURCES -->
+            <section class="content-section">
+                <h2 id="try-resources" class="section-title"><span class="section-icon">🔄</span>try-with-resources</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>AutoCloseable Interface</h3>
+                        <span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">try-with-resources (Java 7+)</span></div>
+                            <pre><code class="language-java">// ❌ Old way - verbose, error-prone
+FileInputStream fis = null;
+try {
+    fis = new FileInputStream("file.txt");
+    // use fis
+} catch (IOException e) {
+    // handle
+} finally {
+    if (fis != null) {
+        try {
+            fis.close();
+        } catch (IOException e) {
+            // log
+        }
+    }
+}
+
+// ✅ try-with-resources - automatic close
+try (FileInputStream fis = new FileInputStream("file.txt")) {
+    // use fis
+} catch (IOException e) {
+    // handle
+}
+// fis.close() tự động được gọi
+
+// Multiple resources - đóng theo thứ tự ngược
+try (FileInputStream fis = new FileInputStream("input.txt");
+     FileOutputStream fos = new FileOutputStream("output.txt")) {
+    // use both
+}
+// fos.close() gọi trước, rồi fis.close()
+
+// Java 9: effectively final resources
+FileInputStream fis = new FileInputStream("file.txt");
+try (fis) {  // Không cần khai báo lại
+    // use fis
+}</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Custom
+                                    AutoCloseable</span></div>
+                            <pre><code class="language-java">public class DatabaseConnection implements AutoCloseable {
+    private Connection conn;
+    
+    public DatabaseConnection(String url) throws SQLException {
+        this.conn = DriverManager.getConnection(url);
+    }
+    
+    @Override
+    public void close() throws SQLException {
+        if (conn != null && !conn.isClosed()) {
+            conn.close();
+        }
+    }
+}
+
+// Usage
+try (DatabaseConnection db = new DatabaseConnection(url)) {
+    // use db
+}  // auto close</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- IO STREAMS -->
             <section class="content-section">
                 <h2 id="io" class="section-title"><span class="section-icon">📁</span>IO Streams</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>Traditional IO</h3><span class="badge important">Important</span>
+                        <h3>java.io Package</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
                         <div class="comparison-table">
+                            <h4>Byte Streams vs Character Streams</h4>
                             <table>
                                 <thead>
                                     <tr>
@@ -328,28 +363,23 @@ throw new ResourceNotFoundException("User", 123L);</code></pre>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Base class</td>
-                                        <td>InputStream, OutputStream</td>
-                                        <td>Reader, Writer</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Unit</td>
+                                        <td><strong>Unit</strong></td>
                                         <td>byte (8-bit)</td>
                                         <td>char (16-bit Unicode)</td>
                                     </tr>
                                     <tr>
-                                        <td>File</td>
-                                        <td>FileInputStream/OutputStream</td>
-                                        <td>FileReader/Writer</td>
+                                        <td><strong>Input</strong></td>
+                                        <td>InputStream</td>
+                                        <td>Reader</td>
                                     </tr>
                                     <tr>
-                                        <td>Buffered</td>
-                                        <td>BufferedInputStream</td>
-                                        <td>BufferedReader</td>
+                                        <td><strong>Output</strong></td>
+                                        <td>OutputStream</td>
+                                        <td>Writer</td>
                                     </tr>
                                     <tr>
-                                        <td>Use for</td>
-                                        <td>Binary data, images</td>
+                                        <td><strong>Use for</strong></td>
+                                        <td>Binary (images, audio)</td>
                                         <td>Text files</td>
                                     </tr>
                                 </tbody>
@@ -357,10 +387,11 @@ throw new ResourceNotFoundException("User", 123L);</code></pre>
                         </div>
 
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">IO
-                                    Examples</span></div>
-                            <pre><code>// Reading text file
-try (BufferedReader reader = new BufferedReader(new FileReader("file.txt"))) {
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Common
+                                    IO Operations</span></div>
+                            <pre><code class="language-java">// Reading text file
+try (BufferedReader reader = new BufferedReader(
+        new FileReader("file.txt"))) {
     String line;
     while ((line = reader.readLine()) != null) {
         System.out.println(line);
@@ -368,214 +399,287 @@ try (BufferedReader reader = new BufferedReader(new FileReader("file.txt"))) {
 }
 
 // Writing text file
-try (BufferedWriter writer = new BufferedWriter(new FileWriter("file.txt"))) {
+try (BufferedWriter writer = new BufferedWriter(
+        new FileWriter("output.txt"))) {
     writer.write("Hello World");
     writer.newLine();
+    writer.write("Second line");
 }
 
 // Copying binary file
-try (InputStream in = new FileInputStream("source.bin");
-     OutputStream out = new FileOutputStream("dest.bin")) {
+try (InputStream in = new FileInputStream("image.png");
+     OutputStream out = new FileOutputStream("copy.png")) {
     byte[] buffer = new byte[8192];
     int bytesRead;
     while ((bytesRead = in.read(buffer)) != -1) {
         out.write(buffer, 0, bytesRead);
     }
+}
+
+// Java 9+ transferTo
+try (InputStream in = new FileInputStream("source");
+     OutputStream out = new FileOutputStream("dest")) {
+    in.transferTo(out);
 }</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- NIO & NIO.2 -->
             <section class="content-section">
-                <h2 id="nio" class="section-title"><span class="section-icon">⚡</span>NIO & NIO.2</h2>
+                <h2 id="nio" class="section-title"><span class="section-icon">🚀</span>NIO & NIO.2</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>New IO (Java 7+)</h3><span class="badge important">Important</span>
+                        <h3>java.nio.file Package (Java 7+)</h3>
+                        <span class="badge important">Important</span>
                     </div>
                     <div class="concept-content">
-                        <div class="comparison-table">
-                            <h4>IO vs NIO</h4>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Feature</th>
-                                        <th>IO</th>
-                                        <th>NIO</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Model</td>
-                                        <td>Stream-based</td>
-                                        <td>Buffer-based</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Blocking</td>
-                                        <td>Blocking</td>
-                                        <td>Non-blocking possible</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Thread per connection</td>
-                                        <td>Yes</td>
-                                        <td>Selector (1 thread many channels)</td>
-                                    </tr>
-                                    <tr>
-                                        <td>API style</td>
-                                        <td>Object-oriented</td>
-                                        <td>Buffer, Channel, Selector</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Files
-                                    API (NIO.2)</span></div>
-                            <pre><code>// Path API
-Path path = Path.of("folder", "file.txt");
-Path absolute = path.toAbsolutePath();
-Path parent = path.getParent();
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Path &
+                                    Files API</span></div>
+                            <pre><code class="language-java">// Path - thay thế File
+Path path = Path.of("dir", "file.txt");
+Path path2 = Paths.get("/home/user/file.txt");
 
-// Files utility class - modern way
-String content = Files.readString(Path.of("file.txt"));
+path.getFileName();      // file.txt
+path.getParent();        // dir
+path.toAbsolutePath();   // absolute path
+path.resolve("sub");     // dir/file.txt/sub
+path.resolveSibling("other.txt");  // dir/other.txt
+
+// Files utility class
+// Đọc/ghi file
+String content = Files.readString(path);
 List&lt;String&gt; lines = Files.readAllLines(path);
 byte[] bytes = Files.readAllBytes(path);
 
 Files.writeString(path, "content");
 Files.write(path, lines);
+Files.write(path, bytes);
+
+// File operations
+Files.exists(path);
+Files.isDirectory(path);
+Files.isReadable(path);
+Files.size(path);
+Files.getLastModifiedTime(path);
+
 Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
 Files.move(source, target);
 Files.delete(path);
+Files.deleteIfExists(path);
 
-// Directory operations
+Files.createFile(path);
 Files.createDirectory(path);
-Files.createDirectories(path);  // Creates parents too
-boolean exists = Files.exists(path);
-boolean isDir = Files.isDirectory(path);
+Files.createDirectories(path);  // với parents</code></pre>
+                        </div>
 
-// Walk directory tree
-try (Stream&lt;Path&gt; paths = Files.walk(Paths.get("dir"))) {
-    paths.filter(Files::isRegularFile)
-         .forEach(System.out::println);
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Walking
+                                    Directory Tree</span></div>
+                            <pre><code class="language-java">// List files trong directory
+try (Stream&lt;Path&gt; stream = Files.list(dir)) {
+    stream.filter(Files::isRegularFile)
+          .forEach(System.out::println);
 }
 
-// Find files
-try (Stream&lt;Path&gt; paths = Files.find(dir, maxDepth,
+// Walk directory tree (recursive)
+try (Stream&lt;Path&gt; stream = Files.walk(dir)) {
+    List&lt;Path&gt; javaFiles = stream
+        .filter(p -> p.toString().endsWith(".java"))
+        .collect(toList());
+}
+
+// Find with filter
+try (Stream&lt;Path&gt; stream = Files.find(dir, 10,
         (path, attrs) -> attrs.isRegularFile() 
-                        && path.toString().endsWith(".java"))) {
-    paths.forEach(System.out::println);
+                      && path.toString().endsWith(".txt"))) {
+    stream.forEach(System.out::println);
+}
+
+// Watch directory for changes
+WatchService watcher = FileSystems.getDefault().newWatchService();
+dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+
+while (true) {
+    WatchKey key = watcher.take();
+    for (WatchEvent&lt;?&gt; event : key.pollEvents()) {
+        System.out.println(event.kind() + ": " + event.context());
+    }
+    key.reset();
 }</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- SERIALIZATION -->
             <section class="content-section">
-                <h2 id="serialization" class="section-title"><span class="section-icon">💾</span>Serialization</h2>
+                <h2 id="serialization" class="section-title"><span class="section-icon">📦</span>Serialization</h2>
 
                 <div class="concept-card">
                     <div class="concept-content">
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Java</span><span
-                                    class="code-title">Serialization Basics</span></div>
-                            <pre><code>// Implement Serializable
-public class Person implements Serializable {
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Object
+                                    Serialization</span></div>
+                            <pre><code class="language-java">// Class phải implement Serializable
+public class User implements Serializable {
     private static final long serialVersionUID = 1L;  // Version control
     
     private String name;
-    private transient String password;  // Not serialized
-    private static String country;      // Not serialized (static)
-    
-    // Custom serialization
-    private void writeObject(ObjectOutputStream out) throws IOException {
-        out.defaultWriteObject();
-        out.writeObject(encrypt(password));
-    }
-    
-    private void readObject(ObjectInputStream in) 
-            throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        this.password = decrypt((String) in.readObject());
-    }
+    private int age;
+    private transient String password;  // Không serialize
 }
 
 // Serialize
-try (ObjectOutputStream out = new ObjectOutputStream(
-        new FileOutputStream("person.ser"))) {
-    out.writeObject(person);
+try (ObjectOutputStream oos = new ObjectOutputStream(
+        new FileOutputStream("user.dat"))) {
+    oos.writeObject(user);
 }
 
 // Deserialize
-try (ObjectInputStream in = new ObjectInputStream(
-        new FileInputStream("person.ser"))) {
-    Person p = (Person) in.readObject();
+try (ObjectInputStream ois = new ObjectInputStream(
+        new FileInputStream("user.dat"))) {
+    User user = (User) ois.readObject();
+}
+
+// Custom serialization
+private void writeObject(ObjectOutputStream oos) throws IOException {
+    oos.defaultWriteObject();
+    oos.writeObject(encrypt(password));
+}
+
+private void readObject(ObjectInputStream ois) 
+        throws IOException, ClassNotFoundException {
+    ois.defaultReadObject();
+    password = decrypt((String) ois.readObject());
 }</code></pre>
                         </div>
 
                         <div class="warning-box">
                             <h4><i class="fas fa-exclamation-triangle"></i> Serialization Issues</h4>
                             <ul>
-                                <li><strong>Security:</strong> Deserialization can execute malicious code</li>
-                                <li><strong>Performance:</strong> Slow compared to other formats</li>
-                                <li><strong>Versioning:</strong> Must manage serialVersionUID</li>
-                                <li><strong>Alternative:</strong> Use JSON (Jackson, Gson) instead</li>
+                                <li><strong>Security:</strong> Deserialization có thể vulnerable</li>
+                                <li><strong>Version:</strong> serialVersionUID phải match</li>
+                                <li><strong>Performance:</strong> Chậm hơn JSON/Protocol Buffers</li>
+                                <li><strong>Recommendation:</strong> Prefer JSON for modern apps</li>
                             </ul>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- INTERVIEW QUESTIONS -->
             <section id="interview" class="content-section">
                 <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
 
                 <div class="interview-questions">
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q1</span>
-                            <p>Checked vs Unchecked exceptions?</p>
+                            <p>Checked vs Unchecked Exception?</p>
                         </div>
                         <div class="answer">
-                            <p><strong>Checked:</strong> Must handle at compile time (IOException).
-                                <strong>Unchecked:</strong> RuntimeException, optional handling (NullPointerException).
-                                Checked = recoverable, Unchecked = bugs.</p>
+                            <ul>
+                                <li><strong>Checked:</strong> Extends Exception, compiler bắt buộc handle/declare,
+                                    recoverable errors</li>
+                                <li><strong>Unchecked:</strong> Extends RuntimeException, không bắt buộc handle,
+                                    programming bugs</li>
+                            </ul>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q2</span>
-                            <p>What is try-with-resources?</p>
+                            <p>try-with-resources hoạt động thế nào?</p>
                         </div>
                         <div class="answer">
-                            <p>Automatically closes resources implementing <code>AutoCloseable</code>. Closes in reverse
-                                declaration order. Handles suppressed exceptions properly.</p>
+                            <p>Resources implement AutoCloseable được tự động close khi exit try block. close() gọi theo
+                                thứ tự ngược khai báo. Suppressed exceptions được track nếu close() throws.</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q3</span>
-                            <p>What is transient keyword?</p>
+                            <p>finally block có luôn chạy không?</p>
                         </div>
                         <div class="answer">
-                            <p>Marks a field to be <strong>excluded from serialization</strong>. Used for sensitive data
-                                (passwords), computed fields, or non-serializable objects.</p>
+                            <p>Gần như luôn chạy. Exceptions: System.exit(), JVM crash, thread kill. finally chạy TRƯỚC
+                                return value được trả về.</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q4</span>
-                            <p>Difference between IO and NIO?</p>
+                            <p>Error vs Exception?</p>
                         </div>
                         <div class="answer">
-                            <p><strong>IO:</strong> Stream-based, blocking. <strong>NIO:</strong> Buffer/Channel-based,
-                                non-blocking possible, uses Selectors for multiplexing. NIO better for many connections.
-                            </p>
+                            <ul>
+                                <li><strong>Error:</strong> Serious problems, không nên catch (OOM, StackOverflow)</li>
+                                <li><strong>Exception:</strong> Recoverable conditions, nên handle appropriately</li>
+                            </ul>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q5</span>
-                            <p>What is serialVersionUID?</p>
+                            <p>throw vs throws?</p>
                         </div>
                         <div class="answer">
-                            <p>Version identifier for serialization compatibility. If not specified, JVM generates one
-                                based on class structure. Change it when making incompatible changes to class.</p>
+                            <ul>
+                                <li><strong>throw:</strong> Dùng để ném exception: <code>throw new Exception()</code>
+                                </li>
+                                <li><strong>throws:</strong> Declare trong method signature:
+                                    <code>void foo() throws Exception</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>NIO khác IO như thế nào?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>IO:</strong> Stream-based, blocking, simple</li>
+                                <li><strong>NIO:</strong> Buffer/Channel-based, non-blocking, better for
+                                    high-concurrency</li>
+                                <li><strong>NIO.2:</strong> Path/Files API, file system operations</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>transient keyword dùng để làm gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Mark field không được serialize. Dùng cho sensitive data (password), computed fields,
+                                hoặc non-serializable objects.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>serialVersionUID là gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Version control cho serialized class. Nếu mismatch giữa serialized data và class
+                                definition → InvalidClassException. Nên explicit declare.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q9</span>
+                            <p>Files.readString() vs BufferedReader?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Files.readString():</strong> Simple, đọc toàn bộ file vào memory</li>
+                                <li><strong>BufferedReader:</strong> Đọc từng line, tốt cho large files</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q10</span>
+                            <p>Suppressed Exceptions là gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Exceptions xảy ra khi close() resources trong try-with-resources. Được attach vào primary
+                                exception với addSuppressed(). Lấy ra với getSuppressed().</p>
                         </div>
                     </div>
                 </div>
@@ -591,6 +695,8 @@ try (ObjectInputStream in = new ObjectInputStream(
     </main>
 
     <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
     <script src="../js/main.js"></script>
 </body>
 

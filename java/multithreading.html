@@ -43,24 +43,28 @@
                 <li><a href="#locks">Locks (ReentrantLock)</a></li>
                 <li><a href="#executor">ExecutorService</a></li>
                 <li><a href="#completable">CompletableFuture</a></li>
+                <li><a href="#forkjoin">Fork/Join Framework</a></li>
+                <li><a href="#virtual-threads">Virtual Threads (Java 21)</a></li>
                 <li><a href="#problems">Common Problems</a></li>
                 <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
             </ul>
         </aside>
 
         <article class="main-content">
+            <!-- THREAD BASICS -->
             <section class="content-section">
                 <h2 id="thread-basics" class="section-title"><span class="section-icon">🧵</span>Thread Basics</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>Creating Threads</h3><span class="badge essential">Essential</span>
+                        <h3>Tạo Thread trong Java</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">3 Ways
-                                    to Create Thread</span></div>
-                            <pre><code>// 1. Extend Thread class
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">4 cách
+                                    tạo Thread</span></div>
+                            <pre><code class="language-java">// 1. Extend Thread class
 class MyThread extends Thread {
     @Override
     public void run() {
@@ -69,11 +73,11 @@ class MyThread extends Thread {
 }
 new MyThread().start();
 
-// 2. Implement Runnable (Preferred - allows extending another class)
+// 2. Implement Runnable (Ưu tiên - cho phép extends class khác)
 class MyRunnable implements Runnable {
     @Override
     public void run() {
-        System.out.println("Runnable running");
+        System.out.println("Runnable đang chạy");
     }
 }
 new Thread(new MyRunnable()).start();
@@ -81,13 +85,13 @@ new Thread(new MyRunnable()).start();
 // 3. Lambda (Java 8+)
 new Thread(() -> System.out.println("Lambda thread")).start();
 
-// 4. Using Callable (returns value, can throw exception)
+// 4. Callable (trả về giá trị, có thể throw exception)
 Callable&lt;String&gt; callable = () -> {
-    return "Result";
+    return "Kết quả";
 };
 ExecutorService executor = Executors.newSingleThreadExecutor();
 Future&lt;String&gt; future = executor.submit(callable);
-String result = future.get();  // Blocks until complete</code></pre>
+String result = future.get();  // Blocks cho đến khi hoàn thành</code></pre>
                         </div>
 
                         <div class="comparison-table">
@@ -102,32 +106,41 @@ String result = future.get();  // Blocks until complete</code></pre>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Return value</td>
+                                        <td><strong>Return value</strong></td>
                                         <td>void</td>
                                         <td>V (generic)</td>
                                     </tr>
                                     <tr>
-                                        <td>Exception</td>
-                                        <td>Cannot throw checked</td>
-                                        <td>Can throw Exception</td>
+                                        <td><strong>Exception</strong></td>
+                                        <td>Không throw checked</td>
+                                        <td>Có thể throw Exception</td>
                                     </tr>
                                     <tr>
-                                        <td>Method</td>
+                                        <td><strong>Method</strong></td>
                                         <td>run()</td>
                                         <td>call()</td>
                                     </tr>
                                     <tr>
-                                        <td>Used with</td>
+                                        <td><strong>Dùng với</strong></td>
                                         <td>Thread, Executor</td>
-                                        <td>ExecutorService only</td>
+                                        <td>Chỉ ExecutorService</td>
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> start() vs run()</h4>
+                            <ul>
+                                <li><strong>start():</strong> Tạo thread mới, JVM gọi run() trong thread đó</li>
+                                <li><strong>run():</strong> Chỉ gọi method bình thường, KHÔNG tạo thread mới!</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- THREAD LIFECYCLE -->
             <section class="content-section">
                 <h2 id="thread-lifecycle" class="section-title"><span class="section-icon">🔄</span>Thread Lifecycle
                 </h2>
@@ -135,7 +148,7 @@ String result = future.get();  // Blocks until complete</code></pre>
                 <div class="concept-card">
                     <div class="concept-content">
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">States</span></div>
+                            <div class="code-header"><span class="code-lang">Diagram</span></div>
                             <pre><code>    NEW ──start()──> RUNNABLE ──run complete──> TERMINATED
                           │ ↑
                           │ │
@@ -153,25 +166,25 @@ String result = future.get();  // Blocks until complete</code></pre>
                                 <thead>
                                     <tr>
                                         <th>State</th>
-                                        <th>Description</th>
+                                        <th>Mô tả</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
                                         <td><code>NEW</code></td>
-                                        <td>Thread created but not started</td>
+                                        <td>Thread được tạo nhưng chưa start()</td>
                                     </tr>
                                     <tr>
                                         <td><code>RUNNABLE</code></td>
-                                        <td>Running or ready to run</td>
+                                        <td>Đang chạy hoặc sẵn sàng chạy</td>
                                     </tr>
                                     <tr>
                                         <td><code>BLOCKED</code></td>
-                                        <td>Waiting for monitor lock</td>
+                                        <td>Đang chờ monitor lock</td>
                                     </tr>
                                     <tr>
                                         <td><code>WAITING</code></td>
-                                        <td>wait(), join() without timeout</td>
+                                        <td>wait(), join() không timeout</td>
                                     </tr>
                                     <tr>
                                         <td><code>TIMED_WAITING</code></td>
@@ -179,72 +192,85 @@ String result = future.get();  // Blocks until complete</code></pre>
                                     </tr>
                                     <tr>
                                         <td><code>TERMINATED</code></td>
-                                        <td>Completed execution</td>
+                                        <td>Hoàn thành execution</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
 
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Common
-                                    Methods</span></div>
-                            <pre><code>// sleep() - pause current thread
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Các
+                                    method quan trọng</span></div>
+                            <pre><code class="language-java">// sleep() - pause thread hiện tại
 Thread.sleep(1000);  // RUNNABLE → TIMED_WAITING
 
-// join() - wait for thread to complete
-thread.join();       // Current thread waits for 'thread' to finish
+// join() - chờ thread khác hoàn thành
+thread.join();       // Thread hiện tại chờ 'thread' kết thúc
+thread.join(5000);   // Chờ tối đa 5 giây
 
-// wait/notify - communication between threads
+// wait/notify - giao tiếp giữa các threads
 synchronized(lock) {
-    lock.wait();     // Release lock and wait
-    lock.notify();   // Wake up one waiting thread
-    lock.notifyAll(); // Wake up all waiting threads
+    while (!condition) {
+        lock.wait();     // Nhả lock và chờ
+    }
+    // Tiếp tục khi được notify
 }
 
-// interrupt() - request thread to stop
-thread.interrupt();  // Sets interrupt flag
-// Inside thread:
+synchronized(lock) {
+    condition = true;
+    lock.notify();   // Đánh thức 1 thread đang wait
+    lock.notifyAll(); // Đánh thức tất cả
+}
+
+// interrupt() - yêu cầu thread dừng
+thread.interrupt();  // Set interrupt flag
+// Trong thread:
 if (Thread.interrupted()) { // Clears flag
-    // Handle interrupt
-}</code></pre>
+    // Xử lý interrupt
+}
+
+// yield() - gợi ý scheduler cho thread khác chạy
+Thread.yield();  // Không đảm bảo gì cả</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- SYNCHRONIZATION -->
             <section class="content-section">
                 <h2 id="synchronization" class="section-title"><span class="section-icon">🔐</span>Synchronization</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>synchronized Keyword</h3><span class="badge essential">Essential</span>
+                        <h3>synchronized Keyword</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Types
-                                    of Synchronization</span></div>
-                            <pre><code>public class Counter {
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Các
+                                    loại Synchronization</span></div>
+                            <pre><code class="language-java">public class Counter {
     private int count = 0;
     
-    // 1. Synchronized method - locks 'this' object
+    // 1. Synchronized method - khóa 'this' object
     public synchronized void increment() {
-        count++;
+        count++;  // Chỉ 1 thread vào được tại một thời điểm
     }
     
-    // 2. Synchronized block - locks specific object
+    // 2. Synchronized block - khóa object cụ thể
     public void incrementWithBlock() {
         synchronized(this) {
             count++;
         }
     }
     
-    // 3. Static synchronized - locks Class object
+    // 3. Static synchronized - khóa Class object
     private static int staticCount = 0;
     public static synchronized void staticIncrement() {
-        staticCount++;
+        staticCount++;  // Khóa Counter.class
     }
     
-    // 4. Lock on specific object
+    // 4. Khóa trên object riêng (tốt hơn)
     private final Object lock = new Object();
     public void incrementWithLock() {
         synchronized(lock) {
@@ -254,19 +280,20 @@ if (Thread.interrupted()) { // Clears flag
 }</code></pre>
                         </div>
 
-                        <div class="warning-box">
-                            <h4><i class="fas fa-exclamation-triangle"></i> Synchronization Issues</h4>
+                        <div class="info-box">
+                            <h4><i class="fas fa-lightbulb"></i> Best Practices</h4>
                             <ul>
-                                <li><strong>Deadlock:</strong> Two threads waiting for each other's locks</li>
-                                <li><strong>Livelock:</strong> Threads keep responding to each other without progress
-                                </li>
-                                <li><strong>Starvation:</strong> Thread never gets CPU time</li>
+                                <li>Dùng private final Object để làm lock</li>
+                                <li>Giữ synchronized block nhỏ nhất có thể</li>
+                                <li>Không synchronized trên String literals hoặc boxed primitives</li>
+                                <li>Đảm bảo nhất quán về lock ordering để tránh deadlock</li>
                             </ul>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- VOLATILE & ATOMIC -->
             <section class="content-section">
                 <h2 id="volatile" class="section-title"><span class="section-icon">⚡</span>Volatile & Atomic</h2>
 
@@ -276,19 +303,19 @@ if (Thread.interrupted()) { // Clears flag
                             <div class="column highlight-box">
                                 <h4>volatile</h4>
                                 <ul>
-                                    <li>Visibility guarantee only</li>
-                                    <li>No atomicity for compound operations</li>
-                                    <li>Reads/writes directly from main memory</li>
-                                    <li>Example: <code>volatile boolean flag = true;</code></li>
+                                    <li>Chỉ đảm bảo <strong>visibility</strong></li>
+                                    <li>Không đảm bảo atomicity</li>
+                                    <li>Đọc/ghi trực tiếp từ main memory</li>
+                                    <li>Dùng cho: boolean flags, status</li>
                                 </ul>
                             </div>
                             <div class="column highlight-box">
                                 <h4>Atomic Classes</h4>
                                 <ul>
-                                    <li>Visibility + Atomicity</li>
-                                    <li>Lock-free using CAS (Compare-And-Swap)</li>
+                                    <li>Visibility + <strong>Atomicity</strong></li>
+                                    <li>Lock-free dùng CAS (Compare-And-Swap)</li>
                                     <li>AtomicInteger, AtomicLong, AtomicReference</li>
-                                    <li>Example: <code>atomicInt.incrementAndGet();</code></li>
+                                    <li>Dùng cho: counters, accumulators</li>
                                 </ul>
                             </div>
                         </div>
@@ -296,40 +323,72 @@ if (Thread.interrupted()) { // Clears flag
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span
                                     class="code-title">Volatile vs Atomic</span></div>
-                            <pre><code>// volatile - visibility only
+                            <pre><code class="language-java">// volatile - chỉ visibility
+private volatile boolean running = true;
+// OK cho flag
+public void stop() { running = false; }
+
 private volatile int count = 0;
-count++;  // NOT ATOMIC! (read, increment, write)
+count++;  // ❌ KHÔNG ATOMIC! (read → increment → write)
 
 // AtomicInteger - visibility + atomicity
 private AtomicInteger atomicCount = new AtomicInteger(0);
-atomicCount.incrementAndGet();  // ATOMIC (CAS operation)
+atomicCount.incrementAndGet();  // ✅ ATOMIC (CAS operation)
 
-// Common Atomic operations
+// Các operations phổ biến
 atomicCount.get();
 atomicCount.set(10);
-atomicCount.compareAndSet(expected, newValue);
+atomicCount.compareAndSet(expected, newValue);  // CAS
 atomicCount.getAndAdd(5);
-atomicCount.updateAndGet(x -> x * 2);</code></pre>
+atomicCount.updateAndGet(x -> x * 2);
+atomicCount.accumulateAndGet(10, Integer::sum);
+
+// AtomicReference cho objects
+AtomicReference&lt;User&gt; userRef = new AtomicReference&lt;&gt;(user);
+userRef.compareAndSet(oldUser, newUser);</code></pre>
                         </div>
 
-                        <div class="info-box">
-                            <h4><i class="fas fa-lightbulb"></i> When to use what?</h4>
-                            <ul>
-                                <li><strong>volatile:</strong> Simple flags (boolean stop flag)</li>
-                                <li><strong>Atomic:</strong> Counters, accumulators with compound operations</li>
-                                <li><strong>synchronized:</strong> Multiple variables need to be updated together</li>
-                            </ul>
+                        <div class="comparison-table">
+                            <h4>Khi nào dùng gì?</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Scenario</th>
+                                        <th>Solution</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Boolean flag (stop, running)</td>
+                                        <td>volatile</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Counter (increment, decrement)</td>
+                                        <td>AtomicInteger</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Nhiều biến cập nhật cùng lúc</td>
+                                        <td>synchronized</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Read-heavy, ít write</td>
+                                        <td>ReadWriteLock</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- LOCKS -->
             <section class="content-section">
                 <h2 id="locks" class="section-title"><span class="section-icon">🔒</span>Locks</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>ReentrantLock</h3><span class="badge important">Important</span>
+                        <h3>ReentrantLock</h3>
+                        <span class="badge important">Important</span>
                     </div>
                     <div class="concept-content">
                         <div class="comparison-table">
@@ -344,34 +403,34 @@ atomicCount.updateAndGet(x -> x * 2);</code></pre>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Try lock</td>
+                                        <td><strong>Try lock</strong></td>
                                         <td>❌</td>
                                         <td>✅ tryLock()</td>
                                     </tr>
                                     <tr>
-                                        <td>Timeout</td>
+                                        <td><strong>Timeout</strong></td>
                                         <td>❌</td>
                                         <td>✅ tryLock(time, unit)</td>
                                     </tr>
                                     <tr>
-                                        <td>Interruptible</td>
+                                        <td><strong>Interruptible</strong></td>
                                         <td>❌</td>
                                         <td>✅ lockInterruptibly()</td>
                                     </tr>
                                     <tr>
-                                        <td>Fairness</td>
+                                        <td><strong>Fairness</strong></td>
                                         <td>❌</td>
-                                        <td>✅ Fair mode available</td>
+                                        <td>✅ new ReentrantLock(true)</td>
                                     </tr>
                                     <tr>
-                                        <td>Multiple conditions</td>
+                                        <td><strong>Multiple conditions</strong></td>
                                         <td>❌</td>
                                         <td>✅ newCondition()</td>
                                     </tr>
                                     <tr>
-                                        <td>Automatic release</td>
+                                        <td><strong>Tự động release</strong></td>
                                         <td>✅</td>
-                                        <td>❌ Must unlock in finally</td>
+                                        <td>❌ Phải unlock trong finally</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -380,43 +439,92 @@ atomicCount.updateAndGet(x -> x * 2);</code></pre>
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span
                                     class="code-title">ReentrantLock Usage</span></div>
-                            <pre><code>private final ReentrantLock lock = new ReentrantLock();
+                            <pre><code class="language-java">private final ReentrantLock lock = new ReentrantLock();
 
 public void safeMethod() {
-    lock.lock();  // Acquire lock
+    lock.lock();  // Lấy lock
     try {
         // Critical section
     } finally {
-        lock.unlock();  // ALWAYS release in finally!
+        lock.unlock();  // LUÔN release trong finally!
     }
 }
 
-// Try lock with timeout
+// Try lock với timeout - tránh deadlock
 if (lock.tryLock(1, TimeUnit.SECONDS)) {
     try {
-        // Got the lock
+        // Lấy được lock
     } finally {
         lock.unlock();
     }
 } else {
-    // Couldn't get lock, do something else
+    // Không lấy được lock, xử lý khác
 }
 
-// ReadWriteLock for read-heavy workloads
+// ReadWriteLock cho read-heavy workloads
 ReadWriteLock rwLock = new ReentrantReadWriteLock();
-rwLock.readLock().lock();   // Multiple readers allowed
-rwLock.writeLock().lock();  // Exclusive write access</code></pre>
+
+// Nhiều threads đọc đồng thời
+rwLock.readLock().lock();
+try {
+    // Read operations
+} finally {
+    rwLock.readLock().unlock();
+}
+
+// Chỉ 1 thread write tại một thời điểm
+rwLock.writeLock().lock();
+try {
+    // Write operations
+} finally {
+    rwLock.writeLock().unlock();
+}</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">StampedLock (Java 8)</span></div>
+                            <pre><code class="language-java">// StampedLock - optimistic reading
+StampedLock sl = new StampedLock();
+
+// Optimistic read - không block writers
+long stamp = sl.tryOptimisticRead();
+// Đọc data
+int currentX = x;
+int currentY = y;
+// Validate stamp - có writer nào chen vào không?
+if (!sl.validate(stamp)) {
+    // Có writer, phải lấy read lock thực sự
+    stamp = sl.readLock();
+    try {
+        currentX = x;
+        currentY = y;
+    } finally {
+        sl.unlockRead(stamp);
+    }
+}
+
+// Write lock
+long stamp = sl.writeLock();
+try {
+    x = newX;
+    y = newY;
+} finally {
+    sl.unlockWrite(stamp);
+}</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- EXECUTOR SERVICE -->
             <section class="content-section">
                 <h2 id="executor" class="section-title"><span class="section-icon">⚙️</span>ExecutorService</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>Thread Pool Types</h3><span class="badge essential">Essential</span>
+                        <h3>Thread Pool Types</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
                         <div class="comparison-table">
@@ -434,19 +542,19 @@ rwLock.writeLock().lock();  // Exclusive write access</code></pre>
                                         <td>newFixedThreadPool(n)</td>
                                         <td>n / n</td>
                                         <td>Unbounded</td>
-                                        <td>Known task count</td>
+                                        <td>Số task biết trước</td>
                                     </tr>
                                     <tr>
                                         <td>newCachedThreadPool()</td>
                                         <td>0 / MAX</td>
                                         <td>SynchronousQueue</td>
-                                        <td>Short-lived tasks</td>
+                                        <td>Task ngắn, burst</td>
                                     </tr>
                                     <tr>
                                         <td>newSingleThreadExecutor()</td>
                                         <td>1 / 1</td>
                                         <td>Unbounded</td>
-                                        <td>Sequential execution</td>
+                                        <td>Tuần tự</td>
                                     </tr>
                                     <tr>
                                         <td>newScheduledThreadPool(n)</td>
@@ -456,9 +564,9 @@ rwLock.writeLock().lock();  // Exclusive write access</code></pre>
                                     </tr>
                                     <tr>
                                         <td>newWorkStealingPool()</td>
-                                        <td>N/A</td>
-                                        <td>N/A</td>
-                                        <td>Fork/Join, parallelism</td>
+                                        <td>CPU cores</td>
+                                        <td>Per-thread</td>
+                                        <td>Parallel, Fork/Join</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -467,105 +575,332 @@ rwLock.writeLock().lock();  // Exclusive write access</code></pre>
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span
                                     class="code-title">ExecutorService Usage</span></div>
-                            <pre><code>// Create thread pool
+                            <pre><code class="language-java">// Tạo thread pool
 ExecutorService executor = Executors.newFixedThreadPool(4);
 
 // Submit tasks
-executor.execute(() -> System.out.println("Runnable"));
-Future&lt;String&gt; future = executor.submit(() -> "Callable result");
+executor.execute(() -> System.out.println("Runnable"));  // Không return
+Future&lt;String&gt; future = executor.submit(() -> "Callable result");  // Return Future
 
-// Get result (blocks)
+// Lấy kết quả (blocking)
 String result = future.get();
 String resultWithTimeout = future.get(5, TimeUnit.SECONDS);
 
-// Submit multiple tasks
+// Check status
+future.isDone();
+future.isCancelled();
+future.cancel(true);  // mayInterruptIfRunning
+
+// Submit nhiều tasks
 List&lt;Callable&lt;String&gt;&gt; tasks = Arrays.asList(
     () -> "Task 1",
     () -> "Task 2"
 );
-List&lt;Future&lt;String&gt;&gt; futures = executor.invokeAll(tasks);
-String firstResult = executor.invokeAny(tasks);  // First completed
+List&lt;Future&lt;String&gt;&gt; futures = executor.invokeAll(tasks);  // Chờ tất cả
+String firstResult = executor.invokeAny(tasks);  // Chờ 1 cái đầu tiên xong
 
-// ALWAYS shutdown!
-executor.shutdown();  // Graceful
-executor.shutdownNow();  // Immediate
+// ⚠️ LUÔN shutdown!
+executor.shutdown();  // Graceful - chờ tasks hiện tại
+executor.shutdownNow();  // Immediate - interrupt tất cả
 executor.awaitTermination(10, TimeUnit.SECONDS);</code></pre>
                         </div>
 
-                        <div class="warning-box">
-                            <h4><i class="fas fa-exclamation-triangle"></i> ThreadPoolExecutor Parameters</h4>
-                            <pre><code>new ThreadPoolExecutor(
-    corePoolSize,    // Minimum threads to keep
-    maximumPoolSize, // Maximum threads allowed
-    keepAliveTime,   // Idle time before killing excess threads
-    timeUnit,
-    workQueue,       // Queue for pending tasks
-    threadFactory,   // How to create threads
-    rejectionHandler // What to do when queue is full
-);</code></pre>
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Custom
+                                    ThreadPoolExecutor</span></div>
+                            <pre><code class="language-java">// Tạo custom thread pool
+ThreadPoolExecutor executor = new ThreadPoolExecutor(
+    4,                  // corePoolSize - threads luôn giữ
+    10,                 // maximumPoolSize - max threads
+    60L,                // keepAliveTime - idle time trước khi kill
+    TimeUnit.SECONDS,
+    new LinkedBlockingQueue&lt;&gt;(100),  // work queue
+    new ThreadFactory() {  // custom thread names
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r);
+            t.setName("MyPool-" + t.getId());
+            return t;
+        }
+    },
+    new ThreadPoolExecutor.CallerRunsPolicy()  // rejection handler
+);
+
+// Rejection policies:
+// AbortPolicy (default) - throws RejectedExecutionException
+// CallerRunsPolicy - caller thread runs the task
+// DiscardPolicy - silently discard
+// DiscardOldestPolicy - discard oldest in queue</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- COMPLETABLE FUTURE -->
             <section class="content-section">
                 <h2 id="completable" class="section-title"><span class="section-icon">🚀</span>CompletableFuture</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>Async Programming (Java 8+)</h3><span class="badge important">Important</span>
+                        <h3>Async Programming (Java 8+)</h3>
+                        <span class="badge important">Important</span>
                     </div>
                     <div class="concept-content">
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span
                                     class="code-title">CompletableFuture Patterns</span></div>
-                            <pre><code>// Create async task
+                            <pre><code class="language-java">// Tạo async task
 CompletableFuture&lt;String&gt; future = CompletableFuture.supplyAsync(() -> {
+    // Chạy trong ForkJoinPool.commonPool()
     return "Hello";
 });
 
+// Với custom executor
+CompletableFuture&lt;String&gt; future = CompletableFuture.supplyAsync(
+    () -> "Hello",
+    myExecutor
+);
+
 // Chain transformations
 future.thenApply(s -> s + " World")           // Transform result
-      .thenAccept(System.out::println)        // Consume result
-      .thenRun(() -> System.out.println("Done")); // Run after
+      .thenAccept(System.out::println)        // Consume result (void)
+      .thenRun(() -> System.out.println("Done")); // Run after (void)
 
-// Combine futures
-CompletableFuture&lt;String&gt; f1 = CompletableFuture.supplyAsync(() -> "Hello");
+// Async variants (chạy trong thread khác)
+future.thenApplyAsync(s -> s + " World")
+      .thenAcceptAsync(System.out::println);</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Combining Futures</span></div>
+                            <pre><code class="language-java">CompletableFuture&lt;String&gt; f1 = CompletableFuture.supplyAsync(() -> "Hello");
 CompletableFuture&lt;String&gt; f2 = CompletableFuture.supplyAsync(() -> "World");
 
-// Combine when both complete
-f1.thenCombine(f2, (s1, s2) -> s1 + " " + s2);
+// Combine khi cả 2 complete
+CompletableFuture&lt;String&gt; combined = f1.thenCombine(f2, (s1, s2) -> s1 + " " + s2);
 
-// Run after both complete
+// Chờ tất cả complete
 CompletableFuture.allOf(f1, f2).join();
 
-// Run after first completes
-CompletableFuture.anyOf(f1, f2);
+// Chờ 1 trong các futures complete
+CompletableFuture&lt;Object&gt; any = CompletableFuture.anyOf(f1, f2);
 
 // Error handling
 future.exceptionally(ex -> "Default")
       .handle((result, ex) -> {
           if (ex != null) return "Error: " + ex.getMessage();
           return result;
-      });</code></pre>
+      });
+
+// Real-world pattern: parallel API calls
+List&lt;CompletableFuture&lt;Product&gt;&gt; futures = productIds.stream()
+    .map(id -> CompletableFuture.supplyAsync(() -> fetchProduct(id)))
+    .collect(toList());
+
+List&lt;Product&gt; products = futures.stream()
+    .map(CompletableFuture::join)
+    .collect(toList());</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- FORK/JOIN -->
+            <section class="content-section">
+                <h2 id="forkjoin" class="section-title"><span class="section-icon">🍴</span>Fork/Join Framework</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Divide and Conquer</h3>
+                        <span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <p>Fork/Join framework dùng cho các task có thể chia nhỏ (divide-and-conquer). Work-stealing
+                            algorithm giúp load balancing.</p>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">RecursiveTask Example</span></div>
+                            <pre><code class="language-java">// RecursiveTask&lt;V&gt; - có return value
+class SumTask extends RecursiveTask&lt;Long&gt; {
+    private final long[] array;
+    private final int start, end;
+    private static final int THRESHOLD = 1000;
+    
+    public SumTask(long[] array, int start, int end) {
+        this.array = array;
+        this.start = start;
+        this.end = end;
+    }
+    
+    @Override
+    protected Long compute() {
+        int length = end - start;
+        
+        // Base case: đủ nhỏ thì tính trực tiếp
+        if (length <= THRESHOLD) {
+            long sum = 0;
+            for (int i = start; i < end; i++) {
+                sum += array[i];
+            }
+            return sum;
+        }
+        
+        // Recursive case: chia đôi
+        int mid = start + length / 2;
+        SumTask left = new SumTask(array, start, mid);
+        SumTask right = new SumTask(array, mid, end);
+        
+        left.fork();  // Submit left task to pool
+        Long rightResult = right.compute();  // Compute right in current thread
+        Long leftResult = left.join();  // Wait for left result
+        
+        return leftResult + rightResult;
+    }
+}
+
+// Sử dụng
+ForkJoinPool pool = ForkJoinPool.commonPool();
+long sum = pool.invoke(new SumTask(array, 0, array.length));
+
+// RecursiveAction - không return value
+class SortTask extends RecursiveAction {
+    @Override
+    protected void compute() {
+        // Similar pattern but no return
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIRTUAL THREADS -->
+            <section class="content-section">
+                <h2 id="virtual-threads" class="section-title"><span class="section-icon">🌐</span>Virtual Threads (Java
+                    21)</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Lightweight Threads</h3>
+                        <span class="badge advanced">Advanced</span>
+                    </div>
+                    <div class="concept-content">
+                        <p>Virtual Threads là lightweight threads được quản lý bởi JVM, không phải OS. Có thể tạo hàng
+                            triệu virtual threads!</p>
+
+                        <div class="comparison-table">
+                            <h4>Platform Threads vs Virtual Threads</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Platform Thread</th>
+                                        <th>Virtual Thread</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Managed by</strong></td>
+                                        <td>OS</td>
+                                        <td>JVM</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Stack size</strong></td>
+                                        <td>~1MB</td>
+                                        <td>~KB (grows as needed)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Max count</strong></td>
+                                        <td>~Thousands</td>
+                                        <td>Millions</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Scheduling</strong></td>
+                                        <td>OS scheduler</td>
+                                        <td>JVM scheduler</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Blocking cost</strong></td>
+                                        <td>Expensive</td>
+                                        <td>Cheap (unmount)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Use case</strong></td>
+                                        <td>CPU-bound</td>
+                                        <td>I/O-bound</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Virtual
+                                    Threads Usage</span></div>
+                            <pre><code class="language-java">// Tạo virtual thread
+Thread vThread = Thread.ofVirtual().start(() -> {
+    System.out.println("Virtual thread: " + Thread.currentThread());
+});
+
+// Named virtual thread
+Thread named = Thread.ofVirtual()
+    .name("my-virtual-thread")
+    .start(() -> doWork());
+
+// Virtual thread executor (tốt nhất cho I/O-bound tasks)
+try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+    // Mỗi task chạy trong 1 virtual thread mới
+    IntStream.range(0, 10_000).forEach(i -> {
+        executor.submit(() -> {
+            Thread.sleep(1000);  // Cheap blocking!
+            return i;
+        });
+    });
+}  // Auto shutdown với try-with-resources
+
+// Structured Concurrency (Preview in Java 21)
+try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+    Future&lt;User&gt; user = scope.fork(() -> fetchUser(id));
+    Future&lt;List&lt;Order&gt;&gt; orders = scope.fork(() -> fetchOrders(id));
+    
+    scope.join();           // Wait for both
+    scope.throwIfFailed();  // Propagate exceptions
+    
+    return new Response(user.resultNow(), orders.resultNow());
+}</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Virtual Threads Best Practices</h4>
+                            <ul>
+                                <li><strong>Dùng cho I/O-bound:</strong> HTTP calls, DB queries, file I/O</li>
+                                <li><strong>Không dùng cho CPU-bound:</strong> Virtual threads vẫn map lên platform
+                                    threads</li>
+                                <li><strong>Avoid synchronized:</strong> Dùng ReentrantLock thay thế (virtual thread bị
+                                    pin khi synchronized)</li>
+                                <li><strong>Không pool:</strong> Tạo mới cho mỗi task, không reuse</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- COMMON PROBLEMS -->
             <section class="content-section">
                 <h2 id="problems" class="section-title"><span class="section-icon">⚠️</span>Common Problems</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>Deadlock</h3><span class="badge essential">Essential</span>
+                        <h3>Deadlock, Livelock, Starvation</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span
                                     class="code-title">Deadlock Example</span></div>
-                            <pre><code>// DEADLOCK: Thread 1 holds lock1, waits for lock2
-//           Thread 2 holds lock2, waits for lock1
+                            <pre><code class="language-java">// DEADLOCK: Thread 1 giữ lock1, chờ lock2
+//           Thread 2 giữ lock2, chờ lock1
 
 Object lock1 = new Object();
 Object lock2 = new Object();
@@ -580,44 +915,78 @@ synchronized(lock2) {
     synchronized(lock1) { /* work */ }  // DEADLOCK!
 }
 
-// SOLUTION: Always acquire locks in same order
-// Or use tryLock() with timeout</code></pre>
+// ✅ SOLUTION 1: Lock ordering - luôn lấy lock theo thứ tự
+synchronized(lock1) {
+    synchronized(lock2) { /* work */ }
+}
+
+// ✅ SOLUTION 2: tryLock với timeout
+if (lock1.tryLock(1, TimeUnit.SECONDS)) {
+    try {
+        if (lock2.tryLock(1, TimeUnit.SECONDS)) {
+            try {
+                // work
+            } finally { lock2.unlock(); }
+        }
+    } finally { lock1.unlock(); }
+}</code></pre>
                         </div>
 
-                        <div class="key-points">
-                            <h4><i class="fas fa-shield-alt"></i> How to Prevent Deadlock</h4>
-                            <ul>
-                                <li>Lock ordering - always acquire locks in same order</li>
-                                <li>Lock timeout - use tryLock() with timeout</li>
-                                <li>Deadlock detection - use JConsole, thread dumps</li>
-                                <li>Reduce lock scope - minimize critical sections</li>
-                            </ul>
+                        <div class="comparison-table">
+                            <h4>Deadlock vs Livelock vs Starvation</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Problem</th>
+                                        <th>Mô tả</th>
+                                        <th>Solution</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Deadlock</strong></td>
+                                        <td>Threads chờ nhau mãi mãi</td>
+                                        <td>Lock ordering, tryLock timeout</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Livelock</strong></td>
+                                        <td>Threads phản ứng lẫn nhau, không progress</td>
+                                        <td>Random delay, back-off</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Starvation</strong></td>
+                                        <td>Thread không bao giờ được CPU time</td>
+                                        <td>Fair lock, priority adjustment</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- INTERVIEW QUESTIONS -->
             <section id="interview" class="content-section">
                 <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
 
                 <div class="interview-questions">
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q1</span>
-                            <p>Difference between synchronized and ReentrantLock?</p>
+                            <p>Sự khác biệt giữa synchronized và ReentrantLock?</p>
                         </div>
                         <div class="answer">
-                            <p><strong>ReentrantLock</strong> offers: tryLock(), timeout, interruptible locking, fair
-                                mode, multiple conditions. But requires manual unlock in finally block.</p>
+                            <p><strong>ReentrantLock</strong> cung cấp: tryLock(), timeout, interruptible locking, fair
+                                mode, multiple conditions. Nhưng phải unlock thủ công trong finally block. synchronized
+                                tự động release khi exit block.</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q2</span>
-                            <p>What is volatile keyword?</p>
+                            <p>volatile keyword dùng để làm gì?</p>
                         </div>
                         <div class="answer">
-                            <p>Guarantees <strong>visibility</strong> - reads/writes go directly to main memory. Does
-                                NOT guarantee atomicity. Use for simple flags, not compound operations like counter++.
-                            </p>
+                            <p>Đảm bảo <strong>visibility</strong> - reads/writes đi thẳng vào main memory. KHÔNG đảm
+                                bảo atomicity. Dùng cho simple flags, không dùng cho counter++ (cần AtomicInteger).</p>
                         </div>
                     </div>
                     <div class="question-card">
@@ -625,27 +994,90 @@ synchronized(lock2) {
                             <p>Thread.sleep() vs Object.wait()?</p>
                         </div>
                         <div class="answer">
-                            <p><strong>sleep():</strong> Pauses thread, keeps lock. <strong>wait():</strong> Releases
-                                lock and waits for notify(). wait() must be inside synchronized block.</p>
+                            <ul>
+                                <li><strong>sleep():</strong> Pause thread, GIỮ lock, timeout</li>
+                                <li><strong>wait():</strong> NHẢ lock và chờ notify(). Phải trong synchronized block.
+                                </li>
+                            </ul>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q4</span>
-                            <p>How to handle exceptions in ExecutorService?</p>
+                            <p>Xử lý exception trong ExecutorService thế nào?</p>
                         </div>
                         <div class="answer">
-                            <p>1) Wrap in try-catch inside task. 2) Use Future.get() which throws ExecutionException. 3)
-                                Override ThreadPoolExecutor.afterExecute(). 4) Set UncaughtExceptionHandler.</p>
+                            <p>1) Wrap try-catch trong task. 2) Future.get() throws ExecutionException. 3) Override
+                                ThreadPoolExecutor.afterExecute(). 4) Set UncaughtExceptionHandler.</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q5</span>
-                            <p>What is ThreadLocal?</p>
+                            <p>ThreadLocal là gì?</p>
                         </div>
                         <div class="answer">
-                            <p>Provides thread-confined variables. Each thread has its own copy. Useful for: user
-                                sessions, DB connections, SimpleDateFormat (not thread-safe). Remember to call remove()
-                                to prevent memory leaks!</p>
+                            <p>Biến thread-local - mỗi thread có bản copy riêng. Dùng cho: user sessions, DB
+                                connections, SimpleDateFormat (not thread-safe). ⚠️ Nhớ gọi remove() để tránh memory
+                                leaks!</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>Virtual Threads khác gì Platform Threads?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Platform:</strong> OS-managed, ~1MB stack, thousands max, expensive blocking
+                                </li>
+                                <li><strong>Virtual:</strong> JVM-managed, dynamic stack, millions possible, cheap
+                                    blocking</li>
+                            </ul>
+                            <p>Virtual threads tốt cho I/O-bound, platform threads cho CPU-bound.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>Deadlock là gì? Cách phòng tránh?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Deadlock:</strong> 2+ threads chờ nhau mãi mãi. <strong>Phòng tránh:</strong>
+                                Lock ordering (luôn lấy locks theo thứ tự), tryLock với timeout, giảm số locks cần
+                                thiết.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>CompletableFuture vs Future?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Future:</strong> Chỉ get() blocking, không chain được</li>
+                                <li><strong>CompletableFuture:</strong> thenApply, thenCombine, exceptionally,
+                                    non-blocking composition</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q9</span>
+                            <p>Fork/Join Framework dùng cho gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Divide-and-conquer tasks. Chia task lớn thành subtasks, xử lý parallel, merge kết quả.
+                                Work-stealing algorithm load balance giữa threads. Dùng RecursiveTask (có return) hoặc
+                                RecursiveAction (void).</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q10</span>
+                            <p>Các thread pool trong Executors?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>FixedThreadPool:</strong> n threads cố định, unbounded queue</li>
+                                <li><strong>CachedThreadPool:</strong> 0-MAX threads, tạo mới khi cần</li>
+                                <li><strong>SingleThreadExecutor:</strong> 1 thread, tuần tự</li>
+                                <li><strong>ScheduledThreadPool:</strong> Scheduled/periodic tasks</li>
+                                <li><strong>Virtual (Java 21):</strong> 1 virtual thread per task</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -661,6 +1093,8 @@ synchronized(lock2) {
     </main>
 
     <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
     <script src="../js/main.js"></script>
 </body>
 

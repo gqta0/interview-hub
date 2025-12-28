@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kubernetes - DevOps Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .topic-icon.k8s {
+            background: linear-gradient(135deg, #326CE5 0%, #1E4BA8 100%);
+        }
+
+        .topic-category {
+            color: #326CE5;
+        }
+
+        .q-number {
+            background: linear-gradient(135deg, #326CE5 0%, #1E4BA8 100%);
+        }
+
+        .question {
+            background: rgba(50, 108, 229, 0.1);
+        }
+
+        .page-navigation .nav-btn:hover {
+            background: rgba(50, 108, 229, 0.1);
+            border-color: #326CE5;
+            color: #326CE5;
+        }
+
+        .back-to-top {
+            background: linear-gradient(135deg, #326CE5 0%, #1E4BA8 100%);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="docker.html" class="nav-back"><i class="fas fa-arrow-left"></i> Docker</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon k8s"><i class="fas fa-dharmachakra"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">DevOps</span>
+            <h1>Kubernetes (K8s)</h1>
+            <p class="topic-desc">Pods, Deployments, Services, ConfigMaps, Ingress, Helm - Điều phối container quy mô
+                lớn</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#intro">Giới thiệu K8s</a></li>
+                <li><a href="#architecture">Kiến trúc Cluster</a></li>
+                <li><a href="#pods">Pods & Containers</a></li>
+                <li><a href="#workloads">Workload Resources</a></li>
+                <li><a href="#services">Services & Networking</a></li>
+                <li><a href="#ingress">Ingress</a></li>
+                <li><a href="#storage">Storage</a></li>
+                <li><a href="#config">ConfigMaps & Secrets</a></li>
+                <li><a href="#scaling">Scaling & Updates</a></li>
+                <li><a href="#rbac">RBAC & Security</a></li>
+                <li><a href="#helm">Helm Charts</a></li>
+                <li><a href="#advanced">Nâng cao</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <!-- GIỚI THIỆU -->
+            <section id="intro" class="content-section">
+                <h2 class="section-title"><span class="section-icon">☸️</span>Giới thiệu Kubernetes</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Kubernetes là gì?</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Định nghĩa</h4>
+                            <p>Kubernetes (K8s) là nền tảng mã nguồn mở để <strong>tự động hóa việc triển khai, mở rộng
+                                    và quản lý các ứng dụng container</strong>. Được Google phát triển dựa trên kinh
+                                nghiệm 15+ năm với hệ thống Borg.</p>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Docker Swarm vs Kubernetes</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Tính năng</th>
+                                        <th>Docker Swarm</th>
+                                        <th>Kubernetes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Độ phức tạp</strong></td>
+                                        <td>Đơn giản, dễ học</td>
+                                        <td>Phức tạp hơn, learning curve cao</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Quy mô</strong></td>
+                                        <td>Vừa và nhỏ</td>
+                                        <td>Lớn, enterprise</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Tính năng</strong></td>
+                                        <td>Cơ bản</td>
+                                        <td>Đầy đủ (auto-scaling, rollback...)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Hệ sinh thái</strong></td>
+                                        <td>Hạn chế</td>
+                                        <td>Rộng lớn (Helm, Istio, Prometheus...)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Cloud support</strong></td>
+                                        <td>Hạn chế</td>
+                                        <td>EKS, GKE, AKS (managed K8s)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>✅ Tính năng chính</h4>
+                                <ul>
+                                    <li>Self-healing (tự phục hồi)</li>
+                                    <li>Auto-scaling (horizontal/vertical)</li>
+                                    <li>Service discovery & load balancing</li>
+                                    <li>Rolling updates & rollbacks</li>
+                                    <li>Secret & config management</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>🔧 Khi nào dùng K8s?</h4>
+                                <ul>
+                                    <li>Microservices architecture</li>
+                                    <li>Nhiều containers cần orchestration</li>
+                                    <li>Yêu cầu high availability</li>
+                                    <li>CI/CD, DevOps workflows</li>
+                                    <li>Multi-cloud, hybrid cloud</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- KIẾN TRÚC -->
+            <section id="architecture" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🏗️</span>Kiến trúc Cluster</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Control Plane & Worker Nodes</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span
+                                    class="code-title">Kubernetes Cluster Architecture</span></div>
+                            <pre><code>┌─────────────────────────────────────────────────────────────────────┐
+│                        CONTROL PLANE (Master)                       │
+│  ┌─────────────┐ ┌──────────────┐ ┌────────────┐ ┌──────────────┐  │
+│  │ kube-apiserver│ │ etcd        │ │ scheduler  │ │ controller   │  │
+│  │ (REST API)   │ │ (key-value) │ │            │ │ manager      │  │
+│  └──────┬───────┘ └──────────────┘ └────────────┘ └──────────────┘  │
+│         │                                                           │
+│         │ Kubernetes API                                            │
+└─────────┼───────────────────────────────────────────────────────────┘
+          │
+          ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                        WORKER NODES                                 │
+│  ┌───────────────────────────────────────────────────────────────┐ │
+│  │ Node 1                                                         │ │
+│  │ ┌───────────┐ ┌────────────┐ ┌─────────────┐                  │ │
+│  │ │  kubelet  │ │ kube-proxy │ │ Container   │                  │ │
+│  │ │           │ │            │ │ Runtime     │                  │ │
+│  │ └───────────┘ └────────────┘ └─────────────┘                  │ │
+│  │ ┌─────────────────────────────────────────┐                   │ │
+│  │ │ Pod A      │ Pod B        │ Pod C       │                   │ │
+│  │ │ [Container]│ [Container]  │ [Container] │                   │ │
+│  │ └─────────────────────────────────────────┘                   │ │
+│  └───────────────────────────────────────────────────────────────┘ │
+│  ┌───────────────────────────────────────────────────────────────┐ │
+│  │ Node 2                                                         │ │
+│  │ ...                                                            │ │
+│  └───────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Các thành phần Control Plane</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Thành phần</th>
+                                        <th>Chức năng</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>kube-apiserver</strong></td>
+                                        <td>Điểm truy cập API duy nhất, xác thực và xử lý requests</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>etcd</strong></td>
+                                        <td>Database phân tán lưu trữ toàn bộ cluster state</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>kube-scheduler</strong></td>
+                                        <td>Chọn node phù hợp để chạy Pod mới</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>kube-controller-manager</strong></td>
+                                        <td>Chạy các controller (Node, Replication, Endpoints...)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>cloud-controller-manager</strong></td>
+                                        <td>Tương tác với cloud provider (load balancer, volumes...)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Các thành phần Worker Node</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Thành phần</th>
+                                        <th>Chức năng</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>kubelet</strong></td>
+                                        <td>Agent trên mỗi node, đảm bảo containers đang chạy trong Pods</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>kube-proxy</strong></td>
+                                        <td>Quản lý network rules, load balancing traffic đến Pods</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Container Runtime</strong></td>
+                                        <td>Chạy containers (containerd, CRI-O, Docker)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PODS -->
+            <section id="pods" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🫛</span>Pods & Containers</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Pod - Đơn vị triển khai nhỏ nhất</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Pod là gì?</h4>
+                            <ul>
+                                <li>Đơn vị triển khai nhỏ nhất trong K8s (không phải container)</li>
+                                <li>Có thể chứa 1 hoặc nhiều containers</li>
+                                <li>Các containers trong Pod chia sẻ network namespace và storage</li>
+                                <li>Pod có IP riêng, các containers trong Pod giao tiếp qua localhost</li>
+                            </ul>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">YAML</span><span class="code-title">Pod
+                                    Definition</span></div>
+                            <pre><code class="language-yaml">apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+  labels:
+    app: myapp
+    environment: production
+spec:
+  containers:
+    - name: main-app
+      image: myapp:1.0
+      ports:
+        - containerPort: 8080
+      resources:
+        requests:
+          memory: "128Mi"
+          cpu: "250m"
+        limits:
+          memory: "256Mi"
+          cpu: "500m"
+      env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: url
+      livenessProbe:
+        httpGet:
+          path: /health
+          port: 8080
+        initialDelaySeconds: 30
+        periodSeconds: 10
+      readinessProbe:
+        httpGet:
+          path: /ready
+          port: 8080
+        initialDelaySeconds: 5
+        periodSeconds: 5
+    - name: sidecar-logging
+      image: fluentd:latest
+      volumeMounts:
+        - name: logs
+          mountPath: /var/log/app
+  volumes:
+    - name: logs
+      emptyDir: {}</code></pre>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>🔍 Liveness Probe</h4>
+                                <p>Kiểm tra container còn sống không. Nếu fail → K8s restart container.</p>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>✅ Readiness Probe</h4>
+                                <p>Kiểm tra container sẵn sàng nhận traffic. Nếu fail → loại khỏi Service endpoints.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Pod Lifecycle</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Pod
+                                    States</span></div>
+                            <pre><code>Pod Phases:
+┌──────────────────────────────────────────────────────────────┐
+│  Pending    → Pod được chấp nhận nhưng chưa scheduled       │
+│      ↓                                                       │
+│  Running    → Pod đã được gắn vào node, containers đang chạy│
+│      ↓                                                       │
+│  Succeeded  → Tất cả containers hoàn thành thành công (Jobs)│
+│      hoặc                                                    │
+│  Failed     → Có container kết thúc với error                │
+│      hoặc                                                    │
+│  Unknown    → Không thể xác định state (node communication) │
+└──────────────────────────────────────────────────────────────┘
+
+Container States:
+- Waiting: Đang pull image, init...
+- Running: Đang chạy
+- Terminated: Đã dừng (thành công hoặc lỗi)</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- WORKLOADS -->
+            <section id="workloads" class="content-section">
+                <h2 class="section-title"><span class="section-icon">⚙️</span>Workload Resources</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Deployment, ReplicaSet, StatefulSet, DaemonSet</h3><span
+                            class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Resource</th>
+                                        <th>Mục đích</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Deployment</strong></td>
+                                        <td>Quản lý stateless apps, rolling updates</td>
+                                        <td>Web servers, APIs, microservices</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ReplicaSet</strong></td>
+                                        <td>Đảm bảo số lượng Pod replicas</td>
+                                        <td>Được Deployment tạo tự động</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>StatefulSet</strong></td>
+                                        <td>Stateful apps với stable identity</td>
+                                        <td>Databases, Kafka, ZooKeeper</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>DaemonSet</strong></td>
+                                        <td>Chạy 1 Pod trên mỗi node</td>
+                                        <td>Log collectors, monitoring agents</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Job</strong></td>
+                                        <td>Chạy task đến khi hoàn thành</td>
+                                        <td>Batch processing, migrations</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>CronJob</strong></td>
+                                        <td>Chạy Job theo schedule</td>
+                                        <td>Backups, reports, cleanup</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">YAML</span><span
+                                    class="code-title">Deployment Example</span></div>
+                            <pre><code class="language-yaml">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-deployment
+  labels:
+    app: myapp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: myapp
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # Tối đa thêm 1 pod trong quá trình update
+      maxUnavailable: 0  # Không pod nào unavailable
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+        - name: myapp
+          image: myapp:1.0
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Bash</span><span class="code-title">Kubectl
+                                    Commands</span></div>
+                            <pre><code class="language-bash"># Tạo và quản lý Deployments
+kubectl apply -f deployment.yaml
+kubectl get deployments
+kubectl describe deployment myapp-deployment
+
+# Scale
+kubectl scale deployment myapp-deployment --replicas=5
+
+# Update image
+kubectl set image deployment/myapp-deployment myapp=myapp:2.0
+
+# Rollout status và history
+kubectl rollout status deployment/myapp-deployment
+kubectl rollout history deployment/myapp-deployment
+
+# Rollback
+kubectl rollout undo deployment/myapp-deployment
+kubectl rollout undo deployment/myapp-deployment --to-revision=2</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SERVICES -->
+            <section id="services" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🌐</span>Services & Networking</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Service Types</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Mô tả</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>ClusterIP</strong></td>
+                                        <td>IP nội bộ cluster (default)</td>
+                                        <td>Communication giữa services</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>NodePort</strong></td>
+                                        <td>Expose qua port trên mỗi node (30000-32767)</td>
+                                        <td>Development, testing</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>LoadBalancer</strong></td>
+                                        <td>Tạo cloud load balancer</td>
+                                        <td>Production exposure (EKS, GKE)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ExternalName</strong></td>
+                                        <td>Map service -> DNS name</td>
+                                        <td>External services (RDS, SaaS)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">YAML</span><span class="code-title">Service
+                                    Examples</span></div>
+                            <pre><code class="language-yaml"># ClusterIP Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+spec:
+  type: ClusterIP
+  selector:
+    app: myapp       # Chọn pods có label app=myapp
+  ports:
+    - port: 80       # Service port
+      targetPort: 8080  # Container port
+      protocol: TCP
+
+---
+# LoadBalancer (cho cloud)
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-lb
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+spec:
+  type: LoadBalancer
+  selector:
+    app: myapp
+  ports:
+    - port: 80
+      targetPort: 8080</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> DNS trong Kubernetes</h4>
+                            <p>Service có thể được truy cập bằng DNS:
+                                <code>service-name.namespace.svc.cluster.local</code>
+                            </p>
+                            <p>Ví dụ: <code>myapp-service.default.svc.cluster.local</code> hoặc ngắn gọn
+                                <code>myapp-service</code>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INGRESS -->
+            <section id="ingress" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🚪</span>Ingress</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>HTTP/HTTPS Routing</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Ingress là gì?</h4>
+                            <ul>
+                                <li>Quản lý external access vào cluster (HTTP/HTTPS)</li>
+                                <li>Định nghĩa rules để route traffic đến Services</li>
+                                <li>Cần Ingress Controller để hoạt động (nginx, traefik, alb...)</li>
+                                <li>Hỗ trợ SSL termination, host-based và path-based routing</li>
+                            </ul>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">YAML</span><span class="code-title">Ingress
+                                    Example</span></div>
+                            <pre><code class="language-yaml">apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: myapp-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - myapp.example.com
+      secretName: myapp-tls-secret
+  rules:
+    - host: myapp.example.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: api-service
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-service
+                port:
+                  number: 80
+    - host: admin.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: admin-service
+                port:
+                  number: 80</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STORAGE -->
+            <section id="storage" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💾</span>Storage</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Volumes, PV & PVC</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Khái niệm</th>
+                                        <th>Mô tả</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Volume</strong></td>
+                                        <td>Storage gắn vào Pod, tồn tại suốt vòng đời Pod</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>PersistentVolume (PV)</strong></td>
+                                        <td>Đại diện cho storage thực tế (admin provision)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>PersistentVolumeClaim (PVC)</strong></td>
+                                        <td>Yêu cầu storage từ user/app</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>StorageClass</strong></td>
+                                        <td>Dynamic provisioning (tự động tạo PV)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">YAML</span><span class="code-title">PVC &
+                                    Pod</span></div>
+                            <pre><code class="language-yaml"># PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gp2        # AWS EBS
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+# Pod sử dụng PVC
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mysql-pod
+spec:
+  containers:
+    - name: mysql
+      image: mysql:8.0
+      env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: password
+      volumeMounts:
+        - name: mysql-storage
+          mountPath: /var/lib/mysql
+  volumes:
+    - name: mysql-storage
+      persistentVolumeClaim:
+        claimName: mysql-pvc</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Access Modes</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Mode</th>
+                                        <th>Mô tả</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>ReadWriteOnce (RWO)</strong></td>
+                                        <td>Một node có thể mount read-write</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ReadOnlyMany (ROX)</strong></td>
+                                        <td>Nhiều nodes có thể mount read-only</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ReadWriteMany (RWX)</strong></td>
+                                        <td>Nhiều nodes có thể mount read-write</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CONFIGMAPS & SECRETS -->
+            <section id="config" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔐</span>ConfigMaps & Secrets</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Quản lý cấu hình</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Resource</th>
+                                        <th>Dùng cho</th>
+                                        <th>Encoding</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>ConfigMap</strong></td>
+                                        <td>Non-sensitive config (env vars, config files)</td>
+                                        <td>Plain text</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Secret</strong></td>
+                                        <td>Sensitive data (passwords, API keys)</td>
+                                        <td>Base64 (not encryption!)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">YAML</span><span
+                                    class="code-title">ConfigMap & Secret</span></div>
+                            <pre><code class="language-yaml"># ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "info"
+  config.properties: |
+    database.host=mysql-service
+    database.port=3306
+    cache.ttl=300
+
+---
+# Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secret
+type: Opaque
+data:
+  DATABASE_PASSWORD: cGFzc3dvcmQxMjM=  # base64 encoded
+  API_KEY: c2VjcmV0LWFwaS1rZXk=
+
+---
+# Sử dụng trong Pod
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+spec:
+  containers:
+    - name: myapp
+      image: myapp:1.0
+      envFrom:
+        - configMapRef:
+            name: app-config
+        - secretRef:
+            name: app-secret
+      # Hoặc mount như file
+      volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+  volumes:
+    - name: config-volume
+      configMap:
+        name: app-config</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Lưu ý về Secrets</h4>
+                            <p>Secrets chỉ base64 encoded, KHÔNG phải encrypted! Để bảo mật thực sự, sử dụng:</p>
+                            <ul>
+                                <li>Encryption at rest (etcd encryption)</li>
+                                <li>External secret managers (AWS Secrets Manager, Vault)</li>
+                                <li>Sealed Secrets</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SCALING -->
+            <section id="scaling" class="content-section">
+                <h2 class="section-title"><span class="section-icon">📈</span>Scaling & Updates</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Horizontal Pod Autoscaler (HPA)</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">YAML</span><span class="code-title">HPA
+                                    Example</span></div>
+                            <pre><code class="language-yaml">apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: myapp-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: myapp-deployment
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300  # Đợi 5 phút trước khi scale down</code></pre>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>📊 HPA (Horizontal)</h4>
+                                <p>Tăng/giảm số lượng Pod replicas dựa trên CPU, memory, custom metrics.</p>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>📏 VPA (Vertical)</h4>
+                                <p>Tự động điều chỉnh resource requests/limits cho containers.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Rolling Updates & Rollbacks</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Rolling
+                                    Update Process</span></div>
+                            <pre><code>Rolling Update (maxSurge=1, maxUnavailable=0):
+┌───────────────────────────────────────────────────────────────┐
+│ Initial: 3 pods v1                                            │
+│   [v1] [v1] [v1]                                              │
+│                                                               │
+│ Step 1: Tạo 1 pod v2 (surge)                                  │
+│   [v1] [v1] [v1] [v2-starting]                                │
+│                                                               │
+│ Step 2: v2 ready → terminate 1 v1                             │
+│   [v1] [v1] [v2] [v2-starting]                                │
+│                                                               │
+│ Step 3: Tiếp tục cho đến khi hết v1                           │
+│   [v2] [v2] [v2]                                              │
+└───────────────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Bash</span><span class="code-title">Update
+                                    Commands</span></div>
+                            <pre><code class="language-bash"># Update image
+kubectl set image deployment/myapp myapp=myapp:v2
+
+# Kiểm tra rollout status
+kubectl rollout status deployment/myapp
+
+# Xem history
+kubectl rollout history deployment/myapp
+
+# Rollback
+kubectl rollout undo deployment/myapp
+kubectl rollout undo deployment/myapp --to-revision=2
+
+# Pause/Resume rollout
+kubectl rollout pause deployment/myapp
+kubectl rollout resume deployment/myapp</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RBAC -->
+            <section id="rbac" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔒</span>RBAC & Security</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Role-Based Access Control</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Resource</th>
+                                        <th>Scope</th>
+                                        <th>Mô tả</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Role</strong></td>
+                                        <td>Namespace</td>
+                                        <td>Định nghĩa permissions trong namespace</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>RoleBinding</strong></td>
+                                        <td>Namespace</td>
+                                        <td>Gán Role cho users/groups/service accounts</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ClusterRole</strong></td>
+                                        <td>Cluster</td>
+                                        <td>Permissions cluster-wide</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ClusterRoleBinding</strong></td>
+                                        <td>Cluster</td>
+                                        <td>Gán ClusterRole</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">YAML</span><span class="code-title">RBAC
+                                    Example</span></div>
+                            <pre><code class="language-yaml"># ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: myapp-sa
+  namespace: production
+
+---
+# Role (namespace-scoped)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+  namespace: production
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list"]
+
+---
+# RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-pods
+  namespace: production
+subjects:
+  - kind: ServiceAccount
+    name: myapp-sa
+    namespace: production
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- HELM -->
+            <section id="helm" class="content-section">
+                <h2 class="section-title"><span class="section-icon">⎈</span>Helm Charts</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Package Manager cho Kubernetes</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Helm là gì?</h4>
+                            <ul>
+                                <li>Package manager cho Kubernetes (như apt, npm)</li>
+                                <li>Chart = collection of K8s manifests có thể tái sử dụng</li>
+                                <li>Hỗ trợ templating với values</li>
+                                <li>Release management (upgrade, rollback)</li>
+                            </ul>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Bash</span><span class="code-title">Helm
+                                    Commands</span></div>
+                            <pre><code class="language-bash"># Thêm repository
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
+
+# Tìm kiếm charts
+helm search repo nginx
+helm search hub postgresql
+
+# Install chart
+helm install my-release bitnami/nginx
+helm install my-db bitnami/postgresql -f values.yaml
+
+# List releases
+helm list
+
+# Upgrade
+helm upgrade my-release bitnami/nginx --set replicas=3
+
+# Rollback
+helm rollback my-release 1
+
+# Uninstall
+helm uninstall my-release
+
+# Tạo chart mới
+helm create mychart</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Chart
+                                    Structure</span></div>
+                            <pre><code>mychart/
+├── Chart.yaml          # Metadata (name, version, dependencies)
+├── values.yaml         # Default configuration values
+├── charts/             # Dependency charts
+├── templates/          # Kubernetes manifest templates
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   ├── ingress.yaml
+│   ├── configmap.yaml
+│   ├── _helpers.tpl    # Template helpers
+│   └── NOTES.txt       # Post-install instructions
+└── .helmignore</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- NÂNG CAO -->
+            <section id="advanced" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🚀</span>Nâng cao</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Advanced Topics</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Công cụ và khái niệm nâng cao</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Topic</th>
+                                        <th>Mô tả</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Namespace</strong></td>
+                                        <td>Phân chia cluster thành các "virtual clusters"</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Resource Quotas</strong></td>
+                                        <td>Giới hạn tài nguyên theo namespace</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Network Policies</strong></td>
+                                        <td>Firewall rules cho pod-to-pod traffic</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Pod Disruption Budget</strong></td>
+                                        <td>Đảm bảo availability khi maintenance</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Taints & Tolerations</strong></td>
+                                        <td>Kiểm soát pod scheduling trên nodes</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Node Affinity</strong></td>
+                                        <td>Chọn nodes cụ thể cho pods</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Init Containers</strong></td>
+                                        <td>Containers chạy trước app container</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Sidecar Pattern</strong></td>
+                                        <td>Helper containers cùng pod (logging, proxy)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Công cụ ecosystem</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Tool</th>
+                                        <th>Mục đích</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Istio / Linkerd</strong></td>
+                                        <td>Service Mesh (traffic management, security)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Prometheus + Grafana</strong></td>
+                                        <td>Monitoring & alerting</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>EFK/Loki</strong></td>
+                                        <td>Logging stack</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ArgoCD / Flux</strong></td>
+                                        <td>GitOps continuous delivery</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Cert-Manager</strong></td>
+                                        <td>Tự động quản lý TLS certificates</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Kustomize</strong></td>
+                                        <td>Kubernetes manifest customization</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INTERVIEW QUESTIONS -->
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>Pod là gì? Tại sao không deploy container trực tiếp?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Pod</strong> là đơn vị triển khai nhỏ nhất trong K8s, có thể chứa 1 hoặc nhiều
+                                containers chia sẻ network/storage.</p>
+                            <p>Lý do: Pods cung cấp abstraction cho scheduling, scaling, và cho phép sidecar pattern
+                                (logging, proxy containers).</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>Deployment vs StatefulSet?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Deployment:</strong> Stateless apps, Pods có thể thay thế lẫn nhau, random
+                                    pod names</li>
+                                <li><strong>StatefulSet:</strong> Stateful apps, stable network identity (pod-0, pod-1),
+                                    stable persistent storage, ordered deployment/scaling</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>Service types trong Kubernetes?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>ClusterIP:</strong> Internal IP, services giao tiếp trong cluster</li>
+                                <li><strong>NodePort:</strong> Expose qua port trên nodes (30000-32767)</li>
+                                <li><strong>LoadBalancer:</strong> Cloud load balancer external access</li>
+                                <li><strong>ExternalName:</strong> DNS alias cho external services</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>Liveness Probe vs Readiness Probe?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Liveness:</strong> Container còn sống không? Fail → restart container</li>
+                                <li><strong>Readiness:</strong> Container sẵn sàng nhận traffic? Fail → loại khỏi
+                                    Service endpoints</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>ConfigMap vs Secret?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>ConfigMap:</strong> Non-sensitive data, plain text, env vars, config files
+                                </li>
+                                <li><strong>Secret:</strong> Sensitive data, base64 encoded (không phải encrypted!), cần
+                                    encryption riêng</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>Ingress là gì? Khác gì với Service?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Service:</strong> L4 load balancing (TCP/UDP), expose pods</p>
+                            <p><strong>Ingress:</strong> L7 routing (HTTP/HTTPS), host/path-based routing, SSL
+                                termination, cần Ingress Controller</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>Giải thích PV, PVC, StorageClass?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>PersistentVolume (PV):</strong> Đại diện storage thực tế (admin tạo)</li>
+                                <li><strong>PersistentVolumeClaim (PVC):</strong> Request storage từ user</li>
+                                <li><strong>StorageClass:</strong> Dynamic provisioning, K8s tự tạo PV khi có PVC</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>Rolling Update hoạt động như thế nào?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Từ từ thay thế pods cũ bằng pods mới:</p>
+                            <ul>
+                                <li>maxSurge: Số pod thêm tạm thời trong update</li>
+                                <li>maxUnavailable: Số pod có thể unavailable</li>
+                            </ul>
+                            <p>Zero-downtime bằng cách luôn có pods ready nhận traffic.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q9</span>
+                            <p>HPA là gì? Dựa vào metrics nào?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Horizontal Pod Autoscaler:</strong> Tự động scale số replicas dựa trên:</p>
+                            <ul>
+                                <li>CPU utilization</li>
+                                <li>Memory utilization</li>
+                                <li>Custom metrics (requests/second, queue length...)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q10</span>
+                            <p>RBAC trong K8s hoạt động như thế nào?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Role-Based Access Control:</p>
+                            <ul>
+                                <li><strong>Role/ClusterRole:</strong> Định nghĩa permissions (verbs on resources)</li>
+                                <li><strong>RoleBinding/ClusterRoleBinding:</strong> Gán role cho subjects (users,
+                                    groups, service accounts)</li>
+                            </ul>
+                            <p>Scope: Role = namespace, ClusterRole = cluster-wide</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="docker.html" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>Docker</span></a>
+                <a href="cicd.html" class="nav-btn next"><span>CI/CD</span><i class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

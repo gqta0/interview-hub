@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker - DevOps Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .topic-icon.docker {
+            background: linear-gradient(135deg, #2496ED 0%, #1D73B2 100%);
+        }
+
+        .topic-category {
+            color: #2496ED;
+        }
+
+        .q-number {
+            background: linear-gradient(135deg, #2496ED 0%, #1D73B2 100%);
+        }
+
+        .question {
+            background: rgba(36, 150, 237, 0.1);
+        }
+
+        .page-navigation .nav-btn:hover {
+            background: rgba(36, 150, 237, 0.1);
+            border-color: #2496ED;
+            color: #2496ED;
+        }
+
+        .back-to-top {
+            background: linear-gradient(135deg, #2496ED 0%, #1D73B2 100%);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html" class="nav-back"><i class="fas fa-arrow-left"></i> Home</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon docker"><i class="fab fa-docker"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">DevOps</span>
+            <h1>Docker</h1>
+            <p class="topic-desc">Containers, Images, Dockerfile, Networks, Volumes, Docker Compose - Container hóa ứng
+                dụng</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#basics">Docker Basics</a></li>
+                <li><a href="#architecture">Architecture</a></li>
+                <li><a href="#images">Images & Registry</a></li>
+                <li><a href="#dockerfile">Dockerfile</a></li>
+                <li><a href="#containers">Container Management</a></li>
+                <li><a href="#networking">Networking</a></li>
+                <li><a href="#volumes">Volumes & Storage</a></li>
+                <li><a href="#compose">Docker Compose</a></li>
+                <li><a href="#best-practices">Best Practices</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <!-- DOCKER BASICS -->
+            <section id="basics" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🐳</span>Docker Basics</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Container vs Virtual Machine</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Container</th>
+                                        <th>Virtual Machine</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Isolation</strong></td>
+                                        <td>Process-level (namespaces)</td>
+                                        <td>Full OS isolation</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Size</strong></td>
+                                        <td>MBs (lightweight)</td>
+                                        <td>GBs (full OS)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Boot time</strong></td>
+                                        <td>Seconds</td>
+                                        <td>Minutes</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Kernel</strong></td>
+                                        <td>Shared with host</td>
+                                        <td>Own kernel</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Resource usage</strong></td>
+                                        <td>Low overhead</td>
+                                        <td>High overhead</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Portability</strong></td>
+                                        <td>Excellent (same image everywhere)</td>
+                                        <td>Good (may need conversion)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Use case</strong></td>
+                                        <td>Microservices, CI/CD</td>
+                                        <td>Different OS, legacy apps</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span
+                                    class="code-title">Container vs VM Architecture</span></div>
+                            <pre><code>Container:                           Virtual Machine:
+┌─────────────────────────┐          ┌─────────────────────────┐
+│   App A  │  App B │ App C│          │  App A    │    App B   │
+├──────────┼────────┼──────┤          ├───────────┼────────────┤
+│Container │Container│Container│      │  Guest OS │  Guest OS  │
+├──────────┴────────┴──────┤          ├───────────┴────────────┤
+│     Docker Engine        │          │      Hypervisor        │
+├──────────────────────────┤          ├────────────────────────┤
+│       Host OS            │          │       Host OS          │
+├──────────────────────────┤          ├────────────────────────┤
+│     Infrastructure       │          │    Infrastructure      │
+└──────────────────────────┘          └────────────────────────┘</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Core Concepts</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Key Terms</h4>
+                            <ul>
+                                <li><strong>Image:</strong> Read-only template with application code + dependencies</li>
+                                <li><strong>Container:</strong> Running instance of an image (isolated process)</li>
+                                <li><strong>Dockerfile:</strong> Script to build an image</li>
+                                <li><strong>Registry:</strong> Storage/distribution for images (Docker Hub)</li>
+                                <li><strong>Volume:</strong> Persistent storage for container data</li>
+                                <li><strong>Network:</strong> Communication between containers</li>
+                            </ul>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Bash</span><span
+                                    class="code-title">Essential Commands</span></div>
+                            <pre><code class="language-bash"># Pull and run image
+docker pull nginx:latest
+docker run -d -p 80:80 --name webserver nginx
+
+# List containers and images
+docker ps                # running containers
+docker ps -a             # all containers
+docker images            # list images
+
+# Container lifecycle
+docker start/stop/restart container_name
+docker rm container_name
+docker rmi image_name
+
+# Logs and shell access
+docker logs -f container_name
+docker exec -it container_name bash</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ARCHITECTURE -->
+            <section id="architecture" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🏗️</span>Docker Architecture</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Client-Server Architecture</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Docker
+                                    Components</span></div>
+                            <pre><code>Docker Architecture:
+┌─────────────────────────────────────────────────────────────────┐
+│  Docker Client (CLI)                                            │
+│  docker build, run, pull, push...                               │
+│                          │ REST API                             │
+│                          ▼                                      │
+│  ┌───────────────────────────────────────────────────────────┐ │
+│  │                   Docker Daemon (dockerd)                  │ │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐   │ │
+│  │  │  Container  │  │   Image     │  │     Network     │   │ │
+│  │  │  Runtime    │  │   Manager   │  │     Driver      │   │ │
+│  │  │ (containerd)│  │             │  │                 │   │ │
+│  │  └─────────────┘  └─────────────┘  └─────────────────┘   │ │
+│  │  ┌─────────────┐  ┌─────────────┐                        │ │
+│  │  │   Volume    │  │  Registry   │                        │ │
+│  │  │   Driver    │  │   Client    │                        │ │
+│  │  └─────────────┘  └─────────────┘                        │ │
+│  └───────────────────────────────────────────────────────────┘ │
+│                          │                                      │
+│                          ▼                                      │
+│  ┌───────────────────────────────────────────────────────────┐ │
+│  │              Docker Registry (Docker Hub)                  │ │
+│  └───────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>🔧 Docker Daemon</h4>
+                                <ul>
+                                    <li>Background service (dockerd)</li>
+                                    <li>Manages containers, images, networks</li>
+                                    <li>Listens for Docker API requests</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>💻 Docker Client</h4>
+                                <ul>
+                                    <li>CLI commands (docker run, build)</li>
+                                    <li>Communicates via REST API</li>
+                                    <li>Can connect to remote daemons</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- IMAGES -->
+            <section id="images" class="content-section">
+                <h2 class="section-title"><span class="section-icon">📦</span>Images & Registry</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Image Layers</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Image
+                                    Layer Architecture</span></div>
+                            <pre><code>Docker Image Layers:
+┌─────────────────────────────────────────┐
+│    Container Layer (Read-Write)         │  ← Container changes here
+├─────────────────────────────────────────┤
+│    Layer 5: COPY app.jar                │  ← Your app code
+├─────────────────────────────────────────┤
+│    Layer 4: RUN mvn package             │  ← Build step
+├─────────────────────────────────────────┤
+│    Layer 3: COPY pom.xml                │  ← Dependencies
+├─────────────────────────────────────────┤
+│    Layer 2: RUN apt-get install java    │  ← Runtime
+├─────────────────────────────────────────┤
+│    Layer 1: FROM ubuntu:22.04           │  ← Base OS
+└─────────────────────────────────────────┘
+       All layers are Read-Only
+       Shared between containers</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> Layer Caching</h4>
+                            <p>Docker caches each layer. If a layer hasn't changed, Docker reuses cached version. Order
+                                Dockerfile instructions from least to most frequently changed for optimal caching.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Registry & Image Management</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Bash</span><span
+                                    class="code-title">Registry Commands</span></div>
+                            <pre><code class="language-bash"># Image naming convention
+registry/repository:tag
+docker.io/library/nginx:1.25     # Full format
+nginx:1.25                       # Short (defaults to docker.io)
+
+# Pull images
+docker pull nginx:latest
+docker pull myregistry.com/myapp:v1.0
+
+# Login to registry
+docker login docker.io
+docker login myregistry.azurecr.io
+
+# Tag and push images
+docker tag myapp:v1 myregistry.com/myapp:v1
+docker push myregistry.com/myapp:v1
+
+# Image inspection
+docker inspect nginx:latest
+docker history nginx:latest     # Show layers
+
+# Clean up
+docker image prune              # Remove dangling images
+docker system prune -a          # Remove all unused data</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Popular Registries</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Registry</th>
+                                        <th>Type</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Docker Hub</strong></td>
+                                        <td>Public/Private</td>
+                                        <td>Default, public images</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>AWS ECR</strong></td>
+                                        <td>Private</td>
+                                        <td>AWS ecosystem</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Google GCR/GAR</strong></td>
+                                        <td>Private</td>
+                                        <td>GCP ecosystem</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Azure ACR</strong></td>
+                                        <td>Private</td>
+                                        <td>Azure ecosystem</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Harbor</strong></td>
+                                        <td>Self-hosted</td>
+                                        <td>Enterprise on-prem</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DOCKERFILE -->
+            <section id="dockerfile" class="content-section">
+                <h2 class="section-title"><span class="section-icon">📝</span>Dockerfile</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Dockerfile Instructions</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Instruction</th>
+                                        <th>Purpose</th>
+                                        <th>Example</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>FROM</strong></td>
+                                        <td>Base image</td>
+                                        <td>FROM openjdk:17-slim</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>WORKDIR</strong></td>
+                                        <td>Set working directory</td>
+                                        <td>WORKDIR /app</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>COPY</strong></td>
+                                        <td>Copy files from host</td>
+                                        <td>COPY target/*.jar app.jar</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ADD</strong></td>
+                                        <td>Copy + extract archives</td>
+                                        <td>ADD config.tar.gz /config</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>RUN</strong></td>
+                                        <td>Execute command (build time)</td>
+                                        <td>RUN apt-get update</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>CMD</strong></td>
+                                        <td>Default command (runtime)</td>
+                                        <td>CMD ["java", "-jar", "app.jar"]</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ENTRYPOINT</strong></td>
+                                        <td>Fixed executable</td>
+                                        <td>ENTRYPOINT ["java", "-jar"]</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>EXPOSE</strong></td>
+                                        <td>Document port</td>
+                                        <td>EXPOSE 8080</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ENV</strong></td>
+                                        <td>Environment variable</td>
+                                        <td>ENV JAVA_OPTS="-Xmx512m"</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ARG</strong></td>
+                                        <td>Build-time variable</td>
+                                        <td>ARG VERSION=1.0</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>VOLUME</strong></td>
+                                        <td>Mount point</td>
+                                        <td>VOLUME /data</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>USER</strong></td>
+                                        <td>Run as user</td>
+                                        <td>USER appuser</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>HEALTHCHECK</strong></td>
+                                        <td>Container health</td>
+                                        <td>HEALTHCHECK CMD curl localhost</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Multi-Stage Build</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Dockerfile</span><span
+                                    class="code-title">Spring Boot Multi-Stage</span></div>
+                            <pre><code class="language-docker"># Stage 1: Build
+FROM maven:3.9-eclipse-temurin-17 AS builder
+WORKDIR /build
+
+# Cache dependencies
+COPY pom.xml .
+RUN mvn dependency:go-offline
+
+# Build application
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+# Stage 2: Runtime
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+
+# Create non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+# Copy only the JAR from builder
+COPY --from=builder /build/target/*.jar app.jar
+
+# Set ownership
+RUN chown -R appuser:appgroup /app
+USER appuser
+
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=3s \
+    CMD wget -q --spider http://localhost:8080/actuator/health || exit 1
+
+ENTRYPOINT ["java", "-jar", "app.jar"]</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> Multi-Stage Benefits</h4>
+                            <ul>
+                                <li>Smaller final image (no build tools)</li>
+                                <li>Security (fewer attack vectors)</li>
+                                <li>Separate build and runtime concerns</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>CMD vs ENTRYPOINT</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>CMD</th>
+                                        <th>ENTRYPOINT</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Override</strong></td>
+                                        <td>Easily overridden at runtime</td>
+                                        <td>Hard to override (--entrypoint)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Purpose</strong></td>
+                                        <td>Default arguments</td>
+                                        <td>Fixed executable</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Combination</strong></td>
+                                        <td colspan="2">ENTRYPOINT = command, CMD = default args</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Dockerfile</span><span
+                                    class="code-title">ENTRYPOINT + CMD</span></div>
+                            <pre><code class="language-docker"># Best practice: combine both
+ENTRYPOINT ["java", "-jar", "app.jar"]
+CMD ["--spring.profiles.active=prod"]
+
+# Runtime override
+docker run myapp                              # Uses default: prod profile
+docker run myapp --spring.profiles.active=dev # Override: dev profile</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CONTAINER MANAGEMENT -->
+            <section id="containers" class="content-section">
+                <h2 class="section-title"><span class="section-icon">⚙️</span>Container Management</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Container Lifecycle</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span
+                                    class="code-title">Container States</span></div>
+                            <pre><code>Container Lifecycle:
+              docker create
+    (none) ────────────────► Created
+                                │
+              docker start      │
+                 ┌──────────────┘
+                 ▼
+              Running ◄────────────────┐
+                 │                     │
+    docker stop  │      docker restart │
+                 ▼                     │
+              Stopped ─────────────────┘
+                 │
+    docker rm    │
+                 ▼
+             (Removed)</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Bash</span><span
+                                    class="code-title">Container Commands</span></div>
+                            <pre><code class="language-bash"># Run with options
+docker run -d \                     # Detached mode
+  --name myapp \                    # Container name
+  -p 8080:8080 \                    # Port mapping host:container
+  -e DATABASE_URL=localhost \       # Environment variable
+  -v /host/data:/app/data \         # Volume mount
+  --memory=512m \                   # Memory limit
+  --cpus=1.5 \                      # CPU limit
+  --restart=unless-stopped \        # Restart policy
+  --network=mynetwork \             # Network
+  myimage:latest
+
+# Resource monitoring
+docker stats                        # Live resource usage
+docker top container_name           # Processes in container
+
+# Copy files
+docker cp local_file container_name:/path
+docker cp container_name:/path local_file
+
+# Export/Import
+docker export container_name > backup.tar
+docker import backup.tar newimage:tag</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Restart Policies</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Policy</th>
+                                        <th>Behavior</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>no</strong></td>
+                                        <td>Never restart (default)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>on-failure[:max]</strong></td>
+                                        <td>Restart on non-zero exit, max retries</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>always</strong></td>
+                                        <td>Always restart, even manual stop</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>unless-stopped</strong></td>
+                                        <td>Always except manual stop</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- NETWORKING -->
+            <section id="networking" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🌐</span>Docker Networking</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Network Drivers</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Driver</th>
+                                        <th>Description</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>bridge</strong></td>
+                                        <td>Default, isolated network</td>
+                                        <td>Single-host containers</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>host</strong></td>
+                                        <td>Share host's network</td>
+                                        <td>Performance, no isolation</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>none</strong></td>
+                                        <td>No networking</td>
+                                        <td>Isolated workloads</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>overlay</strong></td>
+                                        <td>Multi-host networking</td>
+                                        <td>Docker Swarm, clusters</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>macvlan</strong></td>
+                                        <td>Assign MAC address</td>
+                                        <td>Legacy apps needing IP</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Bash</span><span class="code-title">Network
+                                    Commands</span></div>
+                            <pre><code class="language-bash"># Create custom network
+docker network create mynetwork
+docker network create --driver bridge --subnet 172.20.0.0/16 mynetwork
+
+# List and inspect
+docker network ls
+docker network inspect mynetwork
+
+# Connect containers
+docker run -d --network mynetwork --name app1 myapp
+docker run -d --network mynetwork --name db mysql
+
+# DNS: containers can reach each other by name
+# app1 can connect to db:3306
+
+# Connect existing container
+docker network connect mynetwork existing_container
+docker network disconnect mynetwork existing_container</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> Container DNS</h4>
+                            <p>Containers on the same user-defined network can resolve each other by container name. The
+                                default bridge network requires --link (deprecated).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Port Mapping</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Bash</span><span class="code-title">Port
+                                    Mapping Options</span></div>
+                            <pre><code class="language-bash"># Format: -p [host_ip:]host_port:container_port[/protocol]
+
+-p 8080:80           # Map host 8080 to container 80
+-p 127.0.0.1:8080:80 # Only localhost can access
+-p 8080:80/udp       # UDP port
+-p 8080-8090:80-90   # Port range
+
+# Publish all EXPOSE ports
+docker run -P nginx   # Random host ports
+
+# Check port mapping
+docker port container_name</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VOLUMES -->
+            <section id="volumes" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💾</span>Volumes & Storage</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Storage Types</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Location</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Volume</strong></td>
+                                        <td>/var/lib/docker/volumes/</td>
+                                        <td>Persistent data (recommended)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Bind Mount</strong></td>
+                                        <td>Anywhere on host</td>
+                                        <td>Development, config files</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>tmpfs</strong></td>
+                                        <td>Host memory only</td>
+                                        <td>Sensitive data, temp files</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Bash</span><span class="code-title">Volume
+                                    Commands</span></div>
+                            <pre><code class="language-bash"># Named volumes (recommended)
+docker volume create mydata
+docker run -v mydata:/app/data myimage
+
+# Bind mounts
+docker run -v /host/path:/container/path myimage
+docker run -v $(pwd)/config:/app/config:ro myimage  # Read-only
+
+# tmpfs
+docker run --tmpfs /app/temp myimage
+
+# Volume management
+docker volume ls
+docker volume inspect mydata
+docker volume rm mydata
+docker volume prune           # Remove unused volumes
+
+# Modern syntax (--mount)
+docker run --mount type=volume,source=mydata,target=/app/data myimage
+docker run --mount type=bind,source=/host/path,target=/app/config,readonly myimage</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DOCKER COMPOSE -->
+            <section id="compose" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🎼</span>Docker Compose</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Multi-Container Applications</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">YAML</span><span
+                                    class="code-title">docker-compose.yml</span></div>
+                            <pre><code class="language-yaml">version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: myapp:latest
+    container_name: myapp
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DATABASE_URL=jdbc:postgresql://db:5432/mydb
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+    volumes:
+      - app-logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  db:
+    image: postgres:15-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_DB: mydb
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myuser -d mydb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    secrets:
+      - db_password
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - backend
+    volumes:
+      - redis-data:/data
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
+  app-logs:
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Bash</span><span class="code-title">Compose
+                                    Commands</span></div>
+                            <pre><code class="language-bash"># Start services
+docker compose up -d               # Detached
+docker compose up --build          # Rebuild images
+docker compose up -d --scale app=3 # Scale service
+
+# Management
+docker compose ps                  # List services
+docker compose logs -f app         # Follow logs
+docker compose exec app bash       # Shell into service
+
+# Stop and remove
+docker compose stop                # Stop services
+docker compose down                # Stop and remove
+docker compose down -v             # Also remove volumes
+
+# Configuration
+docker compose config              # Validate and view
+docker compose pull                # Pull latest images</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- BEST PRACTICES -->
+            <section id="best-practices" class="content-section">
+                <h2 class="section-title"><span class="section-icon">✨</span>Best Practices</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Dockerfile Best Practices</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="key-points">
+                            <h4><i class="fas fa-check-circle"></i> Do's</h4>
+                            <ul>
+                                <li>Use official base images (alpine variants for smaller size)</li>
+                                <li>Multi-stage builds to reduce final image size</li>
+                                <li>Run as non-root user (USER instruction)</li>
+                                <li>Use .dockerignore to exclude unnecessary files</li>
+                                <li>Order instructions from least to most changing (cache optimization)</li>
+                                <li>Combine RUN commands to reduce layers</li>
+                                <li>Pin versions (FROM node:18.19.0, not node:latest)</li>
+                                <li>Use HEALTHCHECK for container health monitoring</li>
+                            </ul>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Don'ts</h4>
+                            <ul>
+                                <li>Don't store secrets in images (use secrets, env at runtime)</li>
+                                <li>Don't use latest tag in production</li>
+                                <li>Don't run as root in production</li>
+                                <li>Don't install unnecessary packages</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>.dockerignore</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Text</span><span
+                                    class="code-title">.dockerignore</span></div>
+                            <pre><code># Git
+.git
+.gitignore
+
+# IDE
+.idea
+*.iml
+.vscode
+
+# Build artifacts
+target/
+build/
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.env.*
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Tests
+**/test/
+**/*test*</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INTERVIEW QUESTIONS -->
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>Container vs Virtual Machine?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Container:</strong> Process isolation (namespaces), shared kernel, MBs size,
+                                    seconds startup</li>
+                                <li><strong>VM:</strong> Full OS isolation, own kernel, GBs size, minutes startup</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>Docker Image vs Container?</p>
+                        </div>
+                        <div class="answer">
+                            <p><strong>Image:</strong> Read-only template with app + dependencies, made of layers.</p>
+                            <p><strong>Container:</strong> Running instance of image, has writable layer, isolated
+                                process.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>CMD vs ENTRYPOINT?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>CMD:</strong> Default command/args, easily overridden at runtime</li>
+                                <li><strong>ENTRYPOINT:</strong> Fixed executable, CMD becomes default args</li>
+                            </ul>
+                            <p>Best practice: ENTRYPOINT for command, CMD for default arguments.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>Multi-stage build là gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Dockerfile với nhiều FROM stages. Build stage có build tools, final stage chỉ có runtime
+                                + artifacts. Giảm image size, tăng security (không có build tools trong production).</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>Volume vs Bind Mount?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Volume:</strong> Docker quản lý (/var/lib/docker/volumes), portable,
+                                    recommended cho production</li>
+                                <li><strong>Bind mount:</strong> Host path bất kỳ, tốt cho development (code sync)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>Docker network types?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>bridge:</strong> Default, container isolation, single host</li>
+                                <li><strong>host:</strong> Share host network, no isolation</li>
+                                <li><strong>overlay:</strong> Multi-host (Swarm/K8s)</li>
+                                <li><strong>none:</strong> No network</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>Làm sao để giảm Docker image size?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li>Use alpine base images</li>
+                                <li>Multi-stage builds</li>
+                                <li>Combine RUN commands (reduce layers)</li>
+                                <li>Remove cache in same layer (apt-get clean)</li>
+                                <li>Use .dockerignore</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>Docker Compose depends_on có đảm bảo service ready không?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Không! depends_on chỉ đảm bảo container start, không phải application ready. Cần dùng
+                                healthcheck với condition: service_healthy để đảm bảo service thực sự ready.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="../index.html" class="nav-btn prev"><i class="fas fa-arrow-left"></i><span>Home</span></a>
+                <a href="kubernetes.html" class="nav-btn next"><span>Kubernetes</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-docker.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

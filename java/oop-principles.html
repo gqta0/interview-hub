@@ -30,10 +30,6 @@
             <h1>OOP Principles & SOLID</h1>
             <p class="topic-desc">Nền tảng lập trình hướng đối tượng và nguyên tắc thiết kế</p>
         </div>
-        <div class="topic-stats">
-            <div class="stat"><span class="stat-value">4</span><span class="stat-label">OOP Pillars</span></div>
-            <div class="stat"><span class="stat-value">5</span><span class="stat-label">SOLID</span></div>
-        </div>
     </header>
 
     <main class="content-container">
@@ -44,6 +40,7 @@
                 <li><a href="#inheritance">Inheritance</a></li>
                 <li><a href="#polymorphism">Polymorphism</a></li>
                 <li><a href="#abstraction">Abstraction</a></li>
+                <li><a href="#composition">Composition vs Inheritance</a></li>
                 <li><a href="#solid-srp">S - Single Responsibility</a></li>
                 <li><a href="#solid-ocp">O - Open/Closed</a></li>
                 <li><a href="#solid-lsp">L - Liskov Substitution</a></li>
@@ -54,9 +51,11 @@
         </aside>
 
         <article class="main-content">
+            <!-- 4 TRỤ CỘT OOP -->
             <section class="content-section">
                 <h2 class="section-title"><span class="section-icon">🏛️</span>4 Trụ Cột của OOP</h2>
 
+                <!-- ENCAPSULATION -->
                 <div id="encapsulation" class="concept-card">
                     <div class="concept-header">
                         <h3>1. Encapsulation (Đóng gói)</h3>
@@ -64,46 +63,64 @@
                     </div>
                     <div class="concept-content">
                         <p><strong>Định nghĩa:</strong> Che giấu dữ liệu nội bộ và chỉ cho phép truy cập qua các phương
-                            thức public.</p>
+                            thức public. Bảo vệ trạng thái object khỏi sự thay đổi không kiểm soát.</p>
 
                         <div class="key-points">
-                            <h4><i class="fas fa-key"></i> Key Points</h4>
+                            <h4><i class="fas fa-key"></i> Điểm chính</h4>
                             <ul>
-                                <li>Access modifiers: <code>private</code>, <code>protected</code>, <code>public</code>,
-                                    <code>default</code></li>
-                                <li>Getter/setter kiểm soát truy cập</li>
-                                <li>Validation trước khi thay đổi dữ liệu</li>
+                                <li><strong>Access modifiers:</strong> <code>private</code>, <code>protected</code>,
+                                    <code>public</code>, <code>default</code></li>
+                                <li><strong>Getter/Setter:</strong> Kiểm soát đọc/ghi dữ liệu</li>
+                                <li><strong>Validation:</strong> Kiểm tra dữ liệu trước khi thay đổi</li>
+                                <li><strong>Immutability:</strong> Tạo object không thể thay đổi sau khi khởi tạo</li>
                             </ul>
                         </div>
 
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span
                                     class="code-title">Encapsulation Example</span></div>
-                            <pre><code>public class BankAccount {
-    private double balance;  // Hidden from outside
+                            <pre><code class="language-java">public class BankAccount {
+    private double balance;           // Ẩn dữ liệu
+    private final String accountId;   // Immutable field
     
+    public BankAccount(String accountId, double initialBalance) {
+        this.accountId = accountId;
+        this.balance = initialBalance;
+    }
+    
+    // Getter - chỉ đọc
     public double getBalance() {
         return balance;
     }
     
+    // Không có setBalance() - kiểm soát qua methods
     public void deposit(double amount) {
-        if (amount > 0) {
-            balance += amount;
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Số tiền phải > 0");
         }
+        balance += amount;
+    }
+    
+    public boolean withdraw(double amount) {
+        if (amount > 0 && amount <= balance) {
+            balance -= amount;
+            return true;
+        }
+        return false;
     }
 }</code></pre>
                         </div>
 
                         <div class="comparison-table">
-                            <h4>Access Modifiers</h4>
+                            <h4>Access Modifiers trong Java</h4>
                             <table>
                                 <thead>
                                     <tr>
                                         <th>Modifier</th>
-                                        <th>Class</th>
-                                        <th>Package</th>
+                                        <th>Cùng Class</th>
+                                        <th>Cùng Package</th>
                                         <th>Subclass</th>
-                                        <th>World</th>
+                                        <th>Khác Package</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -138,23 +155,35 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-lightbulb"></i> Best Practices</h4>
+                            <ul>
+                                <li>Luôn dùng <code>private</code> cho fields</li>
+                                <li>Chỉ expose getter khi cần thiết</li>
+                                <li>Prefer immutable objects khi có thể</li>
+                                <li>Validate input trong setters</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
+                <!-- INHERITANCE -->
                 <div id="inheritance" class="concept-card">
                     <div class="concept-header">
                         <h3>2. Inheritance (Kế thừa)</h3>
                         <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
-                        <p><strong>Định nghĩa:</strong> Class con thừa hưởng các thuộc tính và phương thức từ class cha
-                            (quan hệ IS-A).</p>
+                        <p><strong>Định nghĩa:</strong> Class con (subclass) thừa hưởng thuộc tính và phương thức từ
+                            class cha (superclass). Thể hiện quan hệ <strong>IS-A</strong>.</p>
 
                         <div class="key-points">
-                            <h4><i class="fas fa-key"></i> Key Points</h4>
+                            <h4><i class="fas fa-key"></i> Điểm chính</h4>
                             <ul>
                                 <li>Java chỉ hỗ trợ <strong>single inheritance</strong> cho class</li>
-                                <li>Sử dụng keyword <code>extends</code></li>
+                                <li>Dùng keyword <code>extends</code> để kế thừa class</li>
+                                <li>Dùng keyword <code>implements</code> để implement interface</li>
                                 <li>Constructor cha gọi qua <code>super()</code></li>
                                 <li><code>final</code> class không thể được kế thừa</li>
                             </ul>
@@ -163,23 +192,88 @@
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span
                                     class="code-title">Inheritance Example</span></div>
-                            <pre><code>public class Animal {
+                            <pre><code class="language-java">// Class cha (Superclass)
+public class Animal {
     protected String name;
-    public void eat() { System.out.println(name + " is eating"); }
+    
+    public Animal(String name) {
+        this.name = name;
+    }
+    
+    public void eat() {
+        System.out.println(name + " đang ăn");
+    }
+    
+    public void sleep() {
+        System.out.println(name + " đang ngủ");
+    }
 }
 
+// Class con (Subclass)
 public class Dog extends Animal {
-    public Dog(String name) { this.name = name; }
+    private String breed;
+    
+    public Dog(String name, String breed) {
+        super(name);  // Gọi constructor cha
+        this.breed = breed;
+    }
     
     @Override
-    public void eat() { System.out.println(name + " eating dog food"); }
+    public void eat() {
+        System.out.println(name + " đang ăn thức ăn cho chó");
+    }
     
-    public void bark() { System.out.println("Woof!"); }
+    // Method riêng của Dog
+    public void bark() {
+        System.out.println(name + " sủa: Gâu gâu!");
+    }
+}
+
+// Sử dụng
+Animal animal = new Dog("Buddy", "Golden Retriever");
+animal.eat();   // "Buddy đang ăn thức ăn cho chó" (polymorphism)
+// animal.bark(); // ❌ Compile error - Animal không có bark()</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Diamond Problem</h4>
+                            <p>Java không cho phép đa kế thừa class để tránh Diamond Problem:</p>
+                            <pre><code>      A
+     / \
+    B   C     Nếu B và C đều override method của A,
+     \ /      D kế thừa từ cả B và C thì gọi method nào?
+      D       
+→ Java giải quyết bằng Interface với default methods</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Diamond
+                                    Problem với Interface</span></div>
+                            <pre><code class="language-java">interface A {
+    default void show() { System.out.println("A"); }
+}
+
+interface B extends A {
+    default void show() { System.out.println("B"); }
+}
+
+interface C extends A {
+    default void show() { System.out.println("C"); }
+}
+
+// Class phải override để giải quyết conflict
+class D implements B, C {
+    @Override
+    public void show() {
+        B.super.show();  // Chọn implementation của B
+        // hoặc tự implement logic mới
+    }
 }</code></pre>
                         </div>
                     </div>
                 </div>
 
+                <!-- POLYMORPHISM -->
                 <div id="polymorphism" class="concept-card">
                     <div class="concept-header">
                         <h3>3. Polymorphism (Đa hình)</h3>
@@ -187,23 +281,59 @@ public class Dog extends Animal {
                     </div>
                     <div class="concept-content">
                         <p><strong>Định nghĩa:</strong> Cùng một method có thể có hành vi khác nhau dựa trên đối tượng
-                            thực thi.</p>
+                            thực thi. "Nhiều hình thái".</p>
 
                         <div class="two-column">
                             <div class="column highlight-box">
-                                <h4>Compile-time (Overloading)</h4>
+                                <h4>Compile-time (Static)</h4>
+                                <p><strong>Method Overloading</strong></p>
                                 <ul>
                                     <li>Cùng tên, khác parameters</li>
-                                    <li>Static binding</li>
+                                    <li>Quyết định tại compile time</li>
+                                    <li>Trong cùng một class</li>
                                 </ul>
                             </div>
                             <div class="column highlight-box">
-                                <h4>Runtime (Overriding)</h4>
+                                <h4>Runtime (Dynamic)</h4>
+                                <p><strong>Method Overriding</strong></p>
                                 <ul>
                                     <li>Cùng signature, khác implementation</li>
-                                    <li>Dynamic binding</li>
+                                    <li>Quyết định tại runtime</li>
+                                    <li>Class con override class cha</li>
                                 </ul>
                             </div>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Overloading vs Overriding</span></div>
+                            <pre><code class="language-java">// OVERLOADING - Compile-time polymorphism
+class Calculator {
+    int add(int a, int b) { return a + b; }
+    int add(int a, int b, int c) { return a + b + c; }    // Khác số params
+    double add(double a, double b) { return a + b; }       // Khác kiểu params
+}
+
+// OVERRIDING - Runtime polymorphism
+class Shape {
+    void draw() { System.out.println("Vẽ hình"); }
+}
+
+class Circle extends Shape {
+    @Override
+    void draw() { System.out.println("Vẽ hình tròn"); }
+}
+
+class Rectangle extends Shape {
+    @Override
+    void draw() { System.out.println("Vẽ hình chữ nhật"); }
+}
+
+// Runtime polymorphism in action
+Shape shape1 = new Circle();
+Shape shape2 = new Rectangle();
+shape1.draw();  // "Vẽ hình tròn" - quyết định tại runtime
+shape2.draw();  // "Vẽ hình chữ nhật"</code></pre>
                         </div>
 
                         <div class="comparison-table">
@@ -211,46 +341,78 @@ public class Dog extends Animal {
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>Aspect</th>
+                                        <th>Khía cạnh</th>
                                         <th>Overloading</th>
                                         <th>Overriding</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Parameters</td>
-                                        <td>Must differ</td>
-                                        <td>Must be same</td>
+                                        <td><strong>Parameters</strong></td>
+                                        <td>Phải khác</td>
+                                        <td>Phải giống</td>
                                     </tr>
                                     <tr>
-                                        <td>Return Type</td>
-                                        <td>Can differ</td>
-                                        <td>Same/covariant</td>
+                                        <td><strong>Return type</strong></td>
+                                        <td>Có thể khác</td>
+                                        <td>Giống hoặc covariant</td>
                                     </tr>
                                     <tr>
-                                        <td>Binding</td>
-                                        <td>Static</td>
-                                        <td>Dynamic</td>
+                                        <td><strong>Access modifier</strong></td>
+                                        <td>Có thể khác</td>
+                                        <td>Không được hẹp hơn</td>
                                     </tr>
                                     <tr>
-                                        <td>Scope</td>
-                                        <td>Same class</td>
-                                        <td>Parent-child</td>
+                                        <td><strong>Exception</strong></td>
+                                        <td>Có thể khác</td>
+                                        <td>Không được rộng hơn</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Binding</strong></td>
+                                        <td>Static (compile)</td>
+                                        <td>Dynamic (runtime)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>static methods</strong></td>
+                                        <td>Có thể</td>
+                                        <td>Không (chỉ hiding)</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Covariant Return Type</span></div>
+                            <pre><code class="language-java">class Animal {
+    Animal reproduce() {
+        return new Animal();
+    }
+}
+
+class Dog extends Animal {
+    @Override
+    Dog reproduce() {  // Covariant: Dog là subtype của Animal
+        return new Dog();
+    }
+}
+
+// Lợi ích: không cần cast
+Dog parent = new Dog();
+Dog puppy = parent.reproduce();  // Trả về Dog, không cần cast</code></pre>
+                        </div>
                     </div>
                 </div>
 
+                <!-- ABSTRACTION -->
                 <div id="abstraction" class="concept-card">
                     <div class="concept-header">
                         <h3>4. Abstraction (Trừu tượng)</h3>
                         <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
-                        <p><strong>Định nghĩa:</strong> Che giấu chi tiết implementation, chỉ hiển thị functionality cần
-                            thiết.</p>
+                        <p><strong>Định nghĩa:</strong> Che giấu chi tiết implementation phức tạp, chỉ hiển thị
+                            functionality cần thiết cho người dùng.</p>
 
                         <div class="comparison-table">
                             <h4>Abstract Class vs Interface</h4>
@@ -264,192 +426,559 @@ public class Dog extends Animal {
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Methods</td>
+                                        <td><strong>Methods</strong></td>
                                         <td>Abstract + Concrete</td>
-                                        <td>Abstract + default/static</td>
+                                        <td>Abstract + default + static</td>
                                     </tr>
                                     <tr>
-                                        <td>Variables</td>
-                                        <td>Any type</td>
-                                        <td>public static final</td>
+                                        <td><strong>Variables</strong></td>
+                                        <td>Mọi loại</td>
+                                        <td>Chỉ public static final</td>
                                     </tr>
                                     <tr>
-                                        <td>Constructor</td>
-                                        <td>Yes</td>
-                                        <td>No</td>
+                                        <td><strong>Constructor</strong></td>
+                                        <td>Có</td>
+                                        <td>Không</td>
                                     </tr>
                                     <tr>
-                                        <td>Inheritance</td>
-                                        <td>Single</td>
-                                        <td>Multiple</td>
+                                        <td><strong>Kế thừa</strong></td>
+                                        <td>Single (extends)</td>
+                                        <td>Multiple (implements)</td>
                                     </tr>
                                     <tr>
-                                        <td>When to use</td>
+                                        <td><strong>Access modifiers</strong></td>
+                                        <td>Mọi loại</td>
+                                        <td>public (default)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Khi nào dùng</strong></td>
                                         <td>IS-A + shared code</td>
                                         <td>CAN-DO contract</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Abstract Class vs Interface</span></div>
+                            <pre><code class="language-java">// Abstract Class - dùng khi có shared implementation
+abstract class Vehicle {
+    protected String brand;
+    
+    public Vehicle(String brand) {
+        this.brand = brand;
+    }
+    
+    // Concrete method - shared code
+    public void start() {
+        System.out.println(brand + " đang khởi động");
+    }
+    
+    // Abstract method - subclass phải implement
+    abstract void move();
+}
+
+class Car extends Vehicle {
+    public Car(String brand) { super(brand); }
+    
+    @Override
+    void move() { System.out.println("Xe chạy trên đường"); }
+}
+
+// Interface - dùng khi định nghĩa contract
+interface Flyable {
+    void fly();  // implicitly public abstract
+    
+    // Java 8+: default method
+    default void land() {
+        System.out.println("Đang hạ cánh");
+    }
+    
+    // Java 8+: static method
+    static boolean canFly(Object obj) {
+        return obj instanceof Flyable;
+    }
+}
+
+interface Swimmable {
+    void swim();
+}
+
+// Multiple interface implementation
+class Duck extends Animal implements Flyable, Swimmable {
+    @Override public void fly() { System.out.println("Vịt bay"); }
+    @Override public void swim() { System.out.println("Vịt bơi"); }
+}</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-lightbulb"></i> Java 8+ Interface Features</h4>
+                            <ul>
+                                <li><strong>default methods:</strong> Có implementation, subclass có thể override</li>
+                                <li><strong>static methods:</strong> Gọi qua Interface.method(), không kế thừa</li>
+                                <li><strong>private methods (Java 9+):</strong> Helper methods cho default methods</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </section>
 
+            <!-- COMPOSITION VS INHERITANCE -->
+            <section class="content-section">
+                <h2 id="composition" class="section-title"><span class="section-icon">🧩</span>Composition vs
+                    Inheritance</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Favor Composition over Inheritance</h3>
+                        <span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>Inheritance (IS-A)</h4>
+                                <ul>
+                                    <li>Compile-time relationship</li>
+                                    <li>Tight coupling</li>
+                                    <li>Exposes internal details</li>
+                                    <li>Khó thay đổi sau này</li>
+                                </ul>
+                                <p><code>Dog IS-A Animal</code></p>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>Composition (HAS-A)</h4>
+                                <ul>
+                                    <li>Runtime relationship</li>
+                                    <li>Loose coupling</li>
+                                    <li>Encapsulates behavior</li>
+                                    <li>Dễ thay đổi, test</li>
+                                </ul>
+                                <p><code>Car HAS-A Engine</code></p>
+                            </div>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">❌
+                                    Inheritance Problem</span></div>
+                            <pre><code class="language-java">// ❌ Problem: Inheritance breaks encapsulation
+class InstrumentedHashSet&lt;E&gt; extends HashSet&lt;E&gt; {
+    private int addCount = 0;
+    
+    @Override
+    public boolean add(E e) {
+        addCount++;
+        return super.add(e);
+    }
+    
+    @Override
+    public boolean addAll(Collection&lt;? extends E&gt; c) {
+        addCount += c.size();
+        return super.addAll(c);  // BUG! addAll gọi add() internally
+    }
+    
+    public int getAddCount() { return addCount; }
+}
+
+// Usage
+InstrumentedHashSet&lt;String&gt; set = new InstrumentedHashSet&lt;&gt;();
+set.addAll(Arrays.asList("A", "B", "C"));
+// Expected: 3, Actual: 6 (addAll đếm 3, rồi add() đếm thêm 3)</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">✅
+                                    Composition Solution</span></div>
+                            <pre><code class="language-java">// ✅ Solution: Composition + Forwarding
+class InstrumentedSet&lt;E&gt; implements Set&lt;E&gt; {
+    private final Set&lt;E&gt; set;        // Composition: HAS-A Set
+    private int addCount = 0;
+    
+    public InstrumentedSet(Set&lt;E&gt; set) {
+        this.set = set;  // Inject any Set implementation
+    }
+    
+    @Override
+    public boolean add(E e) {
+        addCount++;
+        return set.add(e);  // Forward to inner set
+    }
+    
+    @Override
+    public boolean addAll(Collection&lt;? extends E&gt; c) {
+        addCount += c.size();
+        return set.addAll(c);  // Không gọi lại add() của class này
+    }
+    
+    // Forward all other Set methods...
+    @Override public int size() { return set.size(); }
+    @Override public boolean contains(Object o) { return set.contains(o); }
+    // ... other methods
+}
+
+// Flexible: có thể dùng bất kỳ Set implementation
+Set&lt;String&gt; s = new InstrumentedSet&lt;&gt;(new HashSet&lt;&gt;());
+Set&lt;String&gt; s2 = new InstrumentedSet&lt;&gt;(new TreeSet&lt;&gt;());</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-check-circle"></i> Khi nào dùng Inheritance?</h4>
+                            <ul>
+                                <li>Quan hệ IS-A thực sự (Dog IS-A Animal)</li>
+                                <li>Class cha được thiết kế để kế thừa</li>
+                                <li>Không cần thay đổi implementation sau này</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SOLID PRINCIPLES -->
             <section class="content-section">
                 <h2 class="section-title"><span class="section-icon">🎯</span>SOLID Principles</h2>
 
+                <!-- SRP -->
                 <div id="solid-srp" class="concept-card">
                     <div class="concept-header">
-                        <h3>S - Single Responsibility Principle</h3><span class="badge essential">Essential</span>
+                        <h3>S - Single Responsibility Principle</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
-                        <blockquote>"A class should have one, and only one, reason to change."</blockquote>
-                        <div class="code-comparison">
-                            <div class="code-block bad">
-                                <div class="code-header"><span class="code-lang">❌ Bad</span></div>
-                                <pre><code>class Employee {
-    void calculatePay() { }
-    void saveToDatabase() { }  // Violates SRP!
-    void generateReport() { }  // Violates SRP!
+                        <blockquote>"Một class chỉ nên có một lý do để thay đổi."</blockquote>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">❌ Vi
+                                    phạm SRP</span></div>
+                            <pre><code class="language-java">class Employee {
+    void calculatePay() { /* Logic tính lương */ }
+    void saveToDatabase() { /* Logic lưu DB */ }   // Violates SRP!
+    void generateReport() { /* Logic báo cáo */ }  // Violates SRP!
+}
+// 3 lý do để thay đổi: business logic, DB schema, report format</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">✅ Tuân
+                                    thủ SRP</span></div>
+                            <pre><code class="language-java">class Employee { 
+    void calculatePay() { /* Chỉ tính lương */ } 
+}
+
+class EmployeeRepository { 
+    void save(Employee emp) { /* Chỉ lưu DB */ } 
+}
+
+class EmployeeReportGenerator { 
+    void generate(Employee emp) { /* Chỉ tạo báo cáo */ } 
 }</code></pre>
-                            </div>
-                            <div class="code-block good">
-                                <div class="code-header"><span class="code-lang">✅ Good</span></div>
-                                <pre><code>class Employee { void calculatePay() { } }
-class EmployeeRepository { void save() { } }
-class EmployeeReportGenerator { void generate() { } }</code></pre>
-                            </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- OCP -->
                 <div id="solid-ocp" class="concept-card">
                     <div class="concept-header">
-                        <h3>O - Open/Closed Principle</h3><span class="badge essential">Essential</span>
+                        <h3>O - Open/Closed Principle</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
-                        <blockquote>"Open for extension, closed for modification."</blockquote>
-                        <div class="code-block good">
-                            <div class="code-header"><span class="code-lang">✅ Using Interface</span></div>
-                            <pre><code>interface PaymentMethod { void pay(double amount); }
+                        <blockquote>"Mở để mở rộng (extension), đóng để sửa đổi (modification)."</blockquote>
 
-class CreditCard implements PaymentMethod { ... }
-class PayPal implements PaymentMethod { ... }
-class Crypto implements PaymentMethod { ... }  // Easy to add!
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">✅ Dùng
+                                    Interface/Abstraction</span></div>
+                            <pre><code class="language-java">interface PaymentMethod { 
+    void pay(double amount); 
+}
+
+class CreditCard implements PaymentMethod {
+    @Override public void pay(double amount) { /* Credit card logic */ }
+}
+
+class PayPal implements PaymentMethod {
+    @Override public void pay(double amount) { /* PayPal logic */ }
+}
+
+// Thêm payment mới mà không sửa code cũ!
+class Crypto implements PaymentMethod {
+    @Override public void pay(double amount) { /* Crypto logic */ }
+}
 
 class PaymentProcessor {
     void process(PaymentMethod method, double amount) {
-        method.pay(amount);  // No modification needed
+        method.pay(amount);  // Không cần sửa khi thêm payment mới
     }
 }</code></pre>
                         </div>
                     </div>
                 </div>
 
+                <!-- LSP -->
                 <div id="solid-lsp" class="concept-card">
                     <div class="concept-header">
-                        <h3>L - Liskov Substitution Principle</h3><span class="badge essential">Essential</span>
+                        <h3>L - Liskov Substitution Principle</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
-                        <blockquote>"Subclasses must be substitutable for their base classes."</blockquote>
+                        <blockquote>"Đối tượng của class cha có thể được thay thế bằng đối tượng class con mà không làm
+                            sai chương trình."</blockquote>
+
                         <div class="warning-box">
-                            <h4><i class="fas fa-exclamation-triangle"></i> Classic Violation: Rectangle-Square</h4>
-                            <p>Square.setWidth() changes both width AND height - breaks Rectangle's expected behavior!
-                            </p>
+                            <h4><i class="fas fa-exclamation-triangle"></i> Vi phạm LSP: Rectangle-Square</h4>
+                            <pre><code class="language-java">class Rectangle {
+    protected int width, height;
+    
+    void setWidth(int w) { width = w; }
+    void setHeight(int h) { height = h; }
+    int getArea() { return width * height; }
+}
+
+class Square extends Rectangle {
+    @Override void setWidth(int w) { width = height = w; }   // Phá vỡ behavior!
+    @Override void setHeight(int h) { width = height = h; }
+}
+
+// Test thất bại!
+void testArea(Rectangle r) {
+    r.setWidth(5);
+    r.setHeight(4);
+    assert r.getArea() == 20;  // Fails for Square (returns 16)
+}</code></pre>
                         </div>
+
                         <div class="key-points">
                             <h4><i class="fas fa-check-circle"></i> LSP Rules</h4>
                             <ul>
-                                <li>Preconditions cannot be strengthened in subclass</li>
-                                <li>Postconditions cannot be weakened</li>
-                                <li>Invariants must be preserved</li>
+                                <li><strong>Preconditions:</strong> Không được chặt chẽ hơn class cha</li>
+                                <li><strong>Postconditions:</strong> Không được lỏng lẻo hơn class cha</li>
+                                <li><strong>Invariants:</strong> Phải được bảo toàn</li>
+                                <li><strong>History constraint:</strong> Không được thay đổi state theo cách class cha
+                                    không cho phép</li>
                             </ul>
                         </div>
                     </div>
                 </div>
 
+                <!-- ISP -->
                 <div id="solid-isp" class="concept-card">
                     <div class="concept-header">
-                        <h3>I - Interface Segregation Principle</h3><span class="badge essential">Essential</span>
+                        <h3>I - Interface Segregation Principle</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
-                        <blockquote>"Clients should not depend on interfaces they don't use."</blockquote>
-                        <div class="code-block good">
-                            <div class="code-header"><span class="code-lang">✅ Split Interfaces</span></div>
-                            <pre><code>interface Workable { void work(); }
+                        <blockquote>"Client không nên bị buộc phụ thuộc vào interface mà chúng không dùng."</blockquote>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">❌ Fat
+                                    Interface</span></div>
+                            <pre><code class="language-java">interface Worker {
+    void work();
+    void eat();
+    void sleep();
+}
+
+class Robot implements Worker {
+    void work() { /* OK */ }
+    void eat() { /* Robot không ăn! */ }   // Forced to implement
+    void sleep() { /* Robot không ngủ! */ }
+}</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">✅
+                                    Segregated Interfaces</span></div>
+                            <pre><code class="language-java">interface Workable { void work(); }
 interface Eatable { void eat(); }
 interface Sleepable { void sleep(); }
 
-class Human implements Workable, Eatable, Sleepable { ... }
-class Robot implements Workable { ... }  // No eat/sleep!</code></pre>
+class Human implements Workable, Eatable, Sleepable { 
+    // Implement tất cả
+}
+
+class Robot implements Workable { 
+    // Chỉ implement những gì cần
+}</code></pre>
                         </div>
                     </div>
                 </div>
 
+                <!-- DIP -->
                 <div id="solid-dip" class="concept-card">
                     <div class="concept-header">
-                        <h3>D - Dependency Inversion Principle</h3><span class="badge essential">Essential</span>
+                        <h3>D - Dependency Inversion Principle</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
-                        <blockquote>"Depend on abstractions, not concretions."</blockquote>
-                        <div class="code-block good">
-                            <div class="code-header"><span class="code-lang">✅ Dependency Injection</span></div>
-                            <pre><code>interface Database { void save(String data); }
+                        <blockquote>"High-level modules không nên phụ thuộc low-level modules. Cả hai nên phụ thuộc
+                            abstractions."</blockquote>
 
-class MySQLDatabase implements Database { ... }
-class MongoDB implements Database { ... }
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">❌
+                                    Direct Dependency</span></div>
+                            <pre><code class="language-java">class MySQLDatabase {
+    void save(String data) { /* MySQL specific */ }
+}
 
+class UserService {
+    private MySQLDatabase database = new MySQLDatabase();  // Tight coupling!
+    
+    void saveUser(String user) {
+        database.save(user);
+    }
+}</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">✅
+                                    Dependency Injection</span></div>
+                            <pre><code class="language-java">// Abstraction
+interface Database { 
+    void save(String data); 
+}
+
+// Implementations
+class MySQLDatabase implements Database { /* ... */ }
+class MongoDB implements Database { /* ... */ }
+
+// High-level module depends on abstraction
 class UserService {
     private final Database database;
     
-    // Inject dependency via constructor
+    // Constructor injection
     public UserService(Database database) {
         this.database = database;
     }
-}</code></pre>
+    
+    void saveUser(String user) {
+        database.save(user);
+    }
+}
+
+// Usage - Dễ test, dễ thay đổi
+UserService service = new UserService(new MySQLDatabase());
+UserService testService = new UserService(new MockDatabase());</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- INTERVIEW QUESTIONS -->
             <section id="interview" class="content-section">
                 <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
 
                 <div class="interview-questions">
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q1</span>
-                            <p>Abstraction vs Encapsulation?</p>
+                            <p>Sự khác biệt giữa Abstraction và Encapsulation?</p>
                         </div>
                         <div class="answer">
-                            <p><strong>Encapsulation:</strong> HOW to hide (access modifiers, getters/setters).
-                                <strong>Abstraction:</strong> WHAT to hide (interface, abstract class).</p>
+                            <ul>
+                                <li><strong>Encapsulation:</strong> HOW to hide (access modifiers, getters/setters). Che
+                                    giấu implementation details.</li>
+                                <li><strong>Abstraction:</strong> WHAT to hide (interface, abstract class). Chỉ expose
+                                    những gì cần thiết.</li>
+                            </ul>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q2</span>
-                            <p>Why doesn't Java support multiple inheritance?</p>
+                            <p>Tại sao Java không hỗ trợ đa kế thừa class?</p>
                         </div>
                         <div class="answer">
-                            <p>To avoid <strong>Diamond Problem</strong>. If A extends B and C, and both have method
-                                foo(), which one to inherit? Java uses interfaces instead.</p>
+                            <p>Để tránh <strong>Diamond Problem</strong>. Nếu A kế thừa từ B và C, và cả hai đều có
+                                method foo(), Java không biết kế thừa từ đâu. Java dùng interface với default methods
+                                thay thế.</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q3</span>
-                            <p>Can static methods be overridden?</p>
+                            <p>Static method có thể override được không?</p>
                         </div>
                         <div class="answer">
-                            <p>No. They can only be <strong>hidden</strong>. Static methods use static binding
-                                (compile-time), not dynamic binding.</p>
+                            <p>Không. Static methods chỉ có thể bị <strong>hidden</strong>. Static methods dùng static
+                                binding (compile-time), không phải dynamic binding.</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q4</span>
-                            <p>When to use Abstract Class vs Interface?</p>
+                            <p>Khi nào dùng Abstract Class, khi nào dùng Interface?</p>
                         </div>
                         <div class="answer">
-                            <p><strong>Abstract Class:</strong> IS-A + shared code. <strong>Interface:</strong> CAN-DO
-                                capability, multiple inheritance of type.</p>
+                            <ul>
+                                <li><strong>Abstract Class:</strong> IS-A relationship + shared code + state (fields)
+                                </li>
+                                <li><strong>Interface:</strong> CAN-DO capability + multiple inheritance of type</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>Composition vs Inheritance - khi nào dùng cái nào?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Inheritance:</strong> Quan hệ IS-A thực sự, class cha designed cho kế thừa
+                                </li>
+                                <li><strong>Composition:</strong> Quan hệ HAS-A, cần flexibility, cần swap
+                                    implementations</li>
+                            </ul>
+                            <p>Rule: "Favor composition over inheritance"</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>Covariant Return Type là gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Khi override method, return type có thể là subtype của return type ở class cha. Ví dụ:
+                                Animal.clone() trả về Animal, Dog.clone() có thể trả về Dog.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>Giải thích SOLID principles bằng ví dụ thực tế?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>S:</strong> UserService chỉ xử lý user logic, không xử lý email</li>
+                                <li><strong>O:</strong> PaymentProcessor xử lý mọi PaymentMethod mà không cần sửa code
+                                </li>
+                                <li><strong>L:</strong> Mọi Bird subclass phải có thể fly() nếu Bird có fly()</li>
+                                <li><strong>I:</strong> Printer interface tách riêng Print, Scan, Fax</li>
+                                <li><strong>D:</strong> Repository inject vào Service thay vì new trực tiếp</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>Method Overloading có xảy ra với khác return type không?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Không. Overloading chỉ xảy ra khi khác parameter (số lượng hoặc type). Return type không
+                                được tính. Compile error nếu chỉ khác return type.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q9</span>
+                            <p>final, finally, finalize khác nhau?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>final:</strong> Keyword - final class (không kế thừa), final method (không
+                                    override), final variable (constant)</li>
+                                <li><strong>finally:</strong> Block trong try-catch, luôn chạy (cleanup resources)</li>
+                                <li><strong>finalize:</strong> Method của Object, gọi trước GC (deprecated từ Java 9)
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q10</span>
+                            <p>Interface có thể có constructor không? Tại sao?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Không. Interface không có instance, chỉ định nghĩa contract. Không có state (chỉ có
+                                static final fields). Constructor dùng để khởi tạo state, không cần cho interface.</p>
                         </div>
                     </div>
                 </div>
@@ -465,6 +994,8 @@ class UserService {
     </main>
 
     <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
     <script src="../js/main.js"></script>
 </body>
 

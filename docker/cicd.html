@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CI/CD - DevOps Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .topic-icon.cicd {
+            background: linear-gradient(135deg, #E44D26 0%, #F16529 50%, #61DAFB 100%);
+        }
+
+        .topic-category {
+            color: #F16529;
+        }
+
+        .q-number {
+            background: linear-gradient(135deg, #E44D26 0%, #F16529 100%);
+        }
+
+        .question {
+            background: rgba(241, 101, 41, 0.1);
+        }
+
+        .page-navigation .nav-btn:hover {
+            background: rgba(241, 101, 41, 0.1);
+            border-color: #F16529;
+            color: #F16529;
+        }
+
+        .back-to-top {
+            background: linear-gradient(135deg, #E44D26 0%, #F16529 100%);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="kubernetes.html" class="nav-back"><i class="fas fa-arrow-left"></i> Kubernetes</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon cicd"><i class="fas fa-infinity"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">DevOps</span>
+            <h1>CI/CD Pipeline</h1>
+            <p class="topic-desc">Continuous Integration, Continuous Delivery/Deployment - Tự động hóa quy trình phát
+                triển</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#intro">Giới thiệu CI/CD</a></li>
+                <li><a href="#concepts">Khái niệm cốt lõi</a></li>
+                <li><a href="#pipeline">Pipeline Structure</a></li>
+                <li><a href="#tools">CI/CD Tools</a></li>
+                <li><a href="#github-actions">GitHub Actions</a></li>
+                <li><a href="#jenkins">Jenkins</a></li>
+                <li><a href="#gitlab">GitLab CI/CD</a></li>
+                <li><a href="#testing">Testing Strategies</a></li>
+                <li><a href="#deployment">Deployment Strategies</a></li>
+                <li><a href="#security">Security (DevSecOps)</a></li>
+                <li><a href="#best-practices">Best Practices</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <!-- GIỚI THIỆU -->
+            <section id="intro" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔄</span>Giới thiệu CI/CD</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>CI/CD là gì?</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Định nghĩa</h4>
+                            <ul>
+                                <li><strong>CI (Continuous Integration):</strong> Tự động merge code thường xuyên, build
+                                    và test mỗi lần commit</li>
+                                <li><strong>CD (Continuous Delivery):</strong> Tự động chuẩn bị code sẵn sàng deploy,
+                                    nhưng deploy thủ công</li>
+                                <li><strong>CD (Continuous Deployment):</strong> Tự động deploy code lên production sau
+                                    khi pass tests</li>
+                            </ul>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">CI/CD
+                                    Pipeline</span></div>
+                            <pre><code>┌─────────────────────────────────────────────────────────────────────┐
+│                        CI/CD Pipeline Flow                          │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│   Developer          CI (Continuous Integration)                   │
+│   ┌──────┐    ┌──────────────────────────────────────────────┐     │
+│   │ Code │───►│ Commit ──► Build ──► Unit Test ──► Code Scan │     │
+│   └──────┘    └──────────────────────────────────────────────┘     │
+│                                        │                            │
+│                                        ▼                            │
+│              CD (Continuous Delivery/Deployment)                    │
+│   ┌──────────────────────────────────────────────────────────┐     │
+│   │ Integration Test ──► Staging Deploy ──► E2E Test         │     │
+│   └──────────────────────────────────────────────────────────┘     │
+│                                        │                            │
+│                                        ▼                            │
+│   ┌──────────────────────────────────────────────────────────┐     │
+│   │            Production Deployment                          │     │
+│   │     (Manual Approval hoặc Auto nếu CD full)              │     │
+│   └──────────────────────────────────────────────────────────┘     │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>✅ Lợi ích CI/CD</h4>
+                                <ul>
+                                    <li>Phát hiện bugs sớm</li>
+                                    <li>Giảm integration conflicts</li>
+                                    <li>Deploy nhanh và thường xuyên</li>
+                                    <li>Tăng confidence với mỗi release</li>
+                                    <li>Rollback dễ dàng</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>⚠️ Thách thức</h4>
+                                <ul>
+                                    <li>Đầu tư ban đầu cao</li>
+                                    <li>Test coverage phải đủ cao</li>
+                                    <li>Culture change cần thiết</li>
+                                    <li>Security concerns</li>
+                                    <li>Complex infrastructure</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- KHÁI NIỆM -->
+            <section id="concepts" class="content-section">
+                <h2 class="section-title"><span class="section-icon">📚</span>Khái niệm cốt lõi</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>CI vs CD vs CD</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Khái niệm</th>
+                                        <th>Mục đích</th>
+                                        <th>Tự động hóa</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Continuous Integration</strong></td>
+                                        <td>Merge code thường xuyên, phát hiện lỗi sớm</td>
+                                        <td>Build, Unit Test, Lint, Static Analysis</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Continuous Delivery</strong></td>
+                                        <td>Code luôn sẵn sàng deploy</td>
+                                        <td>Integration Test, Staging Deploy, Manual Approval → Prod</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Continuous Deployment</strong></td>
+                                        <td>Tự động deploy mọi thay đổi</td>
+                                        <td>Full automation tới Production</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Thuật ngữ quan trọng</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Term</th>
+                                        <th>Mô tả</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Pipeline</strong></td>
+                                        <td>Tập hợp các stages được thực thi tuần tự/song song</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Stage</strong></td>
+                                        <td>Nhóm các jobs (Build, Test, Deploy...)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Job</strong></td>
+                                        <td>Đơn vị công việc nhỏ nhất (run tests, build image...)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Artifact</strong></td>
+                                        <td>Output của job (JAR, Docker image, test reports...)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Runner/Agent</strong></td>
+                                        <td>Máy thực thi jobs</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Trigger</strong></td>
+                                        <td>Sự kiện khởi động pipeline (push, PR, schedule...)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PIPELINE STRUCTURE -->
+            <section id="pipeline" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔧</span>Pipeline Structure</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Các giai đoạn Pipeline</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Typical
+                                    Pipeline Stages</span></div>
+                            <pre><code>┌─────────────────────────────────────────────────────────────────────┐
+│ 1. SOURCE          │ 2. BUILD           │ 3. TEST                  │
+│ ─────────────────  │ ─────────────────  │ ─────────────────        │
+│ • Git checkout     │ • Compile code     │ • Unit tests             │
+│ • Fetch deps       │ • Build artifacts  │ • Integration tests      │
+│ • Validate config  │ • Create Docker    │ • Code coverage          │
+│                    │   image            │ • Security scan          │
+├─────────────────────────────────────────────────────────────────────┤
+│ 4. STAGING DEPLOY  │ 5. E2E TEST        │ 6. PRODUCTION            │
+│ ─────────────────  │ ─────────────────  │ ─────────────────        │
+│ • Deploy to staging│ • Smoke tests      │ • Manual approval        │
+│ • DB migrations    │ • UI tests         │ • Blue/Green deploy      │
+│ • Config injection │ • Performance test │ • Canary release         │
+│                    │                    │ • Monitor & rollback     │
+└─────────────────────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Pipeline Best Practices</h4>
+                            <ul>
+                                <li><strong>Fail Fast:</strong> Chạy tests nhanh nhất trước (unit tests)</li>
+                                <li><strong>Parallel Execution:</strong> Chạy jobs độc lập song song</li>
+                                <li><strong>Caching:</strong> Cache dependencies để tăng tốc</li>
+                                <li><strong>Artifacts:</strong> Pass artifacts giữa stages thay vì rebuild</li>
+                                <li><strong>Environment Parity:</strong> Staging = Production</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TOOLS -->
+            <section id="tools" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🛠️</span>CI/CD Tools</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>So sánh các công cụ</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Tool</th>
+                                        <th>Type</th>
+                                        <th>Ưu điểm</th>
+                                        <th>Nhược điểm</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>GitHub Actions</strong></td>
+                                        <td>Cloud-native</td>
+                                        <td>Tích hợp GitHub tốt, marketplace lớn</td>
+                                        <td>Lock-in GitHub</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>GitLab CI/CD</strong></td>
+                                        <td>Cloud/Self-hosted</td>
+                                        <td>All-in-one platform, GitOps</td>
+                                        <td>Complex cho beginners</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Jenkins</strong></td>
+                                        <td>Self-hosted</td>
+                                        <td>Flexible, nhiều plugins, mature</td>
+                                        <td>Maintenance heavy, UI cũ</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>CircleCI</strong></td>
+                                        <td>Cloud</td>
+                                        <td>Nhanh, dễ cấu hình</td>
+                                        <td>Pricing cao khi scale</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>AWS CodePipeline</strong></td>
+                                        <td>Cloud (AWS)</td>
+                                        <td>Tích hợp AWS services</td>
+                                        <td>AWS lock-in</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ArgoCD</strong></td>
+                                        <td>GitOps (K8s)</td>
+                                        <td>Declarative, K8s native</td>
+                                        <td>Chỉ cho Kubernetes</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GITHUB ACTIONS -->
+            <section id="github-actions" class="content-section">
+                <h2 class="section-title"><span class="section-icon"><i class="fab fa-github"></i></span>GitHub Actions
+                </h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Workflow Configuration</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">YAML</span><span
+                                    class="code-title">.github/workflows/ci.yml</span></div>
+                            <pre><code class="language-yaml">name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  JAVA_VERSION: '17'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Stage 1: Build và Test
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Run Unit Tests
+        run: mvn test
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: target/*.jar
+
+  # Stage 2: Security Scan
+  security:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+
+  # Stage 3: Build Docker Image
+  docker:
+    runs-on: ubuntu-latest
+    needs: [build, security]
+    if: github.ref == 'refs/heads/main'
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: target/
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Stage 4: Deploy to Staging
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: docker
+    environment: staging
+    steps:
+      - name: Deploy to Staging
+        run: |
+          echo "Deploying to staging..."
+          # kubectl set image deployment/app app=${{ needs.docker.outputs.image-tag }}
+
+  # Stage 5: Deploy to Production
+  deploy-prod:
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    environment: production  # Yêu cầu approval
+    steps:
+      - name: Deploy to Production
+        run: |
+          echo "Deploying to production..."</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>GitHub Actions Keywords</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Keyword</th>
+                                        <th>Mô tả</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>on</strong></td>
+                                        <td>Trigger events (push, pull_request, schedule...)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>jobs</strong></td>
+                                        <td>Tập hợp các jobs chạy (mặc định parallel)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>needs</strong></td>
+                                        <td>Dependencies giữa jobs</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>runs-on</strong></td>
+                                        <td>Runner environment (ubuntu, windows, macos)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>uses</strong></td>
+                                        <td>Sử dụng reusable action</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>environment</strong></td>
+                                        <td>Environment với secrets và protection rules</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>secrets</strong></td>
+                                        <td>Encrypted secrets (GITHUB_TOKEN, custom)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- JENKINS -->
+            <section id="jenkins" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔨</span>Jenkins</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Jenkinsfile (Declarative Pipeline)</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Groovy</span><span
+                                    class="code-title">Jenkinsfile</span></div>
+                            <pre><code class="language-groovy">pipeline {
+    agent any
+    
+    environment {
+        DOCKER_REGISTRY = 'your-registry.com'
+        IMAGE_NAME = 'myapp'
+    }
+    
+    tools {
+        maven 'Maven-3.9'
+        jdk 'JDK-17'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                sh 'mvn clean compile'
+            }
+        }
+        
+        stage('Test') {
+            parallel {
+                stage('Unit Tests') {
+                    steps {
+                        sh 'mvn test'
+                    }
+                    post {
+                        always {
+                            junit 'target/surefire-reports/*.xml'
+                        }
+                    }
+                }
+                stage('Integration Tests') {
+                    steps {
+                        sh 'mvn verify -DskipUnitTests'
+                    }
+                }
+            }
+        }
+        
+        stage('Code Quality') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh 'mvn sonar:sonar'
+                }
+            }
+        }
+        
+        stage('Build Docker Image') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    docker.build("${DOCKER_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}")
+                }
+            }
+        }
+        
+        stage('Push to Registry') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", 'docker-credentials') {
+                        docker.image("${DOCKER_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}").push()
+                        docker.image("${DOCKER_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}").push('latest')
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy to Staging') {
+            when {
+                branch 'main'
+            }
+            steps {
+                sh 'kubectl apply -f k8s/staging/'
+            }
+        }
+        
+        stage('Deploy to Production') {
+            when {
+                branch 'main'
+            }
+            input {
+                message "Deploy to Production?"
+                ok "Deploy"
+            }
+            steps {
+                sh 'kubectl apply -f k8s/production/'
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            slackSend channel: '#deployments', color: 'good', message: "Build succeeded: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        }
+        failure {
+            slackSend channel: '#deployments', color: 'danger', message: "Build failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        }
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GITLAB CI -->
+            <section id="gitlab" class="content-section">
+                <h2 class="section-title"><span class="section-icon"><i class="fab fa-gitlab"></i></span>GitLab CI/CD
+                </h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>.gitlab-ci.yml</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">YAML</span><span
+                                    class="code-title">.gitlab-ci.yml</span></div>
+                            <pre><code class="language-yaml">stages:
+  - build
+  - test
+  - security
+  - deploy
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  DOCKER_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+
+# Cache Maven dependencies
+cache:
+  paths:
+    - .m2/repository/
+
+build:
+  stage: build
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - mvn clean package -DskipTests
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 1 hour
+
+unit-test:
+  stage: test
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - mvn test
+  coverage: '/Total.*?([0-9]{1,3})%/'
+  artifacts:
+    reports:
+      junit: target/surefire-reports/*.xml
+
+integration-test:
+  stage: test
+  image: maven:3.9-eclipse-temurin-17
+  services:
+    - postgres:15
+  variables:
+    POSTGRES_DB: testdb
+    POSTGRES_USER: test
+    POSTGRES_PASSWORD: test
+  script:
+    - mvn verify -DskipUnitTests
+
+sast:
+  stage: security
+  include:
+    - template: Security/SAST.gitlab-ci.yml
+
+container-scanning:
+  stage: security
+  image: docker:24
+  services:
+    - docker:24-dind
+  script:
+    - docker build -t $DOCKER_IMAGE .
+    - docker push $DOCKER_IMAGE
+
+deploy-staging:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  script:
+    - kubectl set image deployment/app app=$DOCKER_IMAGE -n staging
+  environment:
+    name: staging
+    url: https://staging.example.com
+  only:
+    - main
+
+deploy-production:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  script:
+    - kubectl set image deployment/app app=$DOCKER_IMAGE -n production
+  environment:
+    name: production
+    url: https://example.com
+  when: manual  # Yêu cầu click để deploy
+  only:
+    - main</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TESTING -->
+            <section id="testing" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🧪</span>Testing Strategies</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Test Pyramid</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">Test
+                                    Pyramid</span></div>
+                            <pre><code>                    /\
+                   /  \   E2E Tests (UI, Selenium)
+                  /    \  • Slowest, most expensive
+                 /──────\  • Test entire user flow
+                /        \
+               /          \   Integration Tests
+              /            \  • Test service interactions
+             /──────────────\ • Database, API tests
+            /                \
+           /                  \   Unit Tests
+          /                    \  • Fastest, cheapest
+         /                      \ • Test individual functions
+        /────────────────────────\
+        
+Nguyên tắc: Nhiều unit tests ở đáy, ít E2E tests ở đỉnh</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Loại tests trong CI/CD</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Test Type</th>
+                                        <th>Khi nào chạy</th>
+                                        <th>Thời gian</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Unit Tests</strong></td>
+                                        <td>Mỗi commit</td>
+                                        <td>Seconds-Minutes</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Integration Tests</strong></td>
+                                        <td>Mỗi commit/PR</td>
+                                        <td>Minutes</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>E2E Tests</strong></td>
+                                        <td>PR merge, staging deploy</td>
+                                        <td>Minutes-Hours</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Performance Tests</strong></td>
+                                        <td>Trước production</td>
+                                        <td>Hours</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Security Scans</strong></td>
+                                        <td>Mỗi commit</td>
+                                        <td>Minutes</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DEPLOYMENT STRATEGIES -->
+            <section id="deployment" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🚀</span>Deployment Strategies</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Các chiến lược Deploy</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Strategy</th>
+                                        <th>Mô tả</th>
+                                        <th>Downtime</th>
+                                        <th>Rollback</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Rolling Update</strong></td>
+                                        <td>Thay thế instances từ từ</td>
+                                        <td>Zero</td>
+                                        <td>Chậm</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Blue/Green</strong></td>
+                                        <td>2 môi trường, switch traffic</td>
+                                        <td>Zero</td>
+                                        <td>Nhanh (switch back)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Canary</strong></td>
+                                        <td>Deploy cho % nhỏ users</td>
+                                        <td>Zero</td>
+                                        <td>Nhanh</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Recreate</strong></td>
+                                        <td>Stop old, start new</td>
+                                        <td>Có</td>
+                                        <td>Chậm</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Feature Flags</strong></td>
+                                        <td>Toggle features runtime</td>
+                                        <td>Zero</td>
+                                        <td>Ngay lập tức</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Flow</span><span
+                                    class="code-title">Blue/Green Deployment</span></div>
+                            <pre><code>Blue/Green Deployment:
+┌─────────────────────────────────────────────────────────────────────┐
+│                          Load Balancer                              │
+│                              │                                      │
+│              ┌───────────────┴───────────────┐                     │
+│              │                               │                      │
+│              ▼                               ▼                      │
+│   ┌─────────────────────┐        ┌─────────────────────┐           │
+│   │    BLUE (v1.0)      │        │   GREEN (v2.0)      │           │
+│   │    ✓ Active         │        │   ○ Idle            │           │
+│   │    100% traffic     │        │   0% traffic        │           │
+│   └─────────────────────┘        └─────────────────────┘           │
+│                                                                     │
+│   ▶ Test GREEN                                                      │
+│   ▶ Switch traffic: BLUE → GREEN                                    │
+│   ▶ GREEN becomes active, BLUE becomes idle (for rollback)         │
+└─────────────────────────────────────────────────────────────────────┘</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECURITY -->
+            <section id="security" class="content-section">
+                <h2 class="section-title"><span class="section-icon">🔒</span>Security (DevSecOps)</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Security trong CI/CD</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Security Scans</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Mô tả</th>
+                                        <th>Tools</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>SAST</strong></td>
+                                        <td>Static Application Security Testing (code)</td>
+                                        <td>SonarQube, Checkmarx, CodeQL</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>DAST</strong></td>
+                                        <td>Dynamic testing (running app)</td>
+                                        <td>OWASP ZAP, Burp Suite</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>SCA</strong></td>
+                                        <td>Software Composition Analysis (dependencies)</td>
+                                        <td>Snyk, Dependabot, OWASP Dependency-Check</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Container Scan</strong></td>
+                                        <td>Scan Docker images</td>
+                                        <td>Trivy, Clair, Anchore</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>IaC Scan</strong></td>
+                                        <td>Infrastructure as Code security</td>
+                                        <td>Checkov, tfsec</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Secrets Detection</strong></td>
+                                        <td>Tìm secrets trong code</td>
+                                        <td>GitLeaks, TruffleHog</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-shield-alt"></i> DevSecOps Best Practices</h4>
+                            <ul>
+                                <li><strong>Shift Left:</strong> Đưa security vào sớm trong pipeline</li>
+                                <li><strong>Secrets Management:</strong> Dùng Vault, AWS Secrets Manager, không hardcode
+                                </li>
+                                <li><strong>Least Privilege:</strong> CI/CD chỉ có permissions cần thiết</li>
+                                <li><strong>Signed Images:</strong> Sign và verify container images</li>
+                                <li><strong>Audit Logging:</strong> Log tất cả pipeline activities</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- BEST PRACTICES -->
+            <section id="best-practices" class="content-section">
+                <h2 class="section-title"><span class="section-icon">✨</span>Best Practices</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>CI/CD Best Practices</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>✅ Nên làm</h4>
+                                <ul>
+                                    <li>Commit thường xuyên, nhỏ gọn</li>
+                                    <li>Pipeline phải nhanh (<10 phút cho CI)</li>
+                                    <li>Build once, deploy many</li>
+                                    <li>Infrastructure as Code</li>
+                                    <li>Immutable artifacts</li>
+                                    <li>Version everything</li>
+                                    <li>Monitor pipeline metrics</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>❌ Không nên</h4>
+                                <ul>
+                                    <li>Skip tests để deploy nhanh</li>
+                                    <li>Hardcode secrets</li>
+                                    <li>Manual steps trong pipeline</li>
+                                    <li>Long-running feature branches</li>
+                                    <li>Deploy Friday chiều 😅</li>
+                                    <li>Ignore flaky tests</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-info-circle"></i> Metrics cần theo dõi</h4>
+                            <ul>
+                                <li><strong>Lead Time:</strong> Commit → Production</li>
+                                <li><strong>Deployment Frequency:</strong> Bao lâu deploy 1 lần</li>
+                                <li><strong>MTTR:</strong> Mean Time to Recovery</li>
+                                <li><strong>Change Failure Rate:</strong> % deployments gây lỗi</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INTERVIEW QUESTIONS -->
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>CI vs CD (Delivery vs Deployment)?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>CI:</strong> Tự động build và test code mỗi khi commit</li>
+                                <li><strong>CD (Delivery):</strong> Code luôn sẵn sàng deploy, nhưng deploy thủ công
+                                </li>
+                                <li><strong>CD (Deployment):</strong> Tự động deploy mọi thay đổi pass tests đến
+                                    production</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>Blue/Green vs Canary Deployment?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Blue/Green:</strong> 2 môi trường giống hệt, switch all traffic cùng lúc.
+                                    Rollback nhanh nhưng tốn resources.</li>
+                                <li><strong>Canary:</strong> Deploy cho % nhỏ users trước, tăng dần. Phát hiện lỗi sớm
+                                    với ít impact.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>Test Pyramid là gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Chiến lược testing với nhiều Unit tests (đáy, nhanh nhất), ít Integration tests (giữa),
+                                rất ít E2E tests (đỉnh, chậm nhất). Giúp balance coverage và execution time.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>Làm sao bảo mật secrets trong CI/CD?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li>Dùng secret management (Vault, AWS Secrets Manager)</li>
+                                <li>CI/CD encrypted secrets (GitHub Secrets, GitLab CI Variables)</li>
+                                <li>Không bao giờ commit secrets vào code</li>
+                                <li>Rotate secrets định kỳ</li>
+                                <li>Scan code cho secrets với GitLeaks/TruffleHog</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>Pipeline bị chậm, làm sao optimize?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li>Cache dependencies (Maven, npm, Docker layers)</li>
+                                <li>Chạy jobs parallel</li>
+                                <li>Fail fast - unit tests trước</li>
+                                <li>Dùng smaller base images</li>
+                                <li>Incremental builds</li>
+                                <li>Skip unnecessary steps (conditionals)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>GitOps là gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Practice sử dụng Git làm single source of truth cho infrastructure và deployments. Mọi
+                                thay đổi infrastructure qua Git (PR, review). Tools: ArgoCD, Flux tự động sync Git →
+                                Kubernetes.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>SAST vs DAST?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>SAST:</strong> Static - scan source code không cần chạy. Tìm SQL injection,
+                                    XSS...trong code.</li>
+                                <li><strong>DAST:</strong> Dynamic - test ứng dụng đang chạy. Simulate attacks thực tế.
+                                </li>
+                            </ul>
+                            <p>Dùng cả hai để comprehensive security.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>Trunk-based development là gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Branching strategy: developers commit trực tiếp vào main/trunk hoặc short-lived branches
+                                (< 1 ngày). Tránh long-running feature branches. Requires: feature flags, good test
+                                    coverage, CI pipeline nhanh.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q9</span>
+                            <p>DORA metrics là gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p>4 metrics đo lường DevOps performance:</p>
+                            <ul>
+                                <li><strong>Deployment Frequency:</strong> Bao lâu deploy</li>
+                                <li><strong>Lead Time:</strong> Commit → Production</li>
+                                <li><strong>Change Failure Rate:</strong> % deployments gây lỗi</li>
+                                <li><strong>MTTR:</strong> Thời gian phục hồi sau lỗi</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q10</span>
+                            <p>Rollback strategy khi deploy lỗi?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Immediate:</strong> Rollback version cũ (kubectl rollout undo)</li>
+                                <li><strong>Feature Flags:</strong> Toggle feature off</li>
+                                <li><strong>Blue/Green:</strong> Switch traffic back to Blue</li>
+                                <li><strong>Database:</strong> Backwards compatible migrations, never destructive</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="kubernetes.html" class="nav-btn prev"><i
+                        class="fas fa-arrow-left"></i><span>Kubernetes</span></a>
+                <a href="../index.html#devops" class="nav-btn next"><span>DevOps</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-groovy.min.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

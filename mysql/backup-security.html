@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backup & Security - MySQL Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="replication.html" class="nav-back"><i class="fas fa-arrow-left"></i> Replication</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon mysql"><i class="fas fa-shield-alt"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">MySQL</span>
+            <h1>Backup & Security</h1>
+            <p class="topic-desc">mysqldump, Physical Backup, Point-in-Time Recovery, User Privileges, SQL Injection</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#backup-types">Backup Types</a></li>
+                <li><a href="#logical-backup">Logical Backup</a></li>
+                <li><a href="#physical-backup">Physical Backup</a></li>
+                <li><a href="#pitr">Point-in-Time Recovery</a></li>
+                <li><a href="#user-management">User Management</a></li>
+                <li><a href="#privileges">Privileges</a></li>
+                <li><a href="#sql-injection">SQL Injection</a></li>
+                <li><a href="#encryption">Encryption</a></li>
+                <li><a href="#audit">Audit Logging</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+            <!-- BACKUP TYPES -->
+            <section class="content-section">
+                <h2 id="backup-types" class="section-title"><span class="section-icon">💾</span>Backup Types</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Backup Strategy Overview</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Logical vs Physical Backup</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Aspect</th>
+                                        <th>Logical</th>
+                                        <th>Physical</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>What</strong></td>
+                                        <td>SQL statements (CREATE, INSERT)</td>
+                                        <td>Raw data files</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Tools</strong></td>
+                                        <td>mysqldump, mysqlpump</td>
+                                        <td>Percona XtraBackup, cp</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Speed</strong></td>
+                                        <td>Slower (dump + restore)</td>
+                                        <td>Faster for large DBs</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Size</strong></td>
+                                        <td>Smaller (text, compress well)</td>
+                                        <td>Larger (raw files)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Flexibility</strong></td>
+                                        <td>Individual tables, filtering</td>
+                                        <td>Whole database/instance</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Cross-version</strong></td>
+                                        <td>✅ Yes</td>
+                                        <td>❌ Same version usually</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Hot Backup</strong></td>
+                                        <td>With locks/consistency</td>
+                                        <td>With XtraBackup</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Backup Types</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                        <th>Use Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Full</strong></td>
+                                        <td>Complete database backup</td>
+                                        <td>Weekly base backup</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Incremental</strong></td>
+                                        <td>Changes since last backup</td>
+                                        <td>Daily between full backups</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Differential</strong></td>
+                                        <td>Changes since last FULL backup</td>
+                                        <td>Faster restore than incremental</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- LOGICAL BACKUP -->
+            <section class="content-section">
+                <h2 id="logical-backup" class="section-title"><span class="section-icon">📄</span>Logical Backup</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>mysqldump & mysqlpump</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Bash</span><span
+                                    class="code-title">mysqldump Commands</span></div>
+                            <pre><code class="language-bash"># Backup single database
+mysqldump -u root -p mydb > backup.sql
+
+# Backup specific tables
+mysqldump -u root -p mydb users orders > tables.sql
+
+# Backup all databases
+mysqldump -u root -p --all-databases > all_dbs.sql
+
+# Consistent backup (InnoDB - recommended)
+mysqldump -u root -p --single-transaction mydb > backup.sql
+
+# With compression
+mysqldump -u root -p mydb | gzip > backup.sql.gz
+
+# Schema only (no data)
+mysqldump -u root -p --no-data mydb > schema.sql
+
+# Data only (no schema)
+mysqldump -u root -p --no-create-info mydb > data.sql
+
+# Include routines and events
+mysqldump -u root -p --routines --events mydb > backup.sql
+
+# For replication setup (with binlog position)
+mysqldump -u root -p --single-transaction --master-data=2 mydb > backup.sql
+
+# With GTID for replication
+mysqldump -u root -p --single-transaction --set-gtid-purged=ON mydb > backup.sql</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Bash</span><span class="code-title">Restore
+                                    from Backup</span></div>
+                            <pre><code class="language-bash"># Restore database
+mysql -u root -p mydb < backup.sql
+
+# From compressed
+gunzip < backup.sql.gz | mysql -u root -p mydb
+
+# Create database if needed
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS mydb"
+mysql -u root -p mydb < backup.sql
+
+# Restore specific tables (if backup contains multiple)
+mysql -u root -p mydb < backup.sql  # Will only create/insert what's in file</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Bash</span><span
+                                    class="code-title">mysqlpump (Parallel)</span></div>
+                            <pre><code class="language-bash"># mysqlpump - parallel backup (MySQL 5.7+)
+mysqlpump -u root -p --default-parallelism=4 mydb > backup.sql
+
+# Exclude tables
+mysqlpump -u root -p --exclude-tables=logs,sessions mydb > backup.sql
+
+# Include users
+mysqlpump -u root -p --include-users mydb > backup.sql</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PHYSICAL BACKUP -->
+            <section class="content-section">
+                <h2 id="physical-backup" class="section-title"><span class="section-icon">💿</span>Physical Backup</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Percona XtraBackup</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Bash</span><span
+                                    class="code-title">XtraBackup Commands</span></div>
+                            <pre><code class="language-bash"># Full backup
+xtrabackup --backup --target-dir=/backup/full
+
+# Prepare backup (apply logs)
+xtrabackup --prepare --target-dir=/backup/full
+
+# Restore (stop MySQL first, ensure datadir empty)
+xtrabackup --copy-back --target-dir=/backup/full
+chown -R mysql:mysql /var/lib/mysql
+
+# Incremental backup
+xtrabackup --backup --target-dir=/backup/inc1 \
+  --incremental-basedir=/backup/full
+
+# Prepare incremental (apply to base)
+xtrabackup --prepare --apply-log-only --target-dir=/backup/full
+xtrabackup --prepare --target-dir=/backup/full \
+  --incremental-dir=/backup/inc1
+
+# With compression
+xtrabackup --backup --compress --target-dir=/backup/compressed
+
+# Streaming to another server
+xtrabackup --backup --stream=xbstream | ssh user@remote \
+  "cat - > /backup/backup.xbstream"</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-lightbulb"></i> XtraBackup Benefits</h4>
+                            <ul>
+                                <li><strong>Hot Backup:</strong> No lock during backup (InnoDB)</li>
+                                <li><strong>Fast:</strong> Copy files directly, faster restore</li>
+                                <li><strong>Incremental:</strong> Only changed pages</li>
+                                <li><strong>Streaming:</strong> Backup directly to remote</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- POINT-IN-TIME RECOVERY -->
+            <section class="content-section">
+                <h2 id="pitr" class="section-title"><span class="section-icon">⏱️</span>Point-in-Time Recovery</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>PITR Using Binary Logs</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Visual</span><span class="code-title">PITR
+                                    Concept</span></div>
+                            <pre><code>POINT-IN-TIME RECOVERY: Restore to specific moment
+
+Timeline:
+─────────────────────────────────────────────────────────────►
+|           |                    |                    |
+Full     Binlog               Disaster              Now
+Backup   Events              (Data loss)
+         Recorded
+         
+Recovery Process:
+1. Restore full backup
+2. Apply binary logs UP TO specific time
+3. Data restored to that exact moment</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Bash</span><span class="code-title">PITR
+                                    Commands</span></div>
+                            <pre><code class="language-bash"># Step 1: Restore full backup
+mysql -u root -p mydb < full_backup.sql
+
+# Step 2: Find binlog position from backup
+grep "CHANGE MASTER" full_backup.sql
+# -- CHANGE MASTER TO MASTER_LOG_FILE='mysql-bin.000015', MASTER_LOG_POS=1234;
+
+# Step 3: Apply binary logs to specific time
+mysqlbinlog --start-position=1234 \
+  --stop-datetime="2024-01-15 14:30:00" \
+  mysql-bin.000015 mysql-bin.000016 | mysql -u root -p
+
+# Alternatively, stop at specific position
+mysqlbinlog --start-position=1234 \
+  --stop-position=5678 \
+  mysql-bin.000015 | mysql -u root -p
+
+# View binlog events (find when error occurred)
+mysqlbinlog --start-datetime="2024-01-15 14:00:00" \
+  --stop-datetime="2024-01-15 15:00:00" \
+  mysql-bin.000015 | less</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- USER MANAGEMENT -->
+            <section class="content-section">
+                <h2 id="user-management" class="section-title"><span class="section-icon">👤</span>User Management</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Creating & Managing Users</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">User
+                                    Commands</span></div>
+                            <pre><code class="language-sql">-- Create user (localhost only)
+CREATE USER 'app_user'@'localhost' IDENTIFIED BY 'SecureP@ss123!';
+
+-- Create user (from any host)
+CREATE USER 'remote_user'@'%' IDENTIFIED BY 'SecureP@ss123!';
+
+-- Create user (specific IP/subnet)
+CREATE USER 'app_user'@'192.168.1.%' IDENTIFIED BY 'SecureP@ss123!';
+
+-- With password expiration
+CREATE USER 'temp_user'@'localhost' 
+IDENTIFIED BY 'Password123' PASSWORD EXPIRE INTERVAL 30 DAY;
+
+-- Change password
+ALTER USER 'app_user'@'localhost' IDENTIFIED BY 'NewPassword123!';
+
+-- Force password change on next login
+ALTER USER 'app_user'@'localhost' PASSWORD EXPIRE;
+
+-- Lock/Unlock account
+ALTER USER 'app_user'@'localhost' ACCOUNT LOCK;
+ALTER USER 'app_user'@'localhost' ACCOUNT UNLOCK;
+
+-- Rename user
+RENAME USER 'old_name'@'localhost' TO 'new_name'@'localhost';
+
+-- Drop user
+DROP USER 'app_user'@'localhost';
+
+-- View users
+SELECT User, Host, authentication_string FROM mysql.user;
+
+-- View current user
+SELECT CURRENT_USER();</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PRIVILEGES -->
+            <section class="content-section">
+                <h2 id="privileges" class="section-title"><span class="section-icon">🔑</span>Privileges</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>GRANT & REVOKE</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span
+                                    class="code-title">Privilege Commands</span></div>
+                            <pre><code class="language-sql">-- Grant all on specific database
+GRANT ALL PRIVILEGES ON mydb.* TO 'app_user'@'localhost';
+
+-- Grant specific privileges
+GRANT SELECT, INSERT, UPDATE, DELETE ON mydb.* TO 'app_user'@'localhost';
+
+-- Grant on specific table
+GRANT SELECT ON mydb.public_data TO 'readonly_user'@'%';
+
+-- Grant on specific columns
+GRANT SELECT (id, name, email) ON mydb.users TO 'limited_user'@'localhost';
+
+-- With GRANT option (can grant to others)
+GRANT SELECT ON mydb.* TO 'admin'@'localhost' WITH GRANT OPTION;
+
+-- Global privileges (careful!)
+GRANT SUPER, PROCESS, RELOAD ON *.* TO 'dba'@'localhost';
+
+-- Create read-only user
+GRANT SELECT ON mydb.* TO 'readonly'@'%';
+
+-- Application user (CRUD only)
+GRANT SELECT, INSERT, UPDATE, DELETE ON mydb.* TO 'app'@'%';
+
+-- Revoke privileges
+REVOKE DELETE ON mydb.* FROM 'app_user'@'localhost';
+REVOKE ALL PRIVILEGES ON mydb.* FROM 'app_user'@'localhost';
+
+-- View grants
+SHOW GRANTS FOR 'app_user'@'localhost';
+SHOW GRANTS FOR CURRENT_USER;
+
+-- Apply privilege changes
+FLUSH PRIVILEGES;</code></pre>
+                        </div>
+
+                        <div class="comparison-table">
+                            <h4>Common Privilege Levels</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Level</th>
+                                        <th>Syntax</th>
+                                        <th>Example</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Global</strong></td>
+                                        <td>*.* </td>
+                                        <td>GRANT ... ON *.* TO ...</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Database</strong></td>
+                                        <td>db.*</td>
+                                        <td>GRANT ... ON mydb.* TO ...</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Table</strong></td>
+                                        <td>db.table</td>
+                                        <td>GRANT ... ON mydb.users TO ...</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Column</strong></td>
+                                        <td>db.table(col)</td>
+                                        <td>GRANT SELECT(name) ON ...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Principle of Least Privilege</h4>
+                            <ul>
+                                <li>Give minimum required permissions</li>
+                                <li>Use specific hosts, not '%' when possible</li>
+                                <li>Avoid SUPER privilege for application users</li>
+                                <li>Separate read-only accounts for reporting</li>
+                                <li>Audit privileges regularly</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SQL INJECTION -->
+            <section class="content-section">
+                <h2 id="sql-injection" class="section-title"><span class="section-icon">💉</span>SQL Injection</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Prevention Strategies</h3><span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">SQL
+                                    Injection Attack</span></div>
+                            <pre><code class="language-sql">-- Vulnerable code (string concatenation):
+query = "SELECT * FROM users WHERE username = '" + username + "'"
+
+-- Attack input:
+username = "' OR '1'='1"
+
+-- Resulting query:
+SELECT * FROM users WHERE username = '' OR '1'='1'
+-- Returns ALL users!
+
+-- More dangerous:
+username = "'; DROP TABLE users; --"
+
+SELECT * FROM users WHERE username = ''; DROP TABLE users; --'
+-- Table deleted!</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Prevention with Prepared Statements</span></div>
+                            <pre><code class="language-java">// ❌ VULNERABLE: String concatenation
+String query = "SELECT * FROM users WHERE username = '" + username + "'";
+Statement stmt = connection.createStatement();
+ResultSet rs = stmt.executeQuery(query);
+
+// ✅ SAFE: Prepared Statement (parameterized)
+String query = "SELECT * FROM users WHERE username = ?";
+PreparedStatement pstmt = connection.prepareStatement(query);
+pstmt.setString(1, username);  // Parameter binding
+ResultSet rs = pstmt.executeQuery();
+
+// ✅ SAFE: Using JPA/Hibernate
+@Query("SELECT u FROM User u WHERE u.username = :username")
+User findByUsername(@Param("username") String username);
+
+// ✅ SAFE: Spring Data
+userRepository.findByUsername(username);  // Method-based query</code></pre>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="column highlight-box">
+                                <h4>✅ Prevention Methods</h4>
+                                <ul>
+                                    <li>Prepared Statements (parameterized queries)</li>
+                                    <li>ORM/JPA with named parameters</li>
+                                    <li>Input validation (whitelist)</li>
+                                    <li>Escape special characters</li>
+                                    <li>Least privilege for DB users</li>
+                                </ul>
+                            </div>
+                            <div class="column highlight-box">
+                                <h4>❌ What to Avoid</h4>
+                                <ul>
+                                    <li>String concatenation for queries</li>
+                                    <li>Dynamic SQL from user input</li>
+                                    <li>Trusting client-side validation</li>
+                                    <li>Using root/admin for app DB</li>
+                                    <li>Detailed error messages to users</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ENCRYPTION -->
+            <section class="content-section">
+                <h2 id="encryption" class="section-title"><span class="section-icon">🔐</span>Encryption</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Data Encryption</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span
+                                    class="code-title">Encryption Options</span></div>
+                            <pre><code class="language-sql">-- 1. ENCRYPTION AT REST (Transparent Data Encryption - TDE)
+-- my.cnf
+[mysqld]
+early-plugin-load = keyring_file.so
+keyring_file_data = /var/lib/mysql-keyring/keyring
+
+-- Create encrypted table
+CREATE TABLE sensitive_data (
+    id INT PRIMARY KEY,
+    ssn VARCHAR(11),
+    credit_card VARCHAR(16)
+) ENCRYPTION = 'Y';
+
+-- Check encryption status
+SELECT * FROM information_schema.innodb_tablespaces 
+WHERE ENCRYPTION = 'Y';
+
+
+-- 2. ENCRYPTION IN TRANSIT (SSL/TLS)
+-- my.cnf
+[mysqld]
+ssl-ca = /path/to/ca.pem
+ssl-cert = /path/to/server-cert.pem
+ssl-key = /path/to/server-key.pem
+require_secure_transport = ON
+
+-- Connect with SSL
+mysql --ssl-mode=REQUIRED -u user -p
+
+-- Check SSL status
+SHOW STATUS LIKE 'Ssl_cipher';
+
+
+-- 3. APPLICATION-LEVEL ENCRYPTION
+-- Encrypt before storing
+INSERT INTO users (email, ssn_encrypted) 
+VALUES ('user@example.com', AES_ENCRYPT('123-45-6789', 'encryption_key'));
+
+-- Decrypt when reading
+SELECT email, AES_DECRYPT(ssn_encrypted, 'encryption_key') AS ssn
+FROM users;</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Encryption Key Management</h4>
+                            <ul>
+                                <li>Never store keys in code or database</li>
+                                <li>Use dedicated key management (HashiCorp Vault, AWS KMS)</li>
+                                <li>Rotate keys regularly</li>
+                                <li>Backup keys securely (separate from data)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AUDIT LOGGING -->
+            <section class="content-section">
+                <h2 id="audit" class="section-title"><span class="section-icon">📋</span>Audit Logging</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Tracking Database Activity</h3><span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">SQL</span><span class="code-title">Audit
+                                    Configuration</span></div>
+                            <pre><code class="language-sql">-- MySQL Enterprise Audit Plugin
+INSTALL PLUGIN audit_log SONAME 'audit_log.so';
+
+-- Configure in my.cnf
+[mysqld]
+audit_log = FORCE_PLUS_PERMANENT
+audit_log_file = /var/log/mysql/audit.log
+audit_log_format = JSON
+audit_log_policy = ALL  -- LOGINS, QUERIES, ALL, NONE
+
+-- General Query Log (development only - performance impact!)
+SET GLOBAL general_log = 'ON';
+SET GLOBAL general_log_file = '/var/log/mysql/general.log';
+
+-- Community alternative: Percona Audit Plugin (free)
+-- Or application-level audit logging
+
+-- Audit table example (application-level)
+CREATE TABLE audit_log (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    table_name VARCHAR(100),
+    action ENUM('INSERT', 'UPDATE', 'DELETE'),
+    record_id BIGINT,
+    old_values JSON,
+    new_values JSON,
+    user_id BIGINT,
+    ip_address VARCHAR(45),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Trigger for audit
+DELIMITER //
+CREATE TRIGGER users_audit_update
+AFTER UPDATE ON users
+FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (table_name, action, record_id, old_values, new_values, user_id)
+    VALUES ('users', 'UPDATE', NEW.id, 
+        JSON_OBJECT('name', OLD.name, 'email', OLD.email),
+        JSON_OBJECT('name', NEW.name, 'email', NEW.email),
+        @current_user_id);
+END //
+DELIMITER ;</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INTERVIEW QUESTIONS -->
+            <section id="interview" class="content-section">
+                <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
+
+                <div class="interview-questions">
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q1</span>
+                            <p>Logical vs Physical backup?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Logical (mysqldump):</strong> SQL statements, portable, slower, smaller</li>
+                                <li><strong>Physical (XtraBackup):</strong> Raw files, faster for large DBs, same
+                                    version</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q2</span>
+                            <p>mysqldump --single-transaction làm gì?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Uses START TRANSACTION WITH CONSISTENT SNAPSHOT to get consistent backup without locking
+                                tables. InnoDB only. Allows writes during backup.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q3</span>
+                            <p>Point-in-Time Recovery hoạt động thế nào?</p>
+                        </div>
+                        <div class="answer">
+                            <ol>
+                                <li>Restore full backup</li>
+                                <li>Apply binary logs từ backup position đến target time</li>
+                                <li>Use mysqlbinlog --stop-datetime</li>
+                            </ol>
+                            <p>Requires binlog enabled.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q4</span>
+                            <p>Làm sao prevent SQL Injection?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Prepared Statements:</strong> Parameterized queries</li>
+                                <li><strong>ORM:</strong> JPA, Hibernate với named parameters</li>
+                                <li><strong>Input Validation:</strong> Whitelist allowed values</li>
+                                <li><strong>Least Privilege:</strong> Limit DB user permissions</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q5</span>
+                            <p>GRANT và REVOKE khác nhau?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>GRANT:</strong> Cấp quyền cho user</li>
+                                <li><strong>REVOKE:</strong> Thu hồi quyền từ user</li>
+                            </ul>
+                            <p>Syntax: GRANT privileges ON database.table TO 'user'@'host'</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>Encryption at rest vs in transit?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>At Rest:</strong> Data encrypted on disk (TDE, tablespace encryption)</li>
+                                <li><strong>In Transit:</strong> Data encrypted during transmission (SSL/TLS)</li>
+                            </ul>
+                            <p>Both needed for full protection.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>Percona XtraBackup benefits?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li>Hot backup (no locking for InnoDB)</li>
+                                <li>Incremental backups</li>
+                                <li>Streaming/compression</li>
+                                <li>Faster than mysqldump for large DBs</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>Principle of Least Privilege?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Give users minimum permissions needed. App user only needs SELECT/INSERT/UPDATE/DELETE on
+                                app tables. No SUPER, DROP, GRANT. Separate users for different roles.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q9</span>
+                            <p>Backup strategy recommendation?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Full backup:</strong> Weekly (Sunday night)</li>
+                                <li><strong>Incremental:</strong> Daily</li>
+                                <li><strong>Binary logs:</strong> Continuous (for PITR)</li>
+                                <li><strong>Test restores:</strong> Monthly</li>
+                                <li><strong>Off-site:</strong> Store in different location</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q10</span>
+                            <p>Audit logging options?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>MySQL Enterprise:</strong> Audit plugin (paid)</li>
+                                <li><strong>Percona:</strong> Free audit plugin</li>
+                                <li><strong>General log:</strong> All queries (performance impact)</li>
+                                <li><strong>Application-level:</strong> Triggers, ORM events</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-navigation">
+                <a href="replication.html" class="nav-btn prev"><i
+                        class="fas fa-arrow-left"></i><span>Replication</span></a>
+                <a href="../index.html#mysql" class="nav-btn next"><span>MySQL Home</span><i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </article>
+    </main>
+
+    <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

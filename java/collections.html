@@ -44,11 +44,13 @@
                 <li><a href="#concurrent">Concurrent Collections</a></li>
                 <li><a href="#comparison">Comparable vs Comparator</a></li>
                 <li><a href="#iterator">Iterator & Fail-Fast</a></li>
+                <li><a href="#utilities">Collections Utilities</a></li>
                 <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
             </ul>
         </aside>
 
         <article class="main-content">
+            <!-- COLLECTION HIERARCHY -->
             <section class="content-section">
                 <h2 id="hierarchy" class="section-title"><span class="section-icon">🗂️</span>Collection Hierarchy</h2>
 
@@ -58,35 +60,42 @@
                             <div class="code-header"><span class="code-lang">Hierarchy</span></div>
                             <pre><code>                    Iterable
                         │
-                   Collection
-          ┌─────────┼─────────┐
-         List      Set      Queue
-          │         │         │
-    ┌─────┼─────┐   │    ┌────┼────┐
-ArrayList  │  Vector │  PriorityQueue Deque
+                   Collection                         Map (separate)
+         ┌──────────┼──────────┐                        │
+        List       Set       Queue            ┌─────────┼─────────┐
+         │          │          │           HashMap   TreeMap  LinkedHashMap
+    ┌────┼────┐     │     ┌────┼────┐          │
+ArrayList │  Vector │  PriorityQueue Deque  ConcurrentHashMap
       LinkedList    │              │
                ┌────┼────┐    ArrayDeque
-            HashSet │  TreeSet
+            HashSet │  TreeSet   LinkedList
                     │
               LinkedHashSet
 
-           Map (separate hierarchy)
-            │
-    ┌───────┼───────┐
- HashMap  TreeMap  LinkedHashMap
-    │
-ConcurrentHashMap</code></pre>
+Note: Map không extends Collection!</code></pre>
+                        </div>
+
+                        <div class="key-points">
+                            <h4><i class="fas fa-key"></i> Đặc điểm chính của từng loại</h4>
+                            <ul>
+                                <li><strong>List:</strong> Có thứ tự, cho phép duplicate, truy cập theo index</li>
+                                <li><strong>Set:</strong> Không duplicate, có thể có hoặc không thứ tự</li>
+                                <li><strong>Queue:</strong> FIFO (First In First Out), xử lý theo thứ tự</li>
+                                <li><strong>Map:</strong> Key-value pairs, key không duplicate</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- LIST INTERFACE -->
             <section class="content-section">
                 <h2 id="list" class="section-title"><span class="section-icon">📋</span>List Interface</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>ArrayList vs LinkedList vs Vector</h3><span class="badge essential">Essential</span>
+                        <h3>ArrayList vs LinkedList vs Vector</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
                         <div class="comparison-table">
@@ -101,89 +110,112 @@ ConcurrentHashMap</code></pre>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Structure</td>
+                                        <td><strong>Cấu trúc</strong></td>
                                         <td>Dynamic Array</td>
                                         <td>Doubly Linked List</td>
                                         <td>Dynamic Array</td>
                                     </tr>
                                     <tr>
-                                        <td>Get by index</td>
-                                        <td><strong>O(1)</strong></td>
+                                        <td><strong>get(index)</strong></td>
+                                        <td><strong>O(1)</strong> ✅</td>
                                         <td>O(n)</td>
                                         <td>O(1)</td>
                                     </tr>
                                     <tr>
-                                        <td>Add/Remove (end)</td>
+                                        <td><strong>add/remove (cuối)</strong></td>
                                         <td>O(1)*</td>
-                                        <td><strong>O(1)</strong></td>
+                                        <td><strong>O(1)</strong> ✅</td>
                                         <td>O(1)*</td>
                                     </tr>
                                     <tr>
-                                        <td>Add/Remove (middle)</td>
+                                        <td><strong>add/remove (giữa)</strong></td>
                                         <td>O(n)</td>
                                         <td><strong>O(1)</strong>**</td>
                                         <td>O(n)</td>
                                     </tr>
                                     <tr>
-                                        <td>Memory</td>
-                                        <td>Less overhead</td>
-                                        <td>More (node pointers)</td>
-                                        <td>Less overhead</td>
+                                        <td><strong>Memory</strong></td>
+                                        <td>Ít hơn</td>
+                                        <td>Nhiều hơn (node pointers)</td>
+                                        <td>Ít hơn</td>
                                     </tr>
                                     <tr>
-                                        <td>Thread-safe</td>
-                                        <td>❌ No</td>
-                                        <td>❌ No</td>
-                                        <td>✅ Yes</td>
+                                        <td><strong>Thread-safe</strong></td>
+                                        <td>❌</td>
+                                        <td>❌</td>
+                                        <td>✅ (synchronized)</td>
                                     </tr>
                                     <tr>
-                                        <td>Growth</td>
-                                        <td>50%</td>
+                                        <td><strong>Growth</strong></td>
+                                        <td>50% capacity</td>
                                         <td>N/A</td>
-                                        <td>100%</td>
+                                        <td>100% capacity</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
-                        <p>* Amortized O(1), ** O(1) if you have reference to node, O(n) to find position</p>
+                        <p class="small">* Amortized O(1) | ** O(1) nếu có reference đến node</p>
 
                         <div class="code-block">
-                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Usage
-                                    Examples</span></div>
-                            <pre><code>// ArrayList - best for random access, iteration
-List&lt;String&gt; arrayList = new ArrayList&lt;&gt;();
-arrayList.add("A");
-String element = arrayList.get(0);  // O(1)
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">ArrayList Internal</span></div>
+                            <pre><code class="language-java">// ArrayList sử dụng array nội bộ
+public class ArrayList&lt;E&gt; {
+    private Object[] elementData;  // Underlying array
+    private int size;
+    
+    // Default capacity = 10
+    // Khi đầy, grow thêm 50%: newCapacity = oldCapacity + (oldCapacity >> 1)
+}
 
-// LinkedList - best for frequent insertions/deletions
-List&lt;String&gt; linkedList = new LinkedList&lt;&gt;();
-linkedList.addFirst("A");  // O(1)
-linkedList.addLast("B");   // O(1)
+// Best practices
+List&lt;String&gt; list = new ArrayList&lt;&gt;();  // Interface type
+List&lt;String&gt; sized = new ArrayList&lt;&gt;(1000);  // Biết trước size
 
-// Thread-safe alternatives (prefer over Vector)
-List&lt;String&gt; syncList = Collections.synchronizedList(new ArrayList&lt;&gt;());
-List&lt;String&gt; copyOnWrite = new CopyOnWriteArrayList&lt;&gt;();</code></pre>
+// Tránh boxed primitives cho số lượng lớn
+int[] primitives = new int[1000000];  // 4MB
+List&lt;Integer&gt; boxed = new ArrayList&lt;&gt;();  // ~20MB (object overhead)</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">LinkedList là Deque</span></div>
+                            <pre><code class="language-java">// LinkedList implements cả List và Deque
+LinkedList&lt;String&gt; list = new LinkedList&lt;&gt;();
+
+// List operations
+list.add("A");
+list.get(0);
+
+// Deque operations (O(1))
+list.addFirst("First");
+list.addLast("Last");
+list.removeFirst();
+list.removeLast();
+list.peekFirst();  // Không remove
+list.pollFirst();  // Remove và return</code></pre>
                         </div>
 
                         <div class="info-box">
                             <h4><i class="fas fa-lightbulb"></i> Khi nào dùng?</h4>
                             <ul>
                                 <li><strong>ArrayList:</strong> 90% use cases - random access, iteration</li>
-                                <li><strong>LinkedList:</strong> Frequent add/remove at beginning, implement Queue/Deque
-                                </li>
-                                <li><strong>Vector:</strong> Legacy code only, prefer CopyOnWriteArrayList</li>
+                                <li><strong>LinkedList:</strong> Thêm/xóa đầu/cuối nhiều, implement Queue/Stack</li>
+                                <li><strong>Vector:</strong> Legacy code, prefer CopyOnWriteArrayList</li>
                             </ul>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- SET INTERFACE -->
             <section class="content-section">
                 <h2 id="set" class="section-title"><span class="section-icon">🔵</span>Set Interface</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>HashSet vs TreeSet vs LinkedHashSet</h3><span class="badge essential">Essential</span>
+                        <h3>HashSet vs TreeSet vs LinkedHashSet</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
                         <div class="comparison-table">
@@ -198,31 +230,31 @@ List&lt;String&gt; copyOnWrite = new CopyOnWriteArrayList&lt;&gt;();</code></pre
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Structure</td>
+                                        <td><strong>Cấu trúc</strong></td>
                                         <td>HashMap</td>
                                         <td>Red-Black Tree</td>
                                         <td>LinkedHashMap</td>
                                     </tr>
                                     <tr>
-                                        <td>Order</td>
-                                        <td>❌ No order</td>
+                                        <td><strong>Thứ tự</strong></td>
+                                        <td>❌ Không</td>
                                         <td>✅ Sorted</td>
                                         <td>✅ Insertion order</td>
                                     </tr>
                                     <tr>
-                                        <td>add/remove/contains</td>
+                                        <td><strong>add/remove/contains</strong></td>
                                         <td><strong>O(1)</strong></td>
                                         <td>O(log n)</td>
                                         <td>O(1)</td>
                                     </tr>
                                     <tr>
-                                        <td>Null values</td>
-                                        <td>✅ One null</td>
-                                        <td>❌ No (throws NPE)</td>
-                                        <td>✅ One null</td>
+                                        <td><strong>null</strong></td>
+                                        <td>✅ 1 null</td>
+                                        <td>❌ NPE</td>
+                                        <td>✅ 1 null</td>
                                     </tr>
                                     <tr>
-                                        <td>Thread-safe</td>
+                                        <td><strong>Thread-safe</strong></td>
                                         <td>❌</td>
                                         <td>❌</td>
                                         <td>❌</td>
@@ -233,62 +265,107 @@ List&lt;String&gt; copyOnWrite = new CopyOnWriteArrayList&lt;&gt;();</code></pre
 
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span class="code-title">HashSet
-                                    Working</span></div>
-                            <pre><code>// HashSet uses HashMap internally
+                                    hoạt động thế nào?</span></div>
+                            <pre><code class="language-java">// HashSet dùng HashMap internally
+// Value luôn là PRESENT (dummy object)
 Set&lt;String&gt; set = new HashSet&lt;&gt;();
-set.add("A");  // Stores as HashMap.put("A", PRESENT)
+set.add("A");  // Thực ra là map.put("A", PRESENT)
 
-// How HashSet works:
-// 1. Calculate hashCode() of element
-// 2. Find bucket using hash % capacity
-// 3. Check equals() if collision
-// 4. If equals() returns true, don't add (duplicate)
-
-// IMPORTANT: Override both hashCode() and equals()!
+// Để HashSet hoạt động đúng, class PHẢI override:
 public class Person {
     private String id;
+    private String name;
     
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Person)) return false;
-        return id.equals(((Person) o).id);
+        Person person = (Person) o;
+        return Objects.equals(id, person.id);
     }
     
     @Override
     public int hashCode() {
-        return Objects.hash(id);  // Must be consistent with equals
+        return Objects.hash(id);  // Phải consistent với equals
     }
-}</code></pre>
+}
+
+// Contract:
+// if a.equals(b) == true → a.hashCode() == b.hashCode() (bắt buộc)
+// if a.hashCode() == b.hashCode() → a.equals(b) có thể false (collision)</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">TreeSet
+                                    - Sorted Set</span></div>
+                            <pre><code class="language-java">// TreeSet yêu cầu elements Comparable hoặc Comparator
+TreeSet&lt;Integer&gt; numbers = new TreeSet&lt;&gt;();
+numbers.addAll(Arrays.asList(5, 2, 8, 1, 9));
+System.out.println(numbers);  // [1, 2, 5, 8, 9] - sorted!
+
+// NavigableSet methods
+numbers.first();       // 1
+numbers.last();        // 9
+numbers.lower(5);      // 2 (strictly less than)
+numbers.floor(5);      // 5 (less than or equal)
+numbers.higher(5);     // 8 (strictly greater)
+numbers.ceiling(5);    // 5 (greater than or equal)
+numbers.headSet(5);    // [1, 2] - elements < 5
+numbers.tailSet(5);    // [5, 8, 9] - elements >= 5
+numbers.subSet(2, 8);  // [2, 5] - range [2, 8)</code></pre>
                         </div>
 
                         <div class="warning-box">
                             <h4><i class="fas fa-exclamation-triangle"></i> hashCode() Contract</h4>
                             <ul>
-                                <li>If <code>a.equals(b)</code> is true → <code>a.hashCode() == b.hashCode()</code></li>
-                                <li>If hashCode differs → objects are NOT equal</li>
-                                <li>Same hashCode doesn't mean equals (collision)</li>
+                                <li>Nếu <code>a.equals(b) == true</code> → <code>a.hashCode() == b.hashCode()</code>
+                                </li>
+                                <li>Nếu hashCode khác → objects chắc chắn NOT equal</li>
+                                <li>Cùng hashCode không có nghĩa equals (collision)</li>
+                                <li>Phải override CẢ HAI hoặc KHÔNG override gì!</li>
                             </ul>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- MAP INTERFACE -->
             <section class="content-section">
                 <h2 id="map" class="section-title"><span class="section-icon">🗺️</span>Map Interface</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>HashMap Internal Working</h3><span class="badge essential">Essential</span>
+                        <h3>HashMap Internal Working</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Visual</span><span
+                                    class="code-title">HashMap Structure</span></div>
+                            <pre><code>HashMap = Array of Node (bucket) + LinkedList/TreeMap
+
+Index:  0    1    2    3    4    5    6    7   ...
+      ┌────┬────┬────┬────┬────┬────┬────┬────┐
+      │null│ N1 │null│ N2 │null│ N3 │null│ N4 │
+      └────┴──│─┴────┴──│─┴────┴──│─┴────┴──│─┘
+              │         │         │         │
+              ▼         ▼         ▼         ▼
+             N1a      (...)     N3a      (TreeMap nếu > 8)
+              │                   │
+              ▼                   ▼
+             N1b                 N3b
+
+Node: [hash | key | value | next]</code></pre>
+                        </div>
+
                         <div class="key-points">
-                            <h4><i class="fas fa-cogs"></i> How HashMap Works</h4>
+                            <h4><i class="fas fa-cogs"></i> HashMap hoạt động thế nào?</h4>
                             <ul>
-                                <li><strong>Structure:</strong> Array of Node (bucket) + LinkedList/TreeMap</li>
                                 <li><strong>Default capacity:</strong> 16, Load factor: 0.75</li>
-                                <li><strong>Resize:</strong> When size > capacity * loadFactor, double capacity</li>
-                                <li><strong>Java 8+:</strong> LinkedList → TreeMap when bucket size > 8
+                                <li><strong>Resize:</strong> Khi size > capacity × loadFactor → double capacity</li>
+                                <li><strong>Index:</strong> <code>hash & (capacity - 1)</code> (giống hash % capacity
+                                    nhưng nhanh hơn)</li>
+                                <li><strong>Java 8+:</strong> LinkedList → TreeMap khi bucket > 8 elements
                                     (TREEIFY_THRESHOLD)</li>
                             </ul>
                         </div>
@@ -296,21 +373,25 @@ public class Person {
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span class="code-title">HashMap
                                     put() Process</span></div>
-                            <pre><code>// Step by step: map.put(key, value)
+                            <pre><code class="language-java">// Khi gọi map.put(key, value):
 
-// 1. Calculate hash
+// 1. Tính hash (Java 8+ spread bits)
 int hash = (key == null) ? 0 : key.hashCode() ^ (key.hashCode() >>> 16);
 
-// 2. Find bucket index
-int index = hash & (capacity - 1);  // Same as hash % capacity, but faster
+// 2. Tìm bucket index
+int index = hash & (capacity - 1);
 
-// 3. If bucket empty, add new Node
-// 4. If bucket has nodes:
-//    - Check if key exists (equals), if yes update value
-//    - If collision, add to LinkedList/TreeMap
+// 3. Nếu bucket rỗng → tạo Node mới
+// 4. Nếu bucket có nodes:
+//    - Duyệt và check equals() với mỗi key
+//    - Nếu tìm thấy key → update value
+//    - Nếu không tìm thấy → thêm vào cuối list
+// 5. Nếu list > 8 → chuyển thành TreeMap (O(n) → O(log n))
 
-// Java 8: LinkedList -> TreeMap when bucket > 8 elements
-// This improves worst case from O(n) to O(log n)</code></pre>
+// Ví dụ collision
+Map&lt;String, Integer&gt; map = new HashMap&lt;&gt;();
+map.put("Aa", 1);  // "Aa" và "BB" có cùng hashCode!
+map.put("BB", 2);  // Cả hai vào cùng bucket, dùng equals() phân biệt</code></pre>
                         </div>
 
                         <div class="comparison-table">
@@ -326,47 +407,191 @@ int index = hash & (capacity - 1);  // Same as hash % capacity, but faster
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Order</td>
-                                        <td>No order</td>
+                                        <td><strong>Thứ tự</strong></td>
+                                        <td>❌ Không</td>
                                         <td>Key sorted</td>
                                         <td>Insertion/Access order</td>
                                     </tr>
                                     <tr>
-                                        <td>Time complexity</td>
+                                        <td><strong>Complexity</strong></td>
                                         <td>O(1)</td>
                                         <td>O(log n)</td>
                                         <td>O(1)</td>
                                     </tr>
                                     <tr>
-                                        <td>Null key</td>
-                                        <td>✅ One</td>
-                                        <td>❌ No</td>
-                                        <td>✅ One</td>
+                                        <td><strong>null key</strong></td>
+                                        <td>✅ 1</td>
+                                        <td>❌ NPE</td>
+                                        <td>✅ 1</td>
                                     </tr>
                                     <tr>
-                                        <td>Use case</td>
+                                        <td><strong>Use case</strong></td>
                                         <td>General purpose</td>
-                                        <td>Sorted data</td>
+                                        <td>Sorted keys</td>
                                         <td>LRU Cache</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">LinkedHashMap cho LRU Cache</span></div>
+                            <pre><code class="language-java">// LRU Cache với LinkedHashMap
+class LRUCache&lt;K, V&gt; extends LinkedHashMap&lt;K, V&gt; {
+    private final int maxSize;
+    
+    public LRUCache(int maxSize) {
+        // accessOrder = true → move accessed entry to end
+        super(maxSize, 0.75f, true);
+        this.maxSize = maxSize;
+    }
+    
+    @Override
+    protected boolean removeEldestEntry(Map.Entry&lt;K, V&gt; eldest) {
+        return size() > maxSize;  // Auto-remove oldest when full
+    }
+}
+
+LRUCache&lt;String, Integer&gt; cache = new LRUCache&lt;&gt;(3);
+cache.put("A", 1);
+cache.put("B", 2);
+cache.put("C", 3);
+cache.get("A");      // Access A → move to end
+cache.put("D", 4);   // B bị remove (oldest không được access)</code></pre>
+                        </div>
                     </div>
                 </div>
             </section>
 
+            <!-- QUEUE & DEQUE -->
+            <section class="content-section">
+                <h2 id="queue" class="section-title"><span class="section-icon">📥</span>Queue & Deque</h2>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Queue Interface</h3>
+                        <span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="comparison-table">
+                            <h4>Queue Methods</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Operation</th>
+                                        <th>Throws Exception</th>
+                                        <th>Returns null/false</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Insert</strong></td>
+                                        <td>add(e)</td>
+                                        <td>offer(e)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Remove</strong></td>
+                                        <td>remove()</td>
+                                        <td>poll()</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Examine</strong></td>
+                                        <td>element()</td>
+                                        <td>peek()</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Queue
+                                    Implementations</span></div>
+                            <pre><code class="language-java">// 1. LinkedList - General purpose Queue/Deque
+Queue&lt;String&gt; queue = new LinkedList&lt;&gt;();
+queue.offer("A");
+queue.offer("B");
+queue.poll();  // "A" (FIFO)
+
+// 2. PriorityQueue - Min-heap by default
+PriorityQueue&lt;Integer&gt; pq = new PriorityQueue&lt;&gt;();
+pq.offer(5);
+pq.offer(1);
+pq.offer(3);
+pq.poll();  // 1 (smallest first)
+
+// Max-heap
+PriorityQueue&lt;Integer&gt; maxPq = new PriorityQueue&lt;&gt;(Comparator.reverseOrder());
+
+// Custom priority
+PriorityQueue&lt;Task&gt; taskQueue = new PriorityQueue&lt;&gt;(
+    Comparator.comparing(Task::getPriority)
+);
+
+// 3. ArrayDeque - Stack/Queue cho single thread
+Deque&lt;String&gt; deque = new ArrayDeque&lt;&gt;();
+// Dùng như Stack
+deque.push("A");
+deque.pop();
+// Dùng như Queue
+deque.offerLast("A");
+deque.pollFirst();</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Deque
+                                    Interface</span></div>
+                            <pre><code class="language-java">// Deque = Double Ended Queue
+Deque&lt;String&gt; deque = new ArrayDeque&lt;&gt;();
+
+// First (Head) operations
+deque.addFirst("A");     // Throws exception if full
+deque.offerFirst("B");   // Returns false if full
+deque.removeFirst();     // Throws NoSuchElementException if empty
+deque.pollFirst();       // Returns null if empty
+deque.getFirst();        // Throws exception
+deque.peekFirst();       // Returns null
+
+// Last (Tail) operations  
+deque.addLast("C");
+deque.offerLast("D");
+deque.removeLast();
+deque.pollLast();
+
+// Stack operations
+deque.push("E");   // = addFirst
+deque.pop();       // = removeFirst
+deque.peek();      // = peekFirst
+
+// ⚠️ ArrayDeque nhanh hơn Stack và LinkedList cho Stack/Queue operations</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-lightbulb"></i> Khi nào dùng Queue nào?</h4>
+                            <ul>
+                                <li><strong>LinkedList:</strong> Queue đơn giản, cần List operations</li>
+                                <li><strong>ArrayDeque:</strong> Stack hoặc Queue nhanh (single thread)</li>
+                                <li><strong>PriorityQueue:</strong> Cần xử lý theo priority</li>
+                                <li><strong>BlockingQueue:</strong> Producer-Consumer pattern (multi-thread)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CONCURRENT COLLECTIONS -->
             <section class="content-section">
                 <h2 id="concurrent" class="section-title"><span class="section-icon">🔒</span>Concurrent Collections
                 </h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>ConcurrentHashMap</h3><span class="badge essential">Essential</span>
+                        <h3>ConcurrentHashMap</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
                         <div class="comparison-table">
-                            <h4>ConcurrentHashMap vs Hashtable vs SynchronizedMap</h4>
+                            <h4>So sánh Thread-safe Maps</h4>
                             <table>
                                 <thead>
                                     <tr>
@@ -378,26 +603,26 @@ int index = hash & (capacity - 1);  // Same as hash % capacity, but faster
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Lock mechanism</td>
+                                        <td><strong>Lock</strong></td>
                                         <td>Segment/Bucket level</td>
-                                        <td>Whole map</td>
-                                        <td>Whole map</td>
+                                        <td>Toàn bộ map</td>
+                                        <td>Toàn bộ map</td>
                                     </tr>
                                     <tr>
-                                        <td>Null key/value</td>
-                                        <td>❌ Not allowed</td>
-                                        <td>❌ Not allowed</td>
-                                        <td>✅ Allowed</td>
+                                        <td><strong>null key/value</strong></td>
+                                        <td>❌ Không cho phép</td>
+                                        <td>❌</td>
+                                        <td>✅</td>
                                     </tr>
                                     <tr>
-                                        <td>Performance</td>
-                                        <td>Best</td>
-                                        <td>Poor</td>
-                                        <td>Poor</td>
+                                        <td><strong>Performance</strong></td>
+                                        <td>Tốt nhất</td>
+                                        <td>Kém</td>
+                                        <td>Kém</td>
                                     </tr>
                                     <tr>
-                                        <td>Iterator</td>
-                                        <td>Fail-safe</td>
+                                        <td><strong>Iterator</strong></td>
+                                        <td>Fail-safe (weakly consistent)</td>
                                         <td>Fail-fast</td>
                                         <td>Fail-fast</td>
                                     </tr>
@@ -407,34 +632,52 @@ int index = hash & (capacity - 1);  // Same as hash % capacity, but faster
 
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span
-                                    class="code-title">ConcurrentHashMap Features</span></div>
-                            <pre><code>ConcurrentHashMap&lt;String, Integer&gt; map = new ConcurrentHashMap&lt;&gt;();
+                                    class="code-title">ConcurrentHashMap Atomic Operations</span></div>
+                            <pre><code class="language-java">ConcurrentHashMap&lt;String, Integer&gt; map = new ConcurrentHashMap&lt;&gt;();
 
-// Atomic operations
-map.putIfAbsent("key", 1);
-map.computeIfAbsent("key", k -> expensiveOperation(k));
-map.computeIfPresent("key", (k, v) -> v + 1);
-map.merge("key", 1, Integer::sum);
+// Atomic operations - KHÔNG cần synchronized block
+map.putIfAbsent("key", 1);              // Chỉ put nếu chưa có
+map.computeIfAbsent("key", k -> expensiveCompute(k));  // Lazy compute
+map.computeIfPresent("key", (k, v) -> v + 1);  // Update nếu có
+map.merge("key", 1, Integer::sum);      // Insert hoặc update
 
-// Safe iteration - no ConcurrentModificationException
+// Safe iteration - không throw ConcurrentModificationException
 for (Map.Entry&lt;String, Integer&gt; entry : map.entrySet()) {
-    // Safe to modify map during iteration
-    map.remove(entry.getKey());
-}</code></pre>
+    map.remove(entry.getKey());  // OK! Weakly consistent
+}
+
+// Bulk operations (Java 8+)
+map.forEach((k, v) -> System.out.println(k + ": " + v));
+map.reduce(1, (k, v) -> v, Integer::sum);
+map.search(1, (k, v) -> v > 100 ? k : null);</code></pre>
                         </div>
 
-                        <div class="info-box">
-                            <h4><i class="fas fa-info-circle"></i> Other Concurrent Collections</h4>
-                            <ul>
-                                <li><strong>CopyOnWriteArrayList:</strong> Thread-safe ArrayList, copy on write</li>
-                                <li><strong>ConcurrentLinkedQueue:</strong> Non-blocking queue</li>
-                                <li><strong>BlockingQueue:</strong> LinkedBlockingQueue, ArrayBlockingQueue</li>
-                            </ul>
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Other
+                                    Concurrent Collections</span></div>
+                            <pre><code class="language-java">// CopyOnWriteArrayList - Thread-safe, copy on write
+List&lt;String&gt; list = new CopyOnWriteArrayList&lt;&gt;();
+// Tốt cho: nhiều read, ít write
+// Costly: mỗi write copy toàn bộ array
+
+// BlockingQueue - Producer-Consumer pattern
+BlockingQueue&lt;String&gt; queue = new LinkedBlockingQueue&lt;&gt;(100);
+// Producer
+queue.put("item");  // Blocks if full
+// Consumer  
+String item = queue.take();  // Blocks if empty
+
+// ConcurrentLinkedQueue - Non-blocking, lock-free
+Queue&lt;String&gt; lockFree = new ConcurrentLinkedQueue&lt;&gt;();
+
+// ConcurrentSkipListMap - Concurrent sorted map
+ConcurrentNavigableMap&lt;String, Integer&gt; sorted = new ConcurrentSkipListMap&lt;&gt;();</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- COMPARABLE VS COMPARATOR -->
             <section class="content-section">
                 <h2 id="comparison" class="section-title"><span class="section-icon">⚖️</span>Comparable vs Comparator
                 </h2>
@@ -452,29 +695,29 @@ for (Map.Entry&lt;String, Integer&gt; entry : map.entrySet()) {
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Package</td>
+                                        <td><strong>Package</strong></td>
                                         <td>java.lang</td>
                                         <td>java.util</td>
                                     </tr>
                                     <tr>
-                                        <td>Method</td>
+                                        <td><strong>Method</strong></td>
                                         <td>compareTo(T o)</td>
                                         <td>compare(T o1, T o2)</td>
                                     </tr>
                                     <tr>
-                                        <td>Sorting logic</td>
-                                        <td>Inside class (natural)</td>
-                                        <td>Outside class (custom)</td>
+                                        <td><strong>Sorting logic</strong></td>
+                                        <td>Trong class (natural order)</td>
+                                        <td>Ngoài class (custom)</td>
                                     </tr>
                                     <tr>
-                                        <td>Flexibility</td>
-                                        <td>One way only</td>
-                                        <td>Multiple ways</td>
+                                        <td><strong>Số cách sort</strong></td>
+                                        <td>1 cách duy nhất</td>
+                                        <td>Nhiều cách</td>
                                     </tr>
                                     <tr>
-                                        <td>Modifies class</td>
-                                        <td>Yes</td>
-                                        <td>No</td>
+                                        <td><strong>Modify class</strong></td>
+                                        <td>Có</td>
+                                        <td>Không</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -482,32 +725,53 @@ for (Map.Entry&lt;String, Integer&gt; entry : map.entrySet()) {
 
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span
-                                    class="code-title">Example</span></div>
-                            <pre><code>// Comparable - natural ordering (inside class)
-public class Person implements Comparable&lt;Person&gt; {
+                                    class="code-title">Comparable - Natural Ordering</span></div>
+                            <pre><code class="language-java">public class Person implements Comparable&lt;Person&gt; {
     private String name;
     private int age;
     
     @Override
     public int compareTo(Person other) {
-        return this.name.compareTo(other.name);
+        // negative: this < other
+        // zero: this == other
+        // positive: this > other
+        return this.name.compareTo(other.name);  // Natural order by name
     }
 }
 
-// Comparator - custom ordering (outside class)
-Comparator&lt;Person&gt; byAge = (p1, p2) -> p1.age - p2.age;
+List&lt;Person&gt; people = Arrays.asList(p1, p2, p3);
+Collections.sort(people);  // Dùng natural order</code></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Comparator - Custom Ordering</span></div>
+                            <pre><code class="language-java">// Lambda
+Comparator&lt;Person&gt; byAge = (p1, p2) -> p1.getAge() - p2.getAge();
+
+// Method reference (preferred)
 Comparator&lt;Person&gt; byName = Comparator.comparing(Person::getName);
-Comparator&lt;Person&gt; byAgeThenName = byAge.thenComparing(byName);
+Comparator&lt;Person&gt; byAgeDesc = Comparator.comparing(Person::getAge).reversed();
+
+// Chaining - multiple fields
+Comparator&lt;Person&gt; byAgeAndName = Comparator
+    .comparing(Person::getAge)
+    .thenComparing(Person::getName);
+
+// Null handling
+Comparator&lt;Person&gt; nullSafeByName = Comparator
+    .comparing(Person::getName, Comparator.nullsLast(Comparator.naturalOrder()));
 
 // Usage
-Collections.sort(list);  // Uses Comparable
-Collections.sort(list, byAge);  // Uses Comparator
-list.sort(byAgeThenName);  // Java 8+</code></pre>
+Collections.sort(people, byAge);
+people.sort(byAgeAndName);
+list.stream().sorted(byName).collect(Collectors.toList());</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- ITERATOR & FAIL-FAST -->
             <section class="content-section">
                 <h2 id="iterator" class="section-title"><span class="section-icon">🔄</span>Iterator &
                     Fail-Fast/Fail-Safe</h2>
@@ -525,22 +789,22 @@ list.sort(byAgeThenName);  // Java 8+</code></pre>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Behavior</td>
+                                        <td><strong>Behavior</strong></td>
                                         <td>Throws ConcurrentModificationException</td>
-                                        <td>No exception</td>
+                                        <td>Không exception</td>
                                     </tr>
                                     <tr>
-                                        <td>Works on</td>
+                                        <td><strong>Works on</strong></td>
                                         <td>Original collection</td>
                                         <td>Clone/Copy</td>
                                     </tr>
                                     <tr>
-                                        <td>Memory</td>
-                                        <td>No extra</td>
-                                        <td>Extra for copy</td>
+                                        <td><strong>Memory</strong></td>
+                                        <td>Không extra</td>
+                                        <td>Extra cho copy</td>
                                     </tr>
                                     <tr>
-                                        <td>Examples</td>
+                                        <td><strong>Examples</strong></td>
                                         <td>ArrayList, HashMap</td>
                                         <td>ConcurrentHashMap, CopyOnWriteArrayList</td>
                                     </tr>
@@ -551,76 +815,202 @@ list.sort(byAgeThenName);  // Java 8+</code></pre>
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Safe
                                     Removal During Iteration</span></div>
-                            <pre><code>List&lt;String&gt; list = new ArrayList&lt;&gt;(Arrays.asList("A", "B", "C"));
+                            <pre><code class="language-java">List&lt;String&gt; list = new ArrayList&lt;&gt;(Arrays.asList("A", "B", "C"));
 
-// ❌ Wrong - ConcurrentModificationException
+// ❌ WRONG - ConcurrentModificationException
 for (String s : list) {
     if (s.equals("B")) list.remove(s);
 }
 
-// ✅ Correct - Use Iterator.remove()
+// ✅ CORRECT - Iterator.remove()
 Iterator&lt;String&gt; it = list.iterator();
 while (it.hasNext()) {
-    if (it.next().equals("B")) it.remove();
+    if (it.next().equals("B")) {
+        it.remove();  // Safe removal
+    }
 }
 
-// ✅ Correct - Use removeIf() (Java 8+)
-list.removeIf(s -> s.equals("B"));</code></pre>
+// ✅ CORRECT - removeIf() (Java 8+)
+list.removeIf(s -> s.equals("B"));
+
+// ✅ CORRECT - Collect to new list
+List&lt;String&gt; filtered = list.stream()
+    .filter(s -> !s.equals("B"))
+    .collect(Collectors.toList());
+
+// ✅ CORRECT - Backward loop (for index-based)
+for (int i = list.size() - 1; i >= 0; i--) {
+    if (list.get(i).equals("B")) list.remove(i);
+}</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- COLLECTIONS UTILITIES -->
+            <section class="content-section">
+                <h2 id="utilities" class="section-title"><span class="section-icon">🛠️</span>Collections Utilities</h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Collections Utility Methods</span></div>
+                            <pre><code class="language-java">// Sorting
+Collections.sort(list);
+Collections.sort(list, comparator);
+Collections.reverse(list);
+Collections.shuffle(list);
+
+// Searching
+int index = Collections.binarySearch(sortedList, key);  // List phải sorted
+
+// Min/Max
+Collections.min(list);
+Collections.max(list, comparator);
+
+// Frequency
+int count = Collections.frequency(list, element);
+
+// Fill/Replace
+Collections.fill(list, value);
+Collections.replaceAll(list, oldVal, newVal);
+
+// Rotate/Swap
+Collections.rotate(list, distance);
+Collections.swap(list, i, j);
+
+// Immutable wrappers
+List&lt;String&gt; unmodifiable = Collections.unmodifiableList(list);
+Set&lt;String&gt; immutableSet = Set.of("A", "B", "C");  // Java 9+
+List&lt;String&gt; immutableList = List.of("A", "B");    // Java 9+
+Map&lt;String, Integer&gt; immutableMap = Map.of("A", 1, "B", 2);  // Java 9+
+
+// Synchronized wrappers
+List&lt;String&gt; synced = Collections.synchronizedList(new ArrayList&lt;&gt;());
+Map&lt;String, Integer&gt; syncedMap = Collections.synchronizedMap(new HashMap&lt;&gt;());
+
+// Empty/Singleton
+List&lt;String&gt; empty = Collections.emptyList();
+Set&lt;String&gt; singleton = Collections.singleton("A");
+
+// nCopies
+List&lt;String&gt; copies = Collections.nCopies(5, "default");</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INTERVIEW QUESTIONS -->
             <section id="interview" class="content-section">
                 <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
 
                 <div class="interview-questions">
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q1</span>
-                            <p>How does HashMap handle collisions?</p>
+                            <p>HashMap xử lý collision như thế nào?</p>
                         </div>
                         <div class="answer">
-                            <p>Uses <strong>chaining</strong>. In Java 8+: LinkedList for ≤8 elements, TreeMap for >8
-                                elements (TREEIFY). This improves worst case from O(n) to O(log n).</p>
+                            <p>Dùng <strong>chaining</strong>. Java 8+: LinkedList cho ≤8 elements, chuyển thành TreeMap
+                                khi >8 (TREEIFY_THRESHOLD). Cải thiện worst case từ O(n) thành O(log n).</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q2</span>
-                            <p>Why is ConcurrentHashMap better than Hashtable?</p>
+                            <p>Tại sao ConcurrentHashMap tốt hơn Hashtable?</p>
                         </div>
                         <div class="answer">
-                            <p>ConcurrentHashMap uses <strong>segment-level/bucket-level locking</strong> while
-                                Hashtable locks the entire map. CHM allows concurrent reads and limited concurrent
-                                writes.</p>
+                            <p>ConcurrentHashMap dùng <strong>segment-level/bucket-level locking</strong>, cho phép
+                                concurrent reads và limited concurrent writes. Hashtable lock toàn bộ map cho mỗi
+                                operation.</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q3</span>
-                            <p>Difference between HashMap and TreeMap?</p>
+                            <p>Khác biệt HashMap và TreeMap?</p>
                         </div>
                         <div class="answer">
-                            <p><strong>HashMap:</strong> O(1) lookup, no order, allows null key.
-                                <strong>TreeMap:</strong> O(log n) lookup, sorted by keys, NO null key, implements
-                                NavigableMap.</p>
+                            <ul>
+                                <li><strong>HashMap:</strong> O(1) lookup, không thứ tự, cho phép 1 null key</li>
+                                <li><strong>TreeMap:</strong> O(log n) lookup, sorted by keys, KHÔNG cho null key,
+                                    implements NavigableMap</li>
+                            </ul>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q4</span>
-                            <p>When would you use LinkedHashMap?</p>
+                            <p>Khi nào dùng LinkedHashMap?</p>
                         </div>
                         <div class="answer">
-                            <p>When you need <strong>insertion order</strong> or <strong>access order</strong> (for LRU
-                                cache). It maintains a doubly-linked list of entries. Override
-                                <code>removeEldestEntry()</code> for LRU.</p>
+                            <p>Khi cần <strong>insertion order</strong> hoặc <strong>access order</strong> (cho LRU
+                                cache). Override <code>removeEldestEntry()</code> để tự động xóa entry cũ nhất.</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q5</span>
-                            <p>What happens if two keys have same hashCode?</p>
+                            <p>Nếu 2 keys có cùng hashCode thì sao?</p>
                         </div>
                         <div class="answer">
-                            <p>They go to the <strong>same bucket</strong>. HashMap then uses <code>equals()</code> to
-                                determine if they're the same key. If not, both are stored (collision handling).</p>
+                            <p>Chúng vào <strong>cùng bucket</strong>. HashMap dùng <code>equals()</code> để xác định có
+                                phải cùng key không. Nếu không, cả hai đều được lưu (collision handling).</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>Fail-fast vs Fail-safe iterator?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Fail-fast:</strong> Throws ConcurrentModificationException khi collection bị
+                                    modify trong khi iterate (ArrayList, HashMap)</li>
+                                <li><strong>Fail-safe:</strong> Không throw exception, iterate trên copy
+                                    (ConcurrentHashMap)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>ArrayList vs LinkedList - khi nào dùng cái nào?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>ArrayList:</strong> 90% cases - random access, iteration, get by index</li>
+                                <li><strong>LinkedList:</strong> Thêm/xóa đầu/cuối thường xuyên, implement Queue/Deque
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>Tại sao phải override cả equals() và hashCode()?</p>
+                        </div>
+                        <div class="answer">
+                            <p>HashMap/HashSet dùng hashCode để tìm bucket, rồi equals để tìm element trong bucket. Nếu
+                                override equals mà không override hashCode, 2 object "equal" có thể vào khác bucket →
+                                không tìm thấy nhau.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q9</span>
+                            <p>PriorityQueue hoạt động thế nào?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Dùng <strong>min-heap</strong> (binary heap). Element nhỏ nhất ở root. offer/poll là
+                                O(log n), peek là O(1). Dùng Comparator.reverseOrder() cho max-heap.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q10</span>
+                            <p>Immutable collections trong Java 9+?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><code>List.of("A", "B")</code> - Immutable list</li>
+                                <li><code>Set.of("A", "B")</code> - Immutable set</li>
+                                <li><code>Map.of("k1", "v1")</code> - Immutable map</li>
+                            </ul>
+                            <p>Không cho null, không cho duplicate (Set/Map key). Throws UnsupportedOperationException
+                                khi modify.</p>
                         </div>
                     </div>
                 </div>
@@ -636,6 +1026,8 @@ list.removeIf(s -> s.equals("B"));</code></pre>
     </main>
 
     <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
     <script src="../js/main.js"></script>
 </body>
 

@@ -24,7 +24,7 @@
     </nav>
 
     <header class="topic-header">
-        <div class="topic-icon java"><i class="fas fa-drafting-compass"></i></div>
+        <div class="topic-icon java"><i class="fas fa-puzzle-piece"></i></div>
         <div class="topic-info">
             <span class="topic-category">Java Core</span>
             <h1>Design Patterns</h1>
@@ -38,56 +38,64 @@
             <ul>
                 <li><a href="#creational">Creational Patterns</a></li>
                 <li><a href="#singleton">Singleton</a></li>
-                <li><a href="#factory">Factory & Abstract Factory</a></li>
+                <li><a href="#factory">Factory</a></li>
                 <li><a href="#builder">Builder</a></li>
                 <li><a href="#structural">Structural Patterns</a></li>
                 <li><a href="#behavioral">Behavioral Patterns</a></li>
+                <li><a href="#spring-patterns">Patterns trong Spring</a></li>
                 <li><a href="#interview">Câu hỏi phỏng vấn</a></li>
             </ul>
         </aside>
 
         <article class="main-content">
+            <!-- CREATIONAL PATTERNS -->
             <section class="content-section">
                 <h2 id="creational" class="section-title"><span class="section-icon">🏭</span>Creational Patterns</h2>
+                <p>Patterns liên quan đến cách tạo objects.</p>
 
+                <!-- SINGLETON -->
                 <div id="singleton" class="concept-card">
                     <div class="concept-header">
-                        <h3>Singleton Pattern</h3><span class="badge essential">Essential</span>
+                        <h3>Singleton Pattern</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
-                        <p>Đảm bảo một class chỉ có một instance duy nhất và cung cấp global access point.</p>
+                        <p>Đảm bảo chỉ có 1 instance của class và cung cấp global access point.</p>
 
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span
                                     class="code-title">Thread-Safe Singleton Implementations</span></div>
-                            <pre><code>// 1. Eager Initialization - Simple, thread-safe
+                            <pre><code class="language-java">// 1. Eager Initialization - Simple, thread-safe
 public class EagerSingleton {
     private static final EagerSingleton INSTANCE = new EagerSingleton();
     private EagerSingleton() {}
     public static EagerSingleton getInstance() { return INSTANCE; }
 }
 
-// 2. Bill Pugh (Initialization-on-demand holder) - RECOMMENDED
+// 2. Bill Pugh Singleton - Lazy, thread-safe (Recommended)
 public class BillPughSingleton {
     private BillPughSingleton() {}
     
-    private static class Holder {
+    private static class SingletonHelper {
         private static final BillPughSingleton INSTANCE = new BillPughSingleton();
     }
     
     public static BillPughSingleton getInstance() {
-        return Holder.INSTANCE;  // Lazy, thread-safe by JVM class loading
+        return SingletonHelper.INSTANCE;
     }
 }
 
-// 3. Enum Singleton - Simplest, serialization-safe
+// 3. Enum Singleton - Best (Joshua Bloch recommended)
 public enum EnumSingleton {
     INSTANCE;
     
-    public void doSomething() { }
+    public void doSomething() {
+        // business logic
+    }
 }
+// Usage: EnumSingleton.INSTANCE.doSomething();
 
-// 4. Double-Checked Locking (legacy)
+// 4. Double-Checked Locking (DCL)
 public class DCLSingleton {
     private static volatile DCLSingleton instance;
     private DCLSingleton() {}
@@ -106,119 +114,136 @@ public class DCLSingleton {
                         </div>
 
                         <div class="info-box">
-                            <h4><i class="fas fa-star"></i> Best Approach: Enum Singleton</h4>
+                            <h4><i class="fas fa-star"></i> Tại sao Enum Singleton tốt nhất?</h4>
                             <ul>
-                                <li>Thread-safe by JVM guarantee</li>
-                                <li>Serialization-safe (no extra work)</li>
-                                <li>Reflection-safe (cannot instantiate)</li>
-                                <li>Simple and concise</li>
+                                <li>Thread-safe by default</li>
+                                <li>Serialization safe (không tạo instance mới khi deserialize)</li>
+                                <li>Reflection attack safe</li>
+                                <li>Concise và clean</li>
                             </ul>
                         </div>
                     </div>
                 </div>
 
+                <!-- FACTORY -->
                 <div id="factory" class="concept-card">
                     <div class="concept-header">
-                        <h3>Factory Method & Abstract Factory</h3><span class="badge essential">Essential</span>
+                        <h3>Factory Pattern</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Factory
                                     Method</span></div>
-                            <pre><code>// Product interface
+                            <pre><code class="language-java">// Product interface
 public interface Notification {
     void send(String message);
 }
 
 // Concrete products
 public class EmailNotification implements Notification {
-    public void send(String message) { System.out.println("Email: " + message); }
-}
-public class SMSNotification implements Notification {
-    public void send(String message) { System.out.println("SMS: " + message); }
+    public void send(String message) { 
+        System.out.println("Email: " + message); 
+    }
 }
 
-// Factory Method
+public class SMSNotification implements Notification {
+    public void send(String message) { 
+        System.out.println("SMS: " + message); 
+    }
+}
+
+public class PushNotification implements Notification {
+    public void send(String message) { 
+        System.out.println("Push: " + message); 
+    }
+}
+
+// Factory
 public class NotificationFactory {
     public static Notification create(String type) {
-        return switch (type.toUpperCase()) {
-            case "EMAIL" -> new EmailNotification();
-            case "SMS" -> new SMSNotification();
-            default -> throw new IllegalArgumentException("Unknown type");
+        return switch (type.toLowerCase()) {
+            case "email" -> new EmailNotification();
+            case "sms" -> new SMSNotification();
+            case "push" -> new PushNotification();
+            default -> throw new IllegalArgumentException("Unknown type: " + type);
         };
     }
 }
 
 // Usage
-Notification email = NotificationFactory.create("EMAIL");
-email.send("Hello");</code></pre>
+Notification notification = NotificationFactory.create("email");
+notification.send("Hello!");</code></pre>
                         </div>
 
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span
                                     class="code-title">Abstract Factory</span></div>
-                            <pre><code>// Abstract products
-public interface Button { void render(); }
-public interface Checkbox { void render(); }
+                            <pre><code class="language-java">// Abstract products
+interface Button { void render(); }
+interface Checkbox { void render(); }
 
-// Concrete products (Windows)
-public class WindowsButton implements Button { ... }
-public class WindowsCheckbox implements Checkbox { ... }
+// Windows family
+class WindowsButton implements Button { 
+    public void render() { System.out.println("Windows Button"); }
+}
+class WindowsCheckbox implements Checkbox { 
+    public void render() { System.out.println("Windows Checkbox"); }
+}
 
-// Concrete products (Mac)
-public class MacButton implements Button { ... }
-public class MacCheckbox implements Checkbox { ... }
+// Mac family
+class MacButton implements Button { 
+    public void render() { System.out.println("Mac Button"); }
+}
+class MacCheckbox implements Checkbox { 
+    public void render() { System.out.println("Mac Checkbox"); }
+}
 
 // Abstract Factory
-public interface GUIFactory {
+interface GUIFactory {
     Button createButton();
     Checkbox createCheckbox();
 }
 
-// Concrete Factories
-public class WindowsFactory implements GUIFactory {
+class WindowsFactory implements GUIFactory {
     public Button createButton() { return new WindowsButton(); }
     public Checkbox createCheckbox() { return new WindowsCheckbox(); }
 }
 
-public class MacFactory implements GUIFactory {
+class MacFactory implements GUIFactory {
     public Button createButton() { return new MacButton(); }
     public Checkbox createCheckbox() { return new MacCheckbox(); }
 }
 
-// Client code works with any factory
-public class Application {
-    private GUIFactory factory;
-    
-    public Application(GUIFactory factory) {
-        this.factory = factory;
-    }
-    
-    public void createUI() {
-        Button button = factory.createButton();
-        Checkbox checkbox = factory.createCheckbox();
-    }
-}</code></pre>
+// Usage
+GUIFactory factory = isWindows ? new WindowsFactory() : new MacFactory();
+Button btn = factory.createButton();
+btn.render();</code></pre>
                         </div>
                     </div>
                 </div>
 
+                <!-- BUILDER -->
                 <div id="builder" class="concept-card">
                     <div class="concept-header">
-                        <h3>Builder Pattern</h3><span class="badge essential">Essential</span>
+                        <h3>Builder Pattern</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
-                        <p>Xây dựng object phức tạp step-by-step. Tách quá trình construction khỏi representation.</p>
+                        <p>Tạo complex objects từng bước. Tránh telescoping constructor problem.</p>
 
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Builder
                                     Pattern</span></div>
-                            <pre><code>public class User {
-    private final String firstName;    // Required
-    private final String lastName;     // Required
-    private final int age;             // Optional
-    private final String email;        // Optional
-    private final String phone;        // Optional
+                            <pre><code class="language-java">public class User {
+    // Required fields
+    private final String firstName;
+    private final String lastName;
+    
+    // Optional fields
+    private final int age;
+    private final String email;
+    private final String phone;
 
     private User(Builder builder) {
         this.firstName = builder.firstName;
@@ -229,11 +254,11 @@ public class Application {
     }
 
     public static class Builder {
-        // Required parameters
+        // Required
         private final String firstName;
         private final String lastName;
         
-        // Optional with defaults
+        // Optional với defaults
         private int age = 0;
         private String email = "";
         private String phone = "";
@@ -259,60 +284,104 @@ public class Application {
         }
 
         public User build() {
-            // Validation here
+            // Validation
+            if (age < 0) throw new IllegalStateException("Age cannot be negative");
             return new User(this);
         }
     }
+    
+    // Getters...
 }
 
-// Usage - readable, no telescoping constructors
+// Usage - readable, immutable
 User user = new User.Builder("John", "Doe")
     .age(30)
     .email("john@example.com")
+    .build();</code></pre>
+                        </div>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-lightbulb"></i> Lombok @Builder</h4>
+                            <pre><code class="language-java">@Builder
+public class User {
+    private String firstName;
+    private String lastName;
+    @Builder.Default private int age = 0;
+}
+
+User user = User.builder()
+    .firstName("John")
+    .lastName("Doe")
     .build();</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- STRUCTURAL PATTERNS -->
             <section class="content-section">
                 <h2 id="structural" class="section-title"><span class="section-icon">🏗️</span>Structural Patterns</h2>
+                <p>Patterns về cách compose classes/objects.</p>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>Adapter, Decorator, Proxy</h3><span class="badge important">Important</span>
+                        <h3>Adapter Pattern</h3>
+                        <span class="badge important">Important</span>
                     </div>
                     <div class="concept-content">
+                        <p>Convert interface của class này sang interface mà client mong đợi.</p>
+
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Adapter
                                     Pattern</span></div>
-                            <pre><code>// Existing interface you need to work with
+                            <pre><code class="language-java">// Target interface (mà client dùng)
 interface MediaPlayer {
     void play(String filename);
 }
 
-// Incompatible class (from legacy/third-party)
+// Adaptee (interface không tương thích)
 class AdvancedPlayer {
     void playVlc(String filename) { System.out.println("VLC: " + filename); }
     void playMp4(String filename) { System.out.println("MP4: " + filename); }
 }
 
-// Adapter - makes incompatible interface compatible
+// Adapter
 class MediaAdapter implements MediaPlayer {
-    private AdvancedPlayer player = new AdvancedPlayer();
+    private AdvancedPlayer advancedPlayer;
+    
+    public MediaAdapter() {
+        this.advancedPlayer = new AdvancedPlayer();
+    }
     
     @Override
     public void play(String filename) {
-        if (filename.endsWith(".vlc")) player.playVlc(filename);
-        else if (filename.endsWith(".mp4")) player.playMp4(filename);
+        if (filename.endsWith(".vlc")) {
+            advancedPlayer.playVlc(filename);
+        } else if (filename.endsWith(".mp4")) {
+            advancedPlayer.playMp4(filename);
+        }
     }
-}</code></pre>
+}
+
+// Client code
+MediaPlayer player = new MediaAdapter();
+player.play("movie.mp4");</code></pre>
                         </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Decorator Pattern</h3>
+                        <span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <p>Thêm behavior cho object dynamically mà không sửa code.</p>
 
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span
                                     class="code-title">Decorator Pattern</span></div>
-                            <pre><code>// Component interface
+                            <pre><code class="language-java">// Component interface
 interface Coffee {
     double getCost();
     String getDescription();
@@ -321,41 +390,64 @@ interface Coffee {
 // Concrete component
 class SimpleCoffee implements Coffee {
     public double getCost() { return 1.0; }
-    public String getDescription() { return "Coffee"; }
+    public String getDescription() { return "Simple coffee"; }
 }
 
-// Decorator base
+// Base decorator
 abstract class CoffeeDecorator implements Coffee {
     protected Coffee coffee;
-    public CoffeeDecorator(Coffee coffee) { this.coffee = coffee; }
+    
+    public CoffeeDecorator(Coffee coffee) {
+        this.coffee = coffee;
+    }
 }
 
 // Concrete decorators
 class MilkDecorator extends CoffeeDecorator {
     public MilkDecorator(Coffee coffee) { super(coffee); }
+    
     public double getCost() { return coffee.getCost() + 0.5; }
-    public String getDescription() { return coffee.getDescription() + ", Milk"; }
+    public String getDescription() { return coffee.getDescription() + ", milk"; }
 }
 
 class SugarDecorator extends CoffeeDecorator {
     public SugarDecorator(Coffee coffee) { super(coffee); }
+    
     public double getCost() { return coffee.getCost() + 0.2; }
-    public String getDescription() { return coffee.getDescription() + ", Sugar"; }
+    public String getDescription() { return coffee.getDescription() + ", sugar"; }
 }
 
-// Usage - stack decorators
-Coffee coffee = new SugarDecorator(new MilkDecorator(new SimpleCoffee()));
-// Cost: 1.7, Description: Coffee, Milk, Sugar</code></pre>
+// Usage - wrap dynamically
+Coffee coffee = new SimpleCoffee();
+coffee = new MilkDecorator(coffee);
+coffee = new SugarDecorator(coffee);
+// "Simple coffee, milk, sugar" - $1.7</code></pre>
                         </div>
 
+                        <div class="info-box">
+                            <h4><i class="fas fa-lightbulb"></i> Decorator trong Java</h4>
+                            <ul>
+                                <li><code>BufferedInputStream</code> decorates <code>InputStream</code></li>
+                                <li><code>Collections.synchronizedList()</code> decorates <code>List</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Proxy Pattern</h3>
+                        <span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Proxy
                                     Pattern</span></div>
-                            <pre><code>interface Image {
+                            <pre><code class="language-java">interface Image {
     void display();
 }
 
-// Real object (expensive to create)
+// Real subject (expensive to create)
 class RealImage implements Image {
     private String filename;
     
@@ -368,13 +460,15 @@ class RealImage implements Image {
         System.out.println("Loading " + filename);
     }
     
-    public void display() { System.out.println("Displaying " + filename); }
+    public void display() {
+        System.out.println("Displaying " + filename);
+    }
 }
 
-// Proxy - controls access, lazy loading
+// Proxy (lazy loading)
 class ProxyImage implements Image {
     private String filename;
-    private RealImage realImage;  // Lazy initialization
+    private RealImage realImage;
     
     public ProxyImage(String filename) {
         this.filename = filename;
@@ -382,67 +476,37 @@ class ProxyImage implements Image {
     
     public void display() {
         if (realImage == null) {
-            realImage = new RealImage(filename);  // Load only when needed
+            realImage = new RealImage(filename);  // Load khi cần
         }
         realImage.display();
     }
 }
 
 // Usage
-Image image = new ProxyImage("photo.jpg");  // Not loaded yet
-image.display();  // Loads and displays</code></pre>
-                        </div>
-
-                        <div class="comparison-table">
-                            <h4>Structural Patterns Summary</h4>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Pattern</th>
-                                        <th>Purpose</th>
-                                        <th>Java Example</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><strong>Adapter</strong></td>
-                                        <td>Convert interface to expected one</td>
-                                        <td>Arrays.asList(), InputStreamReader</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Decorator</strong></td>
-                                        <td>Add behavior dynamically</td>
-                                        <td>BufferedReader, Collections.unmodifiableList</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Proxy</strong></td>
-                                        <td>Control access, lazy loading</td>
-                                        <td>Spring AOP proxies, LazyInitializer</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Facade</strong></td>
-                                        <td>Simplify complex subsystem</td>
-                                        <td>JDBC DriverManager</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+Image image = new ProxyImage("large_image.jpg");  // Chưa load
+image.display();  // Load và display
+image.display();  // Chỉ display (đã load)</code></pre>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- BEHAVIORAL PATTERNS -->
             <section class="content-section">
                 <h2 id="behavioral" class="section-title"><span class="section-icon">🎭</span>Behavioral Patterns</h2>
 
                 <div class="concept-card">
                     <div class="concept-header">
-                        <h3>Strategy, Observer, Template Method</h3><span class="badge important">Important</span>
+                        <h3>Strategy Pattern</h3>
+                        <span class="badge essential">Essential</span>
                     </div>
                     <div class="concept-content">
+                        <p>Định nghĩa family of algorithms, encapsulate, và swap được.</p>
+
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span
                                     class="code-title">Strategy Pattern</span></div>
-                            <pre><code>// Strategy interface
+                            <pre><code class="language-java">// Strategy interface
 interface PaymentStrategy {
     void pay(double amount);
 }
@@ -450,17 +514,25 @@ interface PaymentStrategy {
 // Concrete strategies
 class CreditCardPayment implements PaymentStrategy {
     private String cardNumber;
-    public CreditCardPayment(String card) { this.cardNumber = card; }
+    
+    public CreditCardPayment(String cardNumber) {
+        this.cardNumber = cardNumber;
+    }
+    
     public void pay(double amount) {
-        System.out.println("Paid " + amount + " via Credit Card");
+        System.out.println("Paid " + amount + " with credit card " + cardNumber);
     }
 }
 
 class PayPalPayment implements PaymentStrategy {
     private String email;
-    public PayPalPayment(String email) { this.email = email; }
+    
+    public PayPalPayment(String email) {
+        this.email = email;
+    }
+    
     public void pay(double amount) {
-        System.out.println("Paid " + amount + " via PayPal");
+        System.out.println("Paid " + amount + " with PayPal " + email);
     }
 }
 
@@ -472,93 +544,173 @@ class ShoppingCart {
         this.paymentStrategy = strategy;
     }
     
-    public void checkout(double total) {
-        paymentStrategy.pay(total);
+    public void checkout(double amount) {
+        paymentStrategy.pay(amount);
     }
 }
 
 // Usage - swap strategies at runtime
 ShoppingCart cart = new ShoppingCart();
 cart.setPaymentStrategy(new CreditCardPayment("1234-5678"));
-cart.checkout(100.0);</code></pre>
+cart.checkout(100.0);
+
+cart.setPaymentStrategy(new PayPalPayment("user@email.com"));
+cart.checkout(50.0);</code></pre>
                         </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Observer Pattern</h3>
+                        <span class="badge essential">Essential</span>
+                    </div>
+                    <div class="concept-content">
+                        <p>One-to-many dependency. Khi subject thay đổi, notify tất cả observers.</p>
 
                         <div class="code-block">
                             <div class="code-header"><span class="code-lang">Java</span><span
                                     class="code-title">Observer Pattern</span></div>
-                            <pre><code>// Using built-in or custom implementation
+                            <pre><code class="language-java">// Observer interface
 interface Observer {
-    void update(String event);
+    void update(String message);
 }
 
-interface Subject {
-    void addObserver(Observer o);
-    void removeObserver(Observer o);
-    void notifyObservers(String event);
-}
-
-class NewsAgency implements Subject {
+// Subject
+class NewsAgency {
     private List&lt;Observer&gt; observers = new ArrayList&lt;&gt;();
+    private String news;
     
-    public void addObserver(Observer o) { observers.add(o); }
-    public void removeObserver(Observer o) { observers.remove(o); }
-    
-    public void notifyObservers(String news) {
-        observers.forEach(o -> o.update(news));
+    public void addObserver(Observer observer) {
+        observers.add(observer);
     }
     
-    public void publishNews(String news) {
-        System.out.println("Publishing: " + news);
-        notifyObservers(news);
+    public void removeObserver(Observer observer) {
+        observers.remove(observer);
+    }
+    
+    public void setNews(String news) {
+        this.news = news;
+        notifyObservers();
+    }
+    
+    private void notifyObservers() {
+        for (Observer observer : observers) {
+            observer.update(news);
+        }
     }
 }
 
-class NewsSubscriber implements Observer {
+// Concrete observers
+class NewsChannel implements Observer {
     private String name;
-    public NewsSubscriber(String name) { this.name = name; }
     
-    public void update(String event) {
-        System.out.println(name + " received: " + event);
+    public NewsChannel(String name) { this.name = name; }
+    
+    public void update(String message) {
+        System.out.println(name + " received: " + message);
     }
 }
 
 // Usage
 NewsAgency agency = new NewsAgency();
-agency.addObserver(new NewsSubscriber("John"));
-agency.addObserver(new NewsSubscriber("Jane"));
-agency.publishNews("Breaking news!");</code></pre>
-                        </div>
+agency.addObserver(new NewsChannel("CNN"));
+agency.addObserver(new NewsChannel("BBC"));
 
+agency.setNews("Breaking news!");
+// CNN received: Breaking news!
+// BBC received: Breaking news!</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Template Method Pattern</h3>
+                        <span class="badge important">Important</span>
+                    </div>
+                    <div class="concept-content">
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Template Method</span></div>
+                            <pre><code class="language-java">// Abstract class với template method
+abstract class DataProcessor {
+    // Template method - định nghĩa skeleton
+    public final void process() {
+        readData();
+        processData();
+        writeData();
+    }
+    
+    abstract void readData();
+    abstract void processData();
+    
+    // Hook method - có thể override
+    void writeData() {
+        System.out.println("Writing to default output");
+    }
+}
+
+class CSVProcessor extends DataProcessor {
+    void readData() { System.out.println("Reading CSV"); }
+    void processData() { System.out.println("Processing CSV"); }
+}
+
+class JSONProcessor extends DataProcessor {
+    void readData() { System.out.println("Reading JSON"); }
+    void processData() { System.out.println("Processing JSON"); }
+    
+    @Override
+    void writeData() { System.out.println("Writing to database"); }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SPRING PATTERNS -->
+            <section class="content-section">
+                <h2 id="spring-patterns" class="section-title"><span class="section-icon">🌱</span>Patterns trong Spring
+                </h2>
+
+                <div class="concept-card">
+                    <div class="concept-content">
                         <div class="comparison-table">
-                            <h4>Behavioral Patterns Summary</h4>
                             <table>
                                 <thead>
                                     <tr>
                                         <th>Pattern</th>
-                                        <th>Purpose</th>
-                                        <th>Java Example</th>
+                                        <th>Spring Implementation</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td><strong>Strategy</strong></td>
-                                        <td>Swap algorithms at runtime</td>
-                                        <td>Comparator, Collections.sort</td>
+                                        <td><strong>Singleton</strong></td>
+                                        <td>Default bean scope</td>
                                     </tr>
                                     <tr>
-                                        <td><strong>Observer</strong></td>
-                                        <td>Notify on state change</td>
-                                        <td>PropertyChangeListener, Event listeners</td>
+                                        <td><strong>Factory</strong></td>
+                                        <td>BeanFactory, ApplicationContext</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Proxy</strong></td>
+                                        <td>AOP, @Transactional, @Cacheable</td>
                                     </tr>
                                     <tr>
                                         <td><strong>Template Method</strong></td>
-                                        <td>Define algorithm skeleton</td>
-                                        <td>AbstractList, HttpServlet</td>
+                                        <td>JdbcTemplate, RestTemplate</td>
                                     </tr>
                                     <tr>
-                                        <td><strong>Chain of Responsibility</strong></td>
-                                        <td>Pass request along chain</td>
-                                        <td>Servlet Filters, Loggers</td>
+                                        <td><strong>Strategy</strong></td>
+                                        <td>Resource interface implementations</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Observer</strong></td>
+                                        <td>ApplicationEvent, @EventListener</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Decorator</strong></td>
+                                        <td>BeanPostProcessor</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -567,58 +719,108 @@ agency.publishNews("Breaking news!");</code></pre>
                 </div>
             </section>
 
+            <!-- INTERVIEW QUESTIONS -->
             <section id="interview" class="content-section">
                 <h2 class="section-title"><span class="section-icon">💼</span>Câu Hỏi Phỏng Vấn</h2>
 
                 <div class="interview-questions">
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q1</span>
-                            <p>How to create thread-safe Singleton?</p>
+                            <p>Tại sao Enum Singleton là best practice?</p>
                         </div>
                         <div class="answer">
-                            <p><strong>Best ways:</strong> 1) Enum singleton (recommended). 2) Bill Pugh holder pattern.
-                                3) Double-checked locking with volatile. Avoid lazy initialization without
-                                synchronization.</p>
+                            <p>Thread-safe by default, serialization safe (không tạo instance mới), reflection attack
+                                safe, và syntax đơn giản.</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q2</span>
-                            <p>Factory vs Abstract Factory?</p>
+                            <p>Factory Pattern vs Abstract Factory?</p>
                         </div>
                         <div class="answer">
-                            <p><strong>Factory:</strong> Creates one type of product. <strong>Abstract Factory:</strong>
-                                Creates families of related products. Use Abstract Factory when products work together
-                                (e.g., UI components for different OS).</p>
+                            <ul>
+                                <li><strong>Factory:</strong> Tạo 1 loại product</li>
+                                <li><strong>Abstract Factory:</strong> Tạo family of related products</li>
+                            </ul>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q3</span>
-                            <p>When to use Builder pattern?</p>
+                            <p>Builder Pattern giải quyết vấn đề gì?</p>
                         </div>
                         <div class="answer">
-                            <p>When object has many parameters (especially optional ones), when you need immutable
-                                objects, to avoid telescoping constructors, or when construction requires multiple
-                                steps.</p>
+                            <p>Telescoping constructor problem (constructor với nhiều parameters). Cho phép tạo
+                                immutable objects từng bước với readable syntax.</p>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q4</span>
-                            <p>Decorator vs Proxy?</p>
+                            <p>Adapter vs Decorator?</p>
                         </div>
                         <div class="answer">
-                            <p><strong>Decorator:</strong> Adds new behavior/responsibilities. <strong>Proxy:</strong>
-                                Controls access (lazy loading, security, caching). Decorator focuses on what, Proxy on
-                                access control.</p>
+                            <ul>
+                                <li><strong>Adapter:</strong> Convert interface, không thêm behavior</li>
+                                <li><strong>Decorator:</strong> Cùng interface, thêm behavior dynamically</li>
+                            </ul>
                         </div>
                     </div>
                     <div class="question-card">
                         <div class="question"><span class="q-number">Q5</span>
-                            <p>Strategy vs State pattern?</p>
+                            <p>Strategy Pattern dùng khi nào?</p>
                         </div>
                         <div class="answer">
-                            <p>Similar structure but different intent. <strong>Strategy:</strong> Client chooses
-                                algorithm. <strong>State:</strong> Object changes behavior based on internal state
-                                (state transitions automatically).</p>
+                            <p>Khi có nhiều algorithms cho cùng 1 task và muốn swap at runtime. Ví dụ: payment methods,
+                                sorting algorithms, compression strategies.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q6</span>
+                            <p>Observer Pattern trong Java?</p>
+                        </div>
+                        <div class="answer">
+                            <p>java.util.Observer (deprecated), PropertyChangeListener, ApplicationEvent trong Spring.
+                                Dùng cho event-driven systems.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q7</span>
+                            <p>Proxy Pattern trong Spring?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Spring AOP dùng proxies cho @Transactional, @Cacheable, @Async. JDK dynamic proxy cho
+                                interfaces, CGLIB cho classes.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q8</span>
+                            <p>Template Method vs Strategy?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li><strong>Template:</strong> Inheritance, fixed skeleton, subclass customize steps
+                                </li>
+                                <li><strong>Strategy:</strong> Composition, entire algorithm swappable</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q9</span>
+                            <p>Dependency Injection là pattern nào?</p>
+                        </div>
+                        <div class="answer">
+                            <p>Là implementation của Dependency Inversion Principle (SOLID D). IoC container inject
+                                dependencies thay vì class tự tạo. Loose coupling, easy testing.</p>
+                        </div>
+                    </div>
+                    <div class="question-card">
+                        <div class="question"><span class="q-number">Q10</span>
+                            <p>Ví dụ Decorator trong Java Standard Library?</p>
+                        </div>
+                        <div class="answer">
+                            <ul>
+                                <li>IO: BufferedInputStream, BufferedReader</li>
+                                <li>Collections: Collections.synchronizedList(), Collections.unmodifiableList()</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -634,6 +836,8 @@ agency.publishNews("Breaking news!");</code></pre>
     </main>
 
     <button class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
     <script src="../js/main.js"></script>
 </body>
 
