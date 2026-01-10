@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Spring AOP - Spring Boot Interview</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .topic-icon.aop {
+            background: linear-gradient(135deg, #8e44ad 0%, #3e1f5e 100%);
+        }
+
+        .topic-category {
+            color: #8e44ad;
+        }
+
+        .architecture-diagram {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            color: #dcdcdc;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 1px solid #333;
+        }
+
+        .nav-pills {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .nav-pill {
+            background: #2d2d2d;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            color: #aaa;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .nav-pill:hover,
+        .nav-pill.active {
+            background: #8e44ad;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo"><i class="fas fa-rocket"></i><span>Interview Hub</span></a>
+            <a href="../index.html#spring" class="nav-back"><i class="fas fa-arrow-left"></i> Spring Boot</a>
+        </div>
+    </nav>
+
+    <header class="topic-header">
+        <div class="topic-icon aop"><i class="fas fa-cut"></i></div>
+        <div class="topic-info">
+            <span class="topic-category">Spring Boot</span>
+            <h1>Spring AOP Deep Dive</h1>
+            <p class="topic-desc">Mastering Aspect Oriented Programming: Từ cơ bản đến Advanced Architecture & Best
+                Practices</p>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <aside class="toc">
+            <h3><i class="fas fa-list"></i> Nội dung</h3>
+            <ul>
+                <li><a href="#concept">Core Architecture</a></li>
+                <li><a href="#weaving">Weaving Types</a></li>
+                <li><a href="#pointcut">Advanced Pointcuts</a></li>
+                <li><a href="#ordering">Advice Ordering</a></li>
+                <li><a href="#introduction">Introduction Advice</a></li>
+                <li><a href="#realworld">Real-world Examples</a></li>
+                <li><a href="#interview">Expert Interview Q&A</a></li>
+            </ul>
+        </aside>
+
+        <article class="main-content">
+
+            <!-- Core Architecture -->
+            <section class="content-section">
+                <h2 id="concept" class="section-title"><span class="section-icon">🏗️</span>Architecture Deep Dive</h2>
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Proxy Pattern & Interceptor Chain</h3><span class="badge advanced">Advanced</span>
+                    </div>
+                    <div class="concept-content">
+                        <p>Spring AOP không thay đổi bytecode của class gốc (trừ khi dùng AspectJ mode). Thay vào đó, nó
+                            sử dụng pattern <strong>Proxy</strong> để bao bọc bean thật.</p>
+
+                        <div class="architecture-diagram">
+                            <pre>
+External Caller 
+      │
+      ▼
+┌────────────── Proxy Object ────────────────┐
+│                                            │
+│  1. Check Proxy Config (Advice Chain)      │
+│  2. Apply @Before Advice                   │
+│      │                                     │
+│      ▼                                     │
+│  3. Invoke Target Method ─────────────────►│────► Target Object (Real Bean)
+│                                            │          │
+│  4. Apply @AfterReturning/Throwing         │◄─────────┘
+│      │                                     │
+│      ▼                                     │
+│  5. Return Result                          │
+│                                            │
+└────────────────────────────────────────────┘
+      │
+      ▼
+Return to Caller
+                            </pre>
+                        </div>
+
+                        <p>Khi một method được gọi trên Proxy, Spring sẽ:</p>
+                        <ol>
+                            <li>Tạo một <strong>Chain of Interceptors</strong> (chuỗi các Advice) áp dụng cho method đó.
+                            </li>
+                            <li>Thực thi lần lượt các Advice theo thứ tự.</li>
+                            <li>Cuối cùng mới gọi method thật (Target) thông qua reflection hoặc method handle.</li>
+                        </ol>
+
+                        <div class="info-box">
+                            <h4><i class="fas fa-microchip"></i> Proxy Factory Bean</h4>
+                            <p>Spring dùng <code>ProxyFactory</code> để tạo ra proxy. Tùy thuộc cấu hình mà nó chọn:</p>
+                            <ul>
+                                <li><strong>JDK Dynamic Proxy:</strong> Sử dụng <code>java.lang.reflect.Proxy</code>.
+                                    Chỉ proxy được methods định nghĩa trong <strong>Interface</strong>.</li>
+                                <li><strong>CGLIB (Code Generation Library):</strong> Tạo subclass của target class và
+                                    override method. Hỗ trợ proxy class cụ thể (không cần interface), nhưng không thể
+                                    override <code>final</code> method.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Weaving Types -->
+            <section class="content-section">
+                <h2 id="weaving" class="section-title"><span class="section-icon">🧶</span>Weaving Types</h2>
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <p>Weaving là quá trình gắn kết Aspect vào code ứng dụng. Có 3 thời điểm weaving:</p>
+                        <div class="comparison-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Loại Weaving</th>
+                                        <th>Framework</th>
+                                        <th>Mô tả</th>
+                                        <th>Ưu điểm</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Compile-time</strong></td>
+                                        <td>AspectJ Compiler (ajc)</td>
+                                        <td>Weave khi compile source code. Code .class sinh ra đã chứa logic AOP.</td>
+                                        <td>Hiệu năng cao nhất (như code thường).</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Post-compile</strong></td>
+                                        <td>AspectJ</td>
+                                        <td>Weave vào file .class đã có (binary weaving). Dùng khi không có source code
+                                            của thư viện.</td>
+                                        <td>Inject logic vào 3rd party libs.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Load-time</strong></td>
+                                        <td>AspectJ Agent</td>
+                                        <td>Weave khi JVM load class vào bộ nhớ (dùng Java Agent).</td>
+                                        <td>Linh hoạt, không cần compiler đặc biệt.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Runtime</strong></td>
+                                        <td><strong>Spring AOP</strong></td>
+                                        <td>Tạo Proxy object tại thời điểm runtime. Không sửa đổi bytecode class gốc.
+                                        </td>
+                                        <td>Đơn giản, tích hợp sẵn, đủ dùng 90% case.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Advanced Pointcuts -->
+            <section class="content-section">
+                <h2 id="pointcut" class="section-title"><span class="section-icon">🎯</span>Advanced Pointcut
+                    Expressions</h2>
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <p>Ngoài <code>execution()</code>, Spring AOP hỗ trợ nhiều PCD (Pointcut Designators) mạnh mẽ
+                            khác.</p>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Advanced PCDs</span></div>
+                            <pre><code class="language-java">// 1. args(): Khớp dựa trên loại tham số runtime
+// Khớp method có đúng 1 tham số là String (hoặc subtype của String)
+@Pointcut("args(java.lang.String)")
+
+// 2. @args(): Khớp method có tham số được đánh annotation cụ thể
+// Khớp method(User user) nếu class User có annotation @Validated
+@Pointcut("@args(org.springframework.validation.annotation.Validated)")
+
+// 3. this() vs target()
+// this(): Object proxy implements interface này (Runtime type)
+@Pointcut("this(com.example.service.MyInterface)")
+// target(): Object thật (bị proxy) implements interface này
+@Pointcut("target(com.example.service.MyImplementation)")
+
+// 4. @target() vs @within()
+// @target: Class của object target có annotation (check runtime)
+@Pointcut("@target(org.springframework.stereotype.Service)")
+// @within: Method được định nghĩa trong class có annotation (check static structure)
+@Pointcut("@within(org.springframework.stereotype.Service)")
+
+// 5. Combining Pointcuts (Logic Operators)
+@Pointcut("execution(* save*(..)) && (args(java.lang.String) || args(java.lang.Long))")
+</code></pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <h4><i class="fas fa-bolt"></i> Performance Warning</h4>
+                            <p>Tránh dùng các PCD dựa trên runtime check như <code>args()</code>, <code>@args()</code>,
+                                <code>target()</code> ở phạm vi quá rộng vì chúng yêu cầu kiểm tra logic mỗi khi method
+                                được gọi. Ưu tiên <code>execution()</code> và <code>within()</code> vì chúng có thể được
+                                optimize tĩnh.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Advice Ordering -->
+            <section class="content-section">
+                <h2 id="ordering" class="section-title"><span class="section-icon">🔢</span>Advice Ordering</h2>
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <p>Khi nhiều Aspect cùng point vào một JoinPoint, thứ tự thực thi là <strong>không xác
+                                định</strong> trừ khi bạn chỉ định rõ. Mô hình thực thi giống như "củ hành" (Onion
+                            Architecture).</p>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">Ordering with @Order</span></div>
+                            <pre><code class="language-java">@Aspect
+@Order(1) // Chạy TRƯỚC (khi đi vào) và chạy SAU CÙNG (khi đi ra)
+public class SecurityAspect { ... }
+
+@Aspect
+@Order(2) // Chạy SAU Security (vào) và chạy TRƯỚC Security (ra)
+public class TransactionAspect { ... }</code></pre>
+                        </div>
+
+                        <div class="architecture-diagram">
+                            <pre>
+      Enter Method Call
+            │
+            ▼
+[ Aspect 1 (@Order=1) - @Before ]
+            │
+            ▼
+   [ Aspect 2 (@Order=2) - @Before ]
+            │
+            ▼
+      TARGET METHOD EXECUTION
+            │
+            ▼
+   [ Aspect 2 (@Order=2) - @After  ]
+            │
+            ▼
+[ Aspect 1 (@Order=1) - @After  ]
+            │
+            ▼
+      Exit Method Call
+                            </pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Introduction Advice -->
+            <section class="content-section">
+                <h2 id="introduction" class="section-title"><span class="section-icon">🧬</span>Introduction Advice
+                    (Mixins)</h2>
+                <div class="concept-card">
+                    <div class="concept-content">
+                        <p><strong>Introduction</strong> cho phép bạn thêm method mới hoặc field mới vào một Bean hiện
+                            có mà không cần sửa code class đó. Nó biến một object thành instance của một interface khác
+                            (Mixin).</p>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Adding
+                                    'Lockable' feature to Services</span></div>
+                            <pre><code class="language-java">// 1. Define Interface
+public interface Lockable {
+    void lock();
+    void unlock();
+    boolean isLocked();
+}
+
+// 2. Default Implementation
+public class DefaultLockable implements Lockable {
+    private boolean locked = false;
+    public void lock() { this.locked = true; }
+    public void unlock() { this.locked = false; }
+    public boolean isLocked() { return this.locked; }
+}
+
+// 3. Aspect Implementation using @DeclareParents
+@Aspect
+@Component
+public class LockMixinAspect {
+
+    // Thêm interface Lockable và implementation mặc định vào TẤT CẢ Service
+    @DeclareParents(value = "com.example.service.*+", defaultImpl = DefaultLockable.class)
+    public static Lockable mixin;
+}
+
+// 4. Usage
+@Autowired UserService userService;
+
+void test() {
+    // Cast userService sang Lockable dù class UserService không implements Lockable
+    Lockable lockable = (Lockable) userService; 
+    lockable.lock();
+    // userService hiện tại đã có state "locked"
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Real-world Examples -->
+            <section class="content-section">
+                <h2 id="realworld" class="section-title"><span class="section-icon">🚀</span>Real-world Examples</h2>
+
+                <!-- Example 1: Rate Limiter -->
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Example 1: API Rate Limiter</h3>
+                    </div>
+                    <div class="concept-content">
+                        <p>Xây dựng annotation <code>@RateLimit</code> để giới hạn số request trong một khoảng thời
+                            gian.</p>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">RateLimitAspect.java</span></div>
+                            <pre><code class="language-java">@Aspect
+@Component
+@RequiredArgsConstructor
+public class RateLimitAspect {
+    private final RedisTemplate<String, String> redisTemplate; // Dùng Redis để đếm
+
+    @Around("@annotation(limit)") // Bind annotation vào tham số method
+    public Object enforceRateLimit(ProceedingJoinPoint joinPoint, RateLimit limit) throws Throwable {
+        
+        // Key based on IP or UserID + Method Name
+        String key = createKey(joinPoint); 
+        int maxReq = limit.max();
+        int timeWindow = limit.seconds();
+
+        // Atomic increment in Redis
+        Long count = redisTemplate.opsForValue().increment(key);
+        
+        if (count == 1) {
+            redisTemplate.expire(key, timeWindow, TimeUnit.SECONDS);
+        }
+
+        if (count > maxReq) {
+            throw new RateLimitExceededException("Too many requests!");
+        }
+
+        return joinPoint.proceed();
+    }
+}
+                            </code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Example 2: Transaction Simulation -->
+                <div class="concept-card">
+                    <div class="concept-header">
+                        <h3>Example 2: Simulating @Transactional</h3>
+                    </div>
+                    <div class="concept-content">
+                        <p>Hiểu cách Spring quản lý transaction thông qua AOP.</p>
+
+                        <div class="code-block">
+                            <div class="code-header"><span class="code-lang">Java</span><span
+                                    class="code-title">SimpleTransactionAspect.java</span></div>
+                            <pre><code class="language-java">@Aspect
+@Component
+public class SimpleTransactionAspect {
+
+    @Autowired PlatformTransactionManager transactionManager;
+
+    @Around("@annotation(org.springframework.transaction.annotation.Transactional)")
+    public Object manageTransaction(ProceedingJoinPoint joinPoint) throws Throwable {
+        // 1. Begin Transaction
+        TransactionStatus status = transactionManager.getTransaction(new DefaultTransactionDefinition());
+        
+        Object result;
+        try {
+            // 2. Execute Business Logic
+            result = joinPoint.proceed();
+            
+            // 3. Commit (nếu không lỗi)
+            transactionManager.commit(status);
+        } catch (Exception ex) {
+            // 4. Rollback (nếu có lỗi)
+            transactionManager.rollback(status);
+            throw ex;
+        }
+        
+        return result;
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Interview Questions -->
+            <section class="content-section">
+                <h2 id="interview" class="section-title"><span class="section-icon">🧠</span>Expert Interview Questions
+                </h2>
+                <div class="qa-grid">
+                    <div class="qa-card">
+                        <div class="qa-header">
+                            <span class="difficulty hard">Hard</span>
+                            <h4>AOP có thể intercept <code>private</code> method không?</h4>
+                        </div>
+                        <div class="qa-answer">
+                            <p><strong>Spring AOP (Runtime Proxy):</strong> KHÔNG. Proxy pattern hoạt động bằng cách
+                                override method (CGLIB) hoặc implement interface (JDK). Cả hai đều không thể tác động
+                                vào <code>private</code> method (không thể override private, không thể define private
+                                trong interface).</p>
+                            <p><strong>AspectJ (Bytecode Weaving):</strong> CÓ. Vì AspectJ sửa đổi trực tiếp bytecode
+                                của class, nó có thể weave code vào private method calls.</p>
+                        </div>
+                    </div>
+
+                    <div class="qa-card">
+                        <div class="qa-header">
+                            <span class="difficulty hard">Hard</span>
+                            <h4>Chuyện gì xảy ra nếu có nhiều Aspect cùng match một JoinPoint?</h4>
+                        </div>
+                        <div class="qa-answer">
+                            <p>Nếu không quy định thứ tự, Spring không đảm bảo thứ tự chạy. Điều này có thể gây lỗi tiềm
+                                ẩn (VD: Transaction chạy trước Security hay ngược lại?). Để fix, dùng annotation
+                                <code>@Order</code> hoặc implement interface <code>Ordered</code>. Số nhỏ chạy trước (ưu
+                                tiên cao).</p>
+                        </div>
+                    </div>
+
+                    <div class="qa-card">
+                        <div class="qa-header">
+                            <span class="difficulty hard">Hard</span>
+                            <h4>Làm sao thay đổi tham số truyền vào method bằng AOP?</h4>
+                        </div>
+                        <div class="qa-answer">
+                            <p>Sử dụng <code>@Around</code> advice. Trong method implement, gọi
+                                <code>joinPoint.proceed(Object[] args)</code> với mảng tham số mới đã được chỉnh sửa.
+                            </p>
+                            <pre><code class="language-java">Object[] newArgs = Arrays.copyOf(joinPoint.getArgs(), ...);
+newArgs[0] = modifiedValue;
+return joinPoint.proceed(newArgs);</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="qa-card">
+                        <div class="qa-header">
+                            <span class="difficulty medium">Medium</span>
+                            <h4>Tại sao CGLIB Proxy startup chậm hơn JDK Proxy?</h4>
+                        </div>
+                        <div class="qa-answer">
+                            <p>CGLIB phải sinh ra byte code cho subclass mới và load nó vào JVM tại thời điểm runtime,
+                                tốn thời gian khởi tạo. Tuy nhiên, sau khi khởi tạo, CGLIB gọi method thường nhanh hơn
+                                JDK Proxy một chút (vì method call trực tiếp vs reflection). Các phiên bản Java mới (JDK
+                                8+) đã tối ưu hóa Reflection rất nhiều nên khoảng cách hiệu năng này không còn đáng kể.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </article>
+    </main>
+
+    <footer class="site-footer">
+        <p>© 2024 Interview Hub. Built to help you crack the interview.</p>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+</body>
+
+</html>
